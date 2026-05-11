@@ -4,7 +4,7 @@ import { listPublishedAirdrops } from '../../lib/airdrops.ts';
 
 const entries = await listPublishedAirdrops();
 const title = 'Tools — wallet-aware airdrop utilities';
-const description = `Five client-side, non-custodial tools paired with our ${entries.length} curated airdrop entries: wallet activity matching, token-holdings checking, wallet-age dating, integrator-fee DEX swap, and a calendar-subscribable deadline feed.`;
+const description = `Six client-side, non-custodial tools paired with our ${entries.length} curated airdrop entries: personalised eligibility verdict, wallet activity matching, token-holdings checking, wallet-age dating, integrator-fee DEX swap, and a calendar-subscribable deadline feed.`;
 ---
 <Base title={title} description={description}>
   <section class="hero">
@@ -12,9 +12,9 @@ const description = `Five client-side, non-custodial tools paired with our ${ent
       <div class="kicker">Tools</div>
       <h1>Wallet-aware tools.</h1>
       <p class="lede">
-        Four browser-only tools (never see your address, never custody, never
-        ask you to sign) plus one subscribe-and-forget calendar feed. Paste,
-        get an answer, leave — or subscribe once and let deadlines come to you.
+        Browser-only tools (never see your address, never custody, never ask
+        you to sign) plus one subscribe-and-forget calendar feed. Paste, get
+        an answer, leave — or subscribe once and let deadlines come to you.
       </p>
     </div>
   </section>
@@ -22,6 +22,18 @@ const description = `Five client-side, non-custodial tools paired with our ${ent
   <section class="section">
     <div class="container">
       <div class="tools-grid">
+        <a class="tool-card tool-card-featured" href="/tools/eligibility">
+          <div class="tool-kicker">★ Personal verdict</div>
+          <h2>Eligibility</h2>
+          <p>
+            Paste your EVM and/or Solana address. We evaluate hand-verified
+            on-chain rules against every airdrop and bucket them into
+            <strong>act on these</strong>, <strong>keep farming</strong>, and
+            <strong>skip</strong> — with a copy-paste shareable summary.
+          </p>
+          <span class="tool-cta">Get my verdict →</span>
+        </a>
+
         <a class="tool-card" href="/tools/wallet-check">
           <div class="tool-kicker">Activity match</div>
           <h2>Wallet check</h2>
@@ -149,6 +161,12 @@ const description = `Five client-side, non-custodial tools paired with our ${ent
       border-color: var(--accent);
       transform: translateY(-2px);
     }
+    .tool-card-featured {
+      border-color: var(--accent);
+      border-left: 4px solid var(--accent);
+      background: linear-gradient(135deg, #fff 0%, #fffaf0 100%);
+    }
+    .tool-card-featured .tool-kicker { color: var(--accent); font-weight: 700; }
     .tool-kicker {
       font-family: var(--font-mono);
       font-size: 0.75rem;

@@ -1,0 +1,963 @@
+---
+import Base from '../../layouts/Base.astro';
+import InlineSignup from '../../components/InlineSignup.astro';
+import { listPublishedAirdrops } from '../../lib/airdrops.ts';
+import { RULES, NO_RULE_REASON } from '../../data/eligibility-rules.ts';
+
+const entries = await listPublishedAirdrops();
+
+// Payload shipped to the browser as JSON. We strip the markdown body — the page
+// only needs metadata for rendering cards, and the rule registry is keyed by
+// slug. `officialUrl` is the off-site action link, surfaced on each result card.
+const entriesPayload = entries.map((e) => ({
+  slug: e.slug,
+  project: e.data.project,
+  chain: e.data.chain,
+  risk: e.data.risk,
+  deadline: e.data.deadline,
+  effort: e.data.effort,
+  costFloor: e.data.costFloor,
+  officialUrl: e.data.officialUrl,
+  blurb: e.data.blurb,
+}));
+
+const rulesPayload = RULES;
+const noRulePayload = NO_RULE_REASON;
+const ruleCount = Object.keys(RULES).length;
+
+const title = `Airdrop eligibility — paste a wallet, get a personal action verdict across ${entries.length} airdrops`;
+const description = `Paste your EVM and/or Solana address. We evaluate ${ruleCount} on-chain rules against ${entries.length} curated airdrops and bucket them into "likely eligible", "keep farming", and "not relevant" — with the official action URL for every hit. Client-side only, non-custodial, no signature, no signup.`;
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const softwareJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'web3-discover eligibility',
+  url: `${siteUrl}/tools/eligibility`,
+  applicationCategory: 'UtilityApplication',
+  operatingSystem: 'Web',
+  description,
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  publisher: { '@type': 'Organization', name: 'web3-discover', url: siteUrl },
+};
+---
+<Base title={title} description={description} extraJsonLd={softwareJsonLd}>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker">Tools · Magic moment</div>
+      <h1>Paste your wallet. Get a personal airdrop verdict.</h1>
+      <p class="lede">
+        Paste an EVM (<code>0x…</code>) address, a Solana address, or both. We
+        evaluate {ruleCount} on-chain rules against {entries.length} hand-vetted
+        airdrops and bucket them into <strong>act on these</strong>,
+        <strong>keep farming</strong>, and <strong>skip</strong>. Read-only,
+        non-custodial, no signature, no signup.
+      </p>
+
+      <form id="el-form" class="el-form" autocomplete="off">
+        <div class="el-input-grid">
+          <div class="el-input-cell">
+            <label class="el-label" for="el-evm">EVM address</label>
+            <input
+              id="el-evm"
+              name="evm"
+              type="text"
+              placeholder="0x…"
+              spellcheck="false"
+              autocapitalize="off"
+              autocorrect="off"
+            />
+          </div>
+          <div class="el-input-cell">
+            <label class="el-label" for="el-sol">Solana address</label>
+            <input
+              id="el-sol"
+              name="sol"
+              type="text"
+              placeholder="base58 32–44 chars"
+              spellcheck="false"
+              autocapitalize="off"
+              autocorrect="off"
+            />
+          </div>
+        </div>
+        <div class="el-actions">
+          <button type="submit" class="el-btn">Evaluate {ruleCount} rules →</button>
+          <p class="el-hint">
+            Either, or both. Try
+            <a href="?evm=0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045&sol=9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM">vitalik.eth + a public Solana wallet</a>.
+            Typically resolves in 2–5 seconds.
+          </p>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div id="el-status" class="el-status" hidden></div>
+      <div id="el-summary" class="el-summary" hidden></div>
+      <div id="el-results" class="el-results" hidden></div>
+      <div id="el-signup" hidden>
+        <InlineSignup
+          source="tool-eligibility"
+          copy="Get a weekly digest of new airdrops your wallet would qualify for — straight to your inbox."
+        />
+      </div>
+
+      <details class="el-howitworks" id="el-howitworks">
+        <summary>How this works (and what it doesn't do)</summary>
+        <div class="prose">
+          <ul>
+            <li>
+              <strong>{ruleCount} hand-verified rules</strong> across the {entries.length}-entry
+              directory. Each rule is one of: presence on a specific EVM chain
+              (<code>eth_getTransactionCount &gt; N</code>), an ERC-20 balance
+              (<code>balanceOf</code> &ge; min), Solana signature history
+              (<code>getSignaturesForAddress</code>), or an SPL balance
+              (<code>getTokenAccountsByOwner</code>).
+            </li>
+            <li>
+              <strong>Three buckets.</strong> <em>Likely eligible</em> means the
+              rule fully passes. <em>Keep farming</em> means partial — e.g. you
+              hold the token in dust amounts, or you've used the chain but
+              below the trader threshold. <em>Not relevant</em> means the rule
+              fails: no activity, no balance.
+            </li>
+            <li>
+              <strong>Loose proxies, not authoritative eligibility.</strong>
+              Most airdrops gate on contract-level criteria (bridged volume,
+              specific dApps used, in-app points). We surface "this is worth
+              your attention" — final eligibility lives on the project page,
+              which every card links to with its official action URL.
+            </li>
+            <li>
+              <strong>Why "manual check needed" exists.</strong> Some entries
+              live on chains with no free CORS-open public RPC reachable from
+              the browser (Monad, MegaETH, Plume, Berachain, Hyperliquid, Ink,
+              Sui-based, etc.), or have purely off-chain criteria
+              (KYC, X/Discord linking, Galxe quests). Those entries don't
+              disappear — we list them in a separate section so you can review
+              them manually.
+            </li>
+            <li>
+              <strong>Your address never reaches our servers.</strong> Requests
+              go browser → publicnode RPC directly. We don't log, store, or
+              proxy.
+            </li>
+          </ul>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <script
+    is:inline
+    type="application/json"
+    id="el-entries"
+    set:html={JSON.stringify(entriesPayload)}
+  ></script>
+  <script
+    is:inline
+    type="application/json"
+    id="el-rules"
+    set:html={JSON.stringify(rulesPayload)}
+  ></script>
+  <script
+    is:inline
+    type="application/json"
+    id="el-no-rule"
+    set:html={JSON.stringify(noRulePayload)}
+  ></script>
+
+  <script is:inline>
+    const ENTRIES = JSON.parse(document.getElementById('el-entries').textContent || '[]');
+    const RULES = JSON.parse(document.getElementById('el-rules').textContent || '{}');
+    const NO_RULE = JSON.parse(document.getElementById('el-no-rule').textContent || '{}');
+
+    // Same publicnode RPCs as /tools/wallet-check + /tools/token-holdings.
+    // Public, CORS-open, no key. Per-host rate budget is shared across all of
+    // a chain's calls, so we batch eth_calls per chain (one JSON-RPC batch
+    // request per chain).
+    const EVM_RPCS = {
+      ethereum: 'https://ethereum-rpc.publicnode.com',
+      base:     'https://base-rpc.publicnode.com',
+      linea:    'https://linea-rpc.publicnode.com',
+      arbitrum: 'https://arbitrum-one-rpc.publicnode.com',
+      polygon:  'https://polygon-bor-rpc.publicnode.com',
+      bsc:      'https://bsc-rpc.publicnode.com',
+    };
+    const SOL_RPC = 'https://solana-rpc.publicnode.com';
+
+    const CHAIN_LABELS = {
+      ethereum: 'Ethereum',
+      base:     'Base',
+      linea:    'Linea',
+      arbitrum: 'Arbitrum',
+      polygon:  'Polygon',
+      bsc:      'BSC',
+      solana:   'Solana',
+    };
+
+    const EVM_RX = /^0x[a-fA-F0-9]{40}$/;
+    const SOL_RX = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+    function escHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+
+    function shortAddr(a) {
+      return a && a.length > 14 ? a.slice(0, 6) + '…' + a.slice(-6) : a || '';
+    }
+
+    async function rpcCall(url, body) {
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }
+
+    // ----- Phase 1: collect all the on-chain reads we'll need -----
+    // Strategy: walk every rule (including nested any/all), enumerate the
+    // distinct (chain, address, [contract]) reads, dedupe, then fire one
+    // batched JSON-RPC POST per chain. This keeps total RPC calls = O(chains)
+    // even with N rules per chain.
+
+    function collectNeeds(rule, needs) {
+      if (rule.kind === 'chainTx') {
+        needs.evmTxCount.add(rule.chain);
+      } else if (rule.kind === 'tokenBalance') {
+        needs.evmTokenBalance.push({ chain: rule.chain, contract: rule.contract });
+      } else if (rule.kind === 'solanaTx') {
+        needs.solanaTx = true;
+      } else if (rule.kind === 'holdsSolMint') {
+        needs.solMints.add(rule.mint);
+      } else if (rule.kind === 'any' || rule.kind === 'all') {
+        for (const r of rule.rules) collectNeeds(r, needs);
+      }
+    }
+
+    function encodeBalanceOf(holder) {
+      const stripped = holder.toLowerCase().replace(/^0x/, '');
+      return '0x70a08231' + '0'.repeat(24) + stripped;
+    }
+
+    function hexToBigInt(h) {
+      if (!h || h === '0x') return 0n;
+      try { return BigInt(h); } catch { return 0n; }
+    }
+
+    // Fan out one batched JSON-RPC POST per EVM chain. Each chain bundles its
+    // (one) eth_getTransactionCount + (k) eth_call(balanceOf) calls. Returns a
+    // partial state — chains that error mark their needs as unavailable so
+    // dependent rules can render an "rpc error" partial instead of a false
+    // negative.
+    async function fetchEvmChain(chainKey, evmAddr, needs) {
+      const wantTxCount = needs.evmTxCount.has(chainKey);
+      const tokens = needs.evmTokenBalance.filter((t) => t.chain === chainKey);
+      if (!wantTxCount && tokens.length === 0) return { chain: chainKey, ok: true };
+
+      const reqs = [];
+      let nextId = 0;
+      const ids = {};
+
+      if (wantTxCount) {
+        ids.txCount = nextId++;
+        reqs.push({
+          jsonrpc: '2.0', id: ids.txCount, method: 'eth_getTransactionCount',
+          params: [evmAddr, 'latest'],
+        });
+      }
+      ids.tokens = [];
+      for (const t of tokens) {
+        const id = nextId++;
+        ids.tokens.push({ id, contract: t.contract });
+        reqs.push({
+          jsonrpc: '2.0', id, method: 'eth_call',
+          params: [{ to: t.contract, data: encodeBalanceOf(evmAddr) }, 'latest'],
+        });
+      }
+
+      let body;
+      try {
+        body = await rpcCall(EVM_RPCS[chainKey], reqs);
+      } catch (err) {
+        return { chain: chainKey, ok: false, error: err.message };
+      }
+      const byId = new Map();
+      for (const r of body) byId.set(r.id, r);
+
+      const out = { chain: chainKey, ok: true, balances: new Map() };
+      if (wantTxCount) {
+        const r = byId.get(ids.txCount);
+        if (r && !r.error) out.txCount = parseInt(r.result, 16) || 0;
+        else out.txCountError = (r && r.error && r.error.message) || 'no response';
+      }
+      for (const t of ids.tokens) {
+        const r = byId.get(t.id);
+        if (r && !r.error) out.balances.set(t.contract, hexToBigInt(r.result));
+        else out.balances.set(t.contract, { error: (r && r.error && r.error.message) || 'no response' });
+      }
+      return out;
+    }
+
+    async function fetchSolanaTxPresent(solAddr) {
+      try {
+        const j = await rpcCall(SOL_RPC, {
+          jsonrpc: '2.0', id: 1, method: 'getSignaturesForAddress',
+          params: [solAddr, { limit: 1 }],
+        });
+        if (j.error) return { ok: false, error: j.error.message };
+        const sigs = j.result || [];
+        return { ok: true, present: Array.isArray(sigs) && sigs.length > 0 };
+      } catch (err) {
+        return { ok: false, error: err.message };
+      }
+    }
+
+    async function fetchSplBalance(solAddr, mint) {
+      try {
+        const j = await rpcCall(SOL_RPC, {
+          jsonrpc: '2.0', id: 1, method: 'getTokenAccountsByOwner',
+          params: [solAddr, { mint }, { encoding: 'jsonParsed' }],
+        });
+        if (j.error) return { ok: false, error: j.error.message };
+        let total = 0n;
+        for (const a of (j.result?.value || [])) {
+          const amt = a.account?.data?.parsed?.info?.tokenAmount?.amount;
+          if (amt) total += BigInt(amt);
+        }
+        return { ok: true, raw: total };
+      } catch (err) {
+        return { ok: false, error: err.message };
+      }
+    }
+
+    // ----- Phase 2: rule evaluation -----
+    // Each evaluator returns { status: 'pass'|'partial'|'fail'|'unavailable', detail: string }.
+    // 'unavailable' means the relevant RPC didn't return (network / rate) and
+    // the rule can't be evaluated — distinct from 'fail' so we don't claim a
+    // wallet is "not relevant" when we never actually checked.
+
+    function fmtAmount(raw, decimals) {
+      if (raw === 0n) return '0';
+      const s = raw.toString().padStart(decimals + 1, '0');
+      const intPart = s.slice(0, s.length - decimals);
+      let frac = s.slice(s.length - decimals).replace(/0+$/, '');
+      if (frac.length === 0) return intPart;
+      if (frac.length > 4) frac = frac.slice(0, 4);
+      return intPart + '.' + frac;
+    }
+
+    function minBigInt(decimals, min) {
+      // min is a decimal string in token units; convert to raw integer.
+      const [whole, fracRaw = ''] = (min + '').split('.');
+      const frac = (fracRaw + '0'.repeat(decimals)).slice(0, decimals);
+      return BigInt(whole || '0') * (10n ** BigInt(decimals)) + BigInt(frac || '0');
+    }
+
+    function evaluateRule(rule, state) {
+      if (rule.kind === 'chainTx') {
+        if (!state.evm) return { status: 'fail', detail: 'No EVM address supplied' };
+        const chainData = state.byChain[rule.chain];
+        if (!chainData || !chainData.ok || chainData.txCountError != null) {
+          return { status: 'unavailable', detail: 'RPC unavailable for ' + (CHAIN_LABELS[rule.chain] || rule.chain) };
+        }
+        const n = chainData.txCount || 0;
+        if (n >= rule.minCount) return { status: 'pass', detail: n.toLocaleString() + ' tx on ' + CHAIN_LABELS[rule.chain] + ' (≥ ' + rule.minCount + ' required)' };
+        if (n > 0) return { status: 'partial', detail: n + ' tx on ' + CHAIN_LABELS[rule.chain] + ' (need ' + rule.minCount + '+)' };
+        return { status: 'fail', detail: 'No transactions on ' + CHAIN_LABELS[rule.chain] };
+      }
+      if (rule.kind === 'tokenBalance') {
+        if (!state.evm) return { status: 'fail', detail: 'No EVM address supplied' };
+        const chainData = state.byChain[rule.chain];
+        if (!chainData || !chainData.ok) return { status: 'unavailable', detail: 'RPC unavailable for ' + (CHAIN_LABELS[rule.chain] || rule.chain) };
+        const bal = chainData.balances.get(rule.contract);
+        if (bal == null || (bal && bal.error != null)) return { status: 'unavailable', detail: rule.symbol + ' balance read failed' };
+        const minRaw = minBigInt(rule.decimals, rule.min);
+        if (bal >= minRaw) return { status: 'pass', detail: 'Holds ' + fmtAmount(bal, rule.decimals) + ' ' + rule.symbol };
+        if (bal > 0n) return { status: 'partial', detail: 'Holds ' + fmtAmount(bal, rule.decimals) + ' ' + rule.symbol + ' (below threshold)' };
+        return { status: 'fail', detail: 'No ' + rule.symbol + ' balance' };
+      }
+      if (rule.kind === 'solanaTx') {
+        if (!state.sol) return { status: 'fail', detail: 'No Solana address supplied' };
+        if (!state.solana || !state.solana.ok) return { status: 'unavailable', detail: 'Solana RPC unavailable' };
+        if (state.solana.present) return { status: 'pass', detail: 'Has Solana signature history' };
+        return { status: 'fail', detail: 'No Solana signature history' };
+      }
+      if (rule.kind === 'holdsSolMint') {
+        if (!state.sol) return { status: 'fail', detail: 'No Solana address supplied' };
+        const entry = state.solMints && state.solMints[rule.mint];
+        if (!entry) return { status: 'unavailable', detail: rule.symbol + ' balance read missing' };
+        if (!entry.ok) return { status: 'unavailable', detail: rule.symbol + ' balance read failed' };
+        const minRaw = minBigInt(rule.decimals, rule.min);
+        if (entry.raw >= minRaw) return { status: 'pass', detail: 'Holds ' + fmtAmount(entry.raw, rule.decimals) + ' ' + rule.symbol };
+        if (entry.raw > 0n) return { status: 'partial', detail: 'Holds ' + fmtAmount(entry.raw, rule.decimals) + ' ' + rule.symbol + ' (below threshold)' };
+        return { status: 'fail', detail: 'No ' + rule.symbol + ' balance' };
+      }
+      if (rule.kind === 'any') {
+        const sub = rule.rules.map((r) => evaluateRule(r, state));
+        if (sub.some((s) => s.status === 'pass')) {
+          const passing = sub.find((s) => s.status === 'pass');
+          return { status: 'pass', detail: passing.detail };
+        }
+        if (sub.some((s) => s.status === 'partial')) {
+          const partial = sub.find((s) => s.status === 'partial');
+          return { status: 'partial', detail: partial.detail };
+        }
+        if (sub.every((s) => s.status === 'unavailable')) return { status: 'unavailable', detail: 'All checks unavailable' };
+        return { status: 'fail', detail: sub.find((s) => s.status === 'fail')?.detail || 'No conditions met' };
+      }
+      if (rule.kind === 'all') {
+        const sub = rule.rules.map((r) => evaluateRule(r, state));
+        if (sub.some((s) => s.status === 'unavailable')) return { status: 'unavailable', detail: 'One or more checks unavailable' };
+        if (sub.every((s) => s.status === 'pass')) return { status: 'pass', detail: sub.map((s) => s.detail).join(' · ') };
+        if (sub.some((s) => s.status === 'pass')) return { status: 'partial', detail: 'Some conditions met: ' + sub.filter((s) => s.status === 'pass').map((s) => s.detail).join(' · ') };
+        return { status: 'fail', detail: 'No conditions met' };
+      }
+      return { status: 'fail', detail: 'Unknown rule kind' };
+    }
+
+    // ----- Rendering -----
+
+    function renderCard(entry, verdict, bucket) {
+      const utm = '?utm_source=eligibility&utm_medium=tool&utm_campaign=' + encodeURIComponent(bucket);
+      const internal = '/airdrops/' + encodeURIComponent(entry.slug) + utm;
+      const officialClass = bucket === 'eligible' ? 'el-card-action' : 'el-card-action-soft';
+      return (
+        '<article class="el-card el-card-' + bucket + '">' +
+          '<header class="el-card-head">' +
+            '<a href="' + internal + '" class="el-card-project">' + escHtml(entry.project) + '</a>' +
+            '<span class="tag risk-' + escHtml(entry.risk) + '">' + escHtml(entry.risk) + '</span>' +
+          '</header>' +
+          '<p class="el-card-meta">' +
+            escHtml(entry.chain) + ' · effort ' + escHtml(entry.effort) +
+            ' · cost ' + escHtml(entry.costFloor) +
+            ' · deadline <span class="mono">' + escHtml(entry.deadline) + '</span>' +
+          '</p>' +
+          (verdict.detail ? '<p class="el-card-verdict">' + escHtml(verdict.detail) + '</p>' : '') +
+          '<div class="el-card-actions">' +
+            '<a class="' + officialClass + '" href="' + escHtml(entry.officialUrl) + '" rel="nofollow noopener" target="_blank">' +
+              (bucket === 'eligible' ? 'Act → ' : 'Official site → ') +
+            '</a>' +
+            '<a class="el-card-readmore" href="' + internal + '">Read on web3-discover →</a>' +
+          '</div>' +
+        '</article>'
+      );
+    }
+
+    function renderResults(state, evmAddr, solAddr) {
+      const statusEl = document.getElementById('el-status');
+      const summaryEl = document.getElementById('el-summary');
+      const resultsEl = document.getElementById('el-results');
+      const signupEl = document.getElementById('el-signup');
+
+      // Walk every entry, look up its rule, classify.
+      const eligible = [];
+      const partial = [];
+      const skip = [];
+      const unavailable = [];
+      const manual = [];
+
+      for (const entry of ENTRIES) {
+        const rule = RULES[entry.slug];
+        if (!rule) {
+          const reason = NO_RULE[entry.slug] || 'unknown';
+          manual.push({ entry, reason });
+          continue;
+        }
+        const verdict = evaluateRule(rule, state);
+        if (verdict.status === 'pass') eligible.push({ entry, verdict });
+        else if (verdict.status === 'partial') partial.push({ entry, verdict });
+        else if (verdict.status === 'unavailable') unavailable.push({ entry, verdict });
+        else skip.push({ entry, verdict });
+      }
+
+      // Compose a status banner that surveys the inputs first.
+      const inputLine = [];
+      if (evmAddr) inputLine.push('<strong>EVM</strong> <code>' + escHtml(shortAddr(evmAddr)) + '</code>');
+      if (solAddr) inputLine.push('<strong>SOL</strong> <code>' + escHtml(shortAddr(solAddr)) + '</code>');
+      const ruleCount = Object.keys(RULES).length;
+      statusEl.innerHTML =
+        'Checked <strong>' + ruleCount + '</strong> rules against <strong>' + ENTRIES.length + '</strong> airdrops for ' +
+        inputLine.join(' + ') + '.';
+      statusEl.hidden = false;
+
+      // ----- Shareable summary line -----
+      const shareText = 'I qualify for ' + eligible.length + '/' + ruleCount + ' airdrops via web3-discover.vercel.app/tools/eligibility';
+      const shareUrl = 'https://web3-discover.vercel.app/tools/eligibility';
+      summaryEl.innerHTML =
+        '<div class="el-summary-grid">' +
+          '<div class="el-summary-bucket el-summary-eligible">' +
+            '<div class="el-summary-num">' + eligible.length + '</div>' +
+            '<div class="el-summary-lbl">✅ Likely eligible</div>' +
+          '</div>' +
+          '<div class="el-summary-bucket el-summary-partial">' +
+            '<div class="el-summary-num">' + partial.length + '</div>' +
+            '<div class="el-summary-lbl">🟡 Keep farming</div>' +
+          '</div>' +
+          '<div class="el-summary-bucket el-summary-skip">' +
+            '<div class="el-summary-num">' + skip.length + '</div>' +
+            '<div class="el-summary-lbl">⏭ Not relevant</div>' +
+          '</div>' +
+          '<div class="el-summary-bucket el-summary-manual">' +
+            '<div class="el-summary-num">' + manual.length + '</div>' +
+            '<div class="el-summary-lbl">🔍 Manual check</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="el-share">' +
+          '<input class="el-share-input mono" id="el-share-text" readonly value="' + escHtml(shareText) + '" />' +
+          '<button type="button" class="el-share-btn" id="el-share-copy" data-text="' + escHtml(shareText) + '">Copy</button>' +
+          '<a class="el-share-btn el-share-x" href="https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText) + '" target="_blank" rel="noopener">Share on X</a>' +
+          '<a class="el-share-btn el-share-tg" href="https://t.me/share/url?url=' + encodeURIComponent(shareUrl) + '&text=' + encodeURIComponent(shareText) + '" target="_blank" rel="noopener">Share on Telegram</a>' +
+        '</div>';
+      summaryEl.hidden = false;
+
+      // ----- Buckets -----
+      let html = '';
+
+      if (eligible.length > 0) {
+        html += '<section class="el-bucket-block"><h2 class="el-bucket-head">✅ Act on these — ' + eligible.length + '</h2>';
+        html += '<div class="el-grid">';
+        for (const { entry, verdict } of eligible) html += renderCard(entry, verdict, 'eligible');
+        html += '</div></section>';
+      }
+      if (partial.length > 0) {
+        html += '<section class="el-bucket-block"><h2 class="el-bucket-head">🟡 Keep farming — ' + partial.length + '</h2>';
+        html += '<p class="el-bucket-note">You\'ve started but haven\'t crossed our heuristic threshold. Worth more cycles before TGE.</p>';
+        html += '<div class="el-grid">';
+        for (const { entry, verdict } of partial) html += renderCard(entry, verdict, 'partial');
+        html += '</div></section>';
+      }
+      if (manual.length > 0) {
+        html += '<section class="el-bucket-block"><h2 class="el-bucket-head">🔍 Manual check needed — ' + manual.length + '</h2>';
+        html += '<p class="el-bucket-note">Lives on its own L1/L2 (no free CORS-open RPC for the browser) or has off-chain criteria (KYC, X/Discord, Galxe quests). Check each one yourself.</p>';
+        html += '<ul class="el-manual-list">';
+        for (const { entry, reason } of manual) {
+          const reasonLabel =
+            reason === 'own-l1-no-cors-rpc' ? 'own L1/L2 — RPC not browser-reachable' :
+            reason === 'off-chain-criteria' ? 'off-chain criteria (KYC / points / X)' :
+            reason === 'multi-chain-too-loose' ? 'multi-chain — too loose to auto-evaluate' :
+            'no machine-checkable rule';
+          html += '<li class="el-manual-item">';
+          html += '<a href="/airdrops/' + encodeURIComponent(entry.slug) + '?utm_source=eligibility&utm_medium=tool&utm_campaign=manual">' + escHtml(entry.project) + '</a>';
+          html += ' <span class="el-manual-chain mono">' + escHtml(entry.chain) + '</span>';
+          html += ' <span class="el-manual-reason">' + escHtml(reasonLabel) + '</span>';
+          html += '</li>';
+        }
+        html += '</ul></section>';
+      }
+      if (skip.length > 0) {
+        html += '<details class="el-bucket-collapsed"><summary class="el-bucket-head">⏭ Not relevant — ' + skip.length + ' (click to expand)</summary>';
+        html += '<p class="el-bucket-note">Rules failed. Most likely safe to skip for this wallet.</p>';
+        html += '<ul class="el-manual-list">';
+        for (const { entry, verdict } of skip) {
+          html += '<li class="el-manual-item">';
+          html += '<a href="/airdrops/' + encodeURIComponent(entry.slug) + '?utm_source=eligibility&utm_medium=tool&utm_campaign=skip">' + escHtml(entry.project) + '</a>';
+          html += ' <span class="el-manual-chain mono">' + escHtml(entry.chain) + '</span>';
+          html += ' <span class="el-manual-reason">' + escHtml(verdict.detail) + '</span>';
+          html += '</li>';
+        }
+        html += '</ul></details>';
+      }
+      if (unavailable.length > 0) {
+        html += '<p class="el-errored">' + unavailable.length + ' rule' + (unavailable.length === 1 ? '' : 's') + ' could not be evaluated (RPC error or rate limit). Try again in a moment.</p>';
+      }
+
+      resultsEl.innerHTML = html;
+      resultsEl.hidden = false;
+      if (signupEl) signupEl.hidden = false;
+
+      // GoatCounter result event with the eligible count baked into title for funnel analysis.
+      if (typeof window.goatcounter !== 'undefined' && window.goatcounter &&
+          typeof window.goatcounter.count === 'function') {
+        window.goatcounter.count({
+          path: 'tool-eligibility-result',
+          title: 'eligibility result: ' + eligible.length + '/' + ruleCount + ' eligible',
+          event: true,
+        });
+      }
+
+      // Copy-to-clipboard for the share line.
+      const copyBtn = document.getElementById('el-share-copy');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', async () => {
+          const text = copyBtn.dataset.text || '';
+          try {
+            await navigator.clipboard.writeText(text);
+            const orig = copyBtn.textContent;
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => { copyBtn.textContent = orig; }, 1600);
+          } catch {
+            const input = document.getElementById('el-share-text');
+            if (input) { input.select(); document.execCommand && document.execCommand('copy'); }
+          }
+        });
+      }
+    }
+
+    async function run(rawEvm, rawSol) {
+      const statusEl = document.getElementById('el-status');
+      const summaryEl = document.getElementById('el-summary');
+      const resultsEl = document.getElementById('el-results');
+      const signupEl = document.getElementById('el-signup');
+
+      const evmAddr = rawEvm && EVM_RX.test(rawEvm.trim()) ? rawEvm.trim() : '';
+      const solAddr = rawSol && SOL_RX.test(rawSol.trim()) ? rawSol.trim() : '';
+
+      if (!evmAddr && !solAddr) {
+        statusEl.innerHTML = '<strong>Paste at least one address.</strong> EVM (<code>0x</code>+40 hex) and/or Solana (base58, 32–44 chars).';
+        statusEl.hidden = false;
+        summaryEl.hidden = true;
+        resultsEl.hidden = true;
+        if (signupEl) signupEl.hidden = true;
+        return;
+      }
+
+      statusEl.innerHTML = 'Evaluating ' + Object.keys(RULES).length + ' rules…';
+      statusEl.hidden = false;
+      summaryEl.hidden = true;
+      resultsEl.hidden = true;
+      if (signupEl) signupEl.hidden = true;
+
+      // ----- Phase 1: collect needs -----
+      const needs = {
+        evmTxCount: new Set(),
+        evmTokenBalance: [],
+        solanaTx: false,
+        solMints: new Set(),
+      };
+      for (const slug of Object.keys(RULES)) collectNeeds(RULES[slug], needs);
+
+      // ----- Phase 2: fan out -----
+      const evmChains = Array.from(new Set([...needs.evmTxCount, ...needs.evmTokenBalance.map((t) => t.chain)]));
+
+      const evmJobs = evmAddr
+        ? evmChains.map((c) => fetchEvmChain(c, evmAddr, needs))
+        : [];
+
+      const solJobs = [];
+      if (solAddr && needs.solanaTx) solJobs.push(fetchSolanaTxPresent(solAddr).then((r) => ({ kind: 'sigs', r })));
+      if (solAddr) {
+        for (const mint of needs.solMints) {
+          solJobs.push(fetchSplBalance(solAddr, mint).then((r) => ({ kind: 'mint', mint, r })));
+        }
+      }
+
+      const [evmRes, solRes] = await Promise.all([Promise.all(evmJobs), Promise.all(solJobs)]);
+
+      const byChain = {};
+      for (const r of evmRes) byChain[r.chain] = r;
+      let solana = null;
+      const solMints = {};
+      for (const item of solRes) {
+        if (item.kind === 'sigs') solana = item.r;
+        else if (item.kind === 'mint') solMints[item.mint] = item.r;
+      }
+
+      const state = { evm: evmAddr, sol: solAddr, byChain, solana, solMints };
+      renderResults(state, evmAddr, solAddr);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.getElementById('el-form');
+      const evmInput = document.getElementById('el-evm');
+      const solInput = document.getElementById('el-sol');
+      form.addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        const evmV = evmInput.value.trim();
+        const solV = solInput.value.trim();
+        if (!evmV && !solV) return;
+        const url = new URL(window.location.href);
+        if (evmV) url.searchParams.set('evm', evmV); else url.searchParams.delete('evm');
+        if (solV) url.searchParams.set('sol', solV); else url.searchParams.delete('sol');
+        history.replaceState(null, '', url.toString());
+        run(evmV, solV);
+      });
+
+      // Auto-run on landing-with-query.
+      const qs = new URL(window.location.href).searchParams;
+      const qe = qs.get('evm');
+      const qsol = qs.get('sol');
+      // Backwards-compat with the wallet-check style ?addr=… (decide which input based on format).
+      const qaddr = qs.get('addr');
+      let presetE = qe, presetS = qsol;
+      if (!presetE && !presetS && qaddr) {
+        if (EVM_RX.test(qaddr)) presetE = qaddr;
+        else if (SOL_RX.test(qaddr)) presetS = qaddr;
+      }
+      if (presetE) evmInput.value = presetE;
+      if (presetS) solInput.value = presetS;
+      if (presetE || presetS) run(presetE || '', presetS || '');
+    });
+  </script>
+
+  <style>
+    .kicker {
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent, #c8531a);
+      margin-bottom: 0.4rem;
+    }
+    .lede { font-family: var(--font-serif, Georgia, serif); font-size: 1.1rem; line-height: 1.55; }
+    .el-form {
+      margin: 1.25rem 0;
+      padding: 1rem 1.1rem;
+      background: #fff;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-left: 4px solid var(--accent, #c8531a);
+      border-radius: 4px;
+    }
+    .el-input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    @media (max-width: 600px) {
+      .el-input-grid { grid-template-columns: 1fr; }
+    }
+    .el-label {
+      display: block;
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--ink-soft, #555);
+      font-family: var(--font-mono, monospace);
+      margin-bottom: 0.35rem;
+    }
+    .el-input-cell input[type="text"] {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      font-family: var(--font-mono, monospace);
+      font-size: 0.9rem;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 4px;
+      background: #fff;
+      box-sizing: border-box;
+    }
+    .el-input-cell input[type="text"]:focus {
+      outline: 2px solid var(--accent, #c8531a);
+      outline-offset: -1px;
+    }
+    .el-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+      margin-top: 0.85rem;
+    }
+    .el-btn {
+      padding: 0.6rem 1.1rem;
+      background: var(--accent, #c8531a);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    .el-btn:hover { background: var(--warn, #a8741a); }
+    .el-hint { margin: 0; font-size: 0.85rem; color: var(--ink-soft, #555); }
+    .el-status {
+      padding: 0.85rem 1rem;
+      background: #fdfbf6;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-left: 3px solid var(--accent, #c8531a);
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+    .el-summary { margin-bottom: 1.5rem; }
+    .el-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.5rem;
+      margin-bottom: 0.85rem;
+    }
+    .el-summary-bucket {
+      padding: 0.85rem 1rem;
+      background: #fff;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 4px;
+      text-align: center;
+    }
+    .el-summary-eligible { border-left: 4px solid #2e8540; }
+    .el-summary-partial { border-left: 4px solid #c8531a; }
+    .el-summary-skip { border-left: 4px solid #999; }
+    .el-summary-manual { border-left: 4px solid #4060a8; }
+    .el-summary-num {
+      font-family: var(--font-serif, Georgia, serif);
+      font-size: 1.85rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .el-summary-lbl {
+      font-size: 0.82rem;
+      color: var(--ink-soft, #555);
+      margin-top: 0.3rem;
+    }
+    .el-share {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .el-share-input {
+      flex: 1 1 360px;
+      min-width: 0;
+      padding: 0.55rem 0.75rem;
+      font-size: 0.86rem;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 4px;
+      background: #fff;
+      box-sizing: border-box;
+    }
+    .el-share-btn {
+      padding: 0.55rem 0.95rem;
+      font-size: 0.86rem;
+      background: var(--accent, #c8531a);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .el-share-btn:hover { background: var(--warn, #a8741a); }
+    .el-share-x { background: #000; }
+    .el-share-x:hover { background: #222; }
+    .el-share-tg { background: #2ca5e0; }
+    .el-share-tg:hover { background: #1d8cc4; }
+    .el-bucket-block { margin: 1.75rem 0 0; }
+    .el-bucket-head {
+      font-family: var(--font-serif, Georgia, serif);
+      font-size: 1.3rem;
+      margin: 0 0 0.5rem;
+    }
+    .el-bucket-note {
+      margin: 0 0 0.85rem;
+      font-size: 0.88rem;
+      color: var(--ink-soft, #555);
+      font-style: italic;
+    }
+    .el-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 0.85rem;
+    }
+    .el-card {
+      padding: 0.95rem 1rem;
+      background: #fff;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+    }
+    .el-card-eligible { border-left: 4px solid #2e8540; }
+    .el-card-partial { border-left: 4px solid #c8531a; background: #fffaf0; }
+    .el-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.5rem;
+      margin-bottom: 0.4rem;
+    }
+    .el-card-project {
+      font-weight: 700;
+      font-size: 1.05rem;
+      text-decoration: none;
+      color: var(--ink, #222);
+    }
+    .el-card-project:hover { text-decoration: underline; color: var(--accent, #c8531a); }
+    .el-card-meta {
+      margin: 0 0 0.5rem;
+      font-size: 0.82rem;
+      color: var(--ink-soft, #555);
+    }
+    .el-card-verdict {
+      margin: 0 0 0.7rem;
+      padding: 0.5rem 0.65rem;
+      background: rgba(46, 133, 64, 0.08);
+      border-left: 2px solid #2e8540;
+      font-size: 0.88rem;
+      color: var(--ink, #222);
+      border-radius: 2px;
+    }
+    .el-card-partial .el-card-verdict {
+      background: rgba(200, 83, 26, 0.08);
+      border-left-color: #c8531a;
+    }
+    .el-card-actions {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin-top: auto;
+    }
+    .el-card-action, .el-card-action-soft, .el-card-readmore {
+      padding: 0.4rem 0.75rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 3px;
+    }
+    .el-card-action { background: var(--accent, #c8531a); color: #fff; }
+    .el-card-action:hover { background: var(--warn, #a8741a); }
+    .el-card-action-soft { background: #fff; color: var(--accent, #c8531a); border: 1px solid var(--accent, #c8531a); }
+    .el-card-action-soft:hover { background: #fdfbf6; }
+    .el-card-readmore { color: var(--accent, #c8531a); }
+    .el-manual-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .el-manual-item {
+      padding: 0.55rem 0;
+      border-bottom: 1px dashed var(--rule, #d9d4c4);
+      font-size: 0.92rem;
+    }
+    .el-manual-item:last-child { border-bottom: none; }
+    .el-manual-chain {
+      margin-left: 0.4rem;
+      font-size: 0.82rem;
+      color: var(--ink-soft, #555);
+    }
+    .el-manual-reason {
+      margin-left: 0.4rem;
+      font-size: 0.82rem;
+      color: var(--ink-soft, #555);
+      font-style: italic;
+    }
+    .el-bucket-collapsed {
+      margin: 1.75rem 0 0;
+      padding: 0.85rem 1rem;
+      background: #fdfbf6;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 4px;
+    }
+    .el-bucket-collapsed summary { cursor: pointer; font-weight: 600; }
+    .el-errored {
+      margin-top: 1rem;
+      padding: 0.7rem 0.9rem;
+      background: rgba(200, 83, 26, 0.08);
+      border-left: 3px solid var(--warn, #a8741a);
+      font-size: 0.88rem;
+      border-radius: 3px;
+    }
+    .el-howitworks {
+      margin-top: 2rem;
+      padding: 0.85rem 1rem;
+      background: #fdfbf6;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 4px;
+    }
+    .el-howitworks summary { cursor: pointer; font-weight: 600; font-size: 0.95rem; }
+    .el-howitworks .prose { margin-top: 0.75rem; font-size: 0.92rem; line-height: 1.55; }
+    .el-howitworks .prose ul { padding-left: 1.2rem; }
+    .el-howitworks .prose li { margin-bottom: 0.5rem; }
+  </style>
+</Base>

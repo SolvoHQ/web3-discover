@@ -18,8 +18,8 @@ const description = `A curated, scam-filtered directory of ${entries.length} cur
         Just fresh, vetted opportunities you can act on.
       </p>
 
-      <form class="hero-check" action="/tools/wallet-check" method="get">
-        <label class="hero-check-label" for="hero-addr">Paste your wallet — see what you could farm</label>
+      <form class="hero-check" action="/tools/eligibility" method="get">
+        <label class="hero-check-label" for="hero-addr">★ Paste your wallet — get a personal action verdict across {entries.length} airdrops</label>
         <div class="hero-check-row">
           <input
             id="hero-addr"
@@ -38,13 +38,15 @@ const description = `A curated, scam-filtered directory of ${entries.length} cur
       <p class="hero-links">
         <a href="/airdrops"><strong>Browse {entries.length} active airdrops →</strong></a>
         <span class="hero-sep"> · </span>
-        <a href="/tools/token-holdings"><strong>Check which airdrop tokens you already hold →</strong></a>
+        <a href="/tools/wallet-check"><strong>Match a wallet against the directory →</strong></a>
+        <span class="hero-sep"> · </span>
+        <a href="/tools/token-holdings"><strong>Check airdrop tokens you already hold →</strong></a>
         <span class="hero-sep"> · </span>
         <a href="/tools/wallet-age"><strong>How old is your wallet? →</strong></a>
         <span class="hero-sep"> · </span>
-        <a href="/tools/calendar"><strong>Subscribe deadlines in Google / Apple Calendar →</strong></a>
+        <a href="/tools/calendar"><strong>Subscribe deadlines in Calendar →</strong></a>
         <span class="hero-sep"> · </span>
-        <a href="/data"><strong>Or grab the data as JSON →</strong></a>
+        <a href="/data"><strong>Grab the data as JSON →</strong></a>
       </p>
 
       <p class="hero-newsletter">

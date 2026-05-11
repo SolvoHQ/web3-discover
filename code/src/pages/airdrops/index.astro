@@ -40,6 +40,12 @@ const itemListJsonLd = {
       <p class="lede">
         Default sort: deadline ascending. Risk flag shows whether the airdrop terms are publicly confirmed or still inferred — suspected scams are excluded entirely, not silently hidden.
       </p>
+
+      <p class="hero-tools-cta">
+        <a href="/tools/eligibility"><strong>★ Get a personal eligibility verdict for your wallet →</strong></a>
+        <span class="hero-tools-sep"> · </span>
+        <a href="/tools/wallet-check">Match by chain activity</a>
+      </p>
     </div>
   </section>
 
@@ -229,6 +235,18 @@ const itemListJsonLd = {
       .filter-search { flex: 1 1 100%; }
       .filter-count { margin-left: 0; flex: 1 1 100%; }
     }
+    .hero-tools-cta {
+      margin: 0.85rem 0 0;
+      padding: 0.7rem 0.95rem;
+      background: linear-gradient(135deg, #fff 0%, #fffaf0 100%);
+      border: 1px solid var(--rule);
+      border-left: 4px solid var(--accent);
+      border-radius: 4px;
+      font-size: 0.95rem;
+    }
+    .hero-tools-cta a { text-decoration: none; }
+    .hero-tools-cta a:hover { text-decoration: underline; }
+    .hero-tools-sep { color: var(--ink-soft); margin: 0 0.35rem; }
   </style>
 
   <script>
