@@ -1,0 +1,55 @@
+---
+import Base from '../../layouts/Base.astro';
+import { airdrops } from '../../data/airdrops.ts';
+
+const title = 'Active airdrops — web3-discover';
+const description = 'The current index of hand-vetted, scam-filtered web3 airdrops. Sorted by deadline, with effort, cost floor, and risk flag on every entry.';
+---
+<Base title={title} description={description}>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker">Index</div>
+      <h1>Active airdrops</h1>
+      <p class="lede">
+        Default sort: deadline ascending, then effort. Suspected scams are flagged, not hidden.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>{airdrops.length} entries</h2>
+        <span class="meta">Placeholder set · curated entries land next tick</span>
+      </div>
+      <p class="note">
+        Preview build — the entries below are placeholders to validate the index shape.
+        Real curated airdrops land in the next content drop.
+      </p>
+      <table class="listing">
+        <thead>
+          <tr>
+            <th>Project</th>
+            <th class="col-chain">Chain</th>
+            <th class="col-effort">Effort</th>
+            <th>Cost</th>
+            <th>Deadline</th>
+            <th>Risk</th>
+          </tr>
+        </thead>
+        <tbody>
+          {airdrops.map((a) => (
+            <tr>
+              <td class="project"><a href={`/airdrops/${a.slug}`}>{a.project}</a></td>
+              <td class="col-chain mono">{a.chain}</td>
+              <td class="col-effort mono">{a.effort}</td>
+              <td class="mono">{a.costFloor}</td>
+              <td class="mono">{a.deadline}</td>
+              <td><span class={`tag risk-${a.risk}`}>{a.risk}</span></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</Base>

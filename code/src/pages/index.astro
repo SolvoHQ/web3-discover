@@ -1,0 +1,76 @@
+---
+import Base from '../layouts/Base.astro';
+import { airdrops } from '../data/airdrops.ts';
+
+const title = 'web3-discover — the airdrop hunter\'s honest map';
+const description = 'A curated, scam-filtered directory of currently-claimable web3 airdrops. Hand-vetted entries with action, effort, cost, and deadline — no paid placements, no claim buttons, no noise.';
+const preview = airdrops.slice(0, 3);
+---
+<Base title={title} description={description}>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker">Airdrop curation, maintained daily</div>
+      <h1>The airdrop hunter's honest map.</h1>
+      <p class="lede">
+        No scams. No noise. No paid placements pretending to be listings.
+        Just fresh, vetted opportunities you can act on.
+      </p>
+      <p><a href="/airdrops"><strong>Browse current airdrops →</strong></a></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="promise">
+        <div class="promise-item">
+          <h3>Hand-vetted</h3>
+          <p>Every entry checked before publishing. Suspected scams get a flag, not silence.</p>
+        </div>
+        <div class="promise-item">
+          <h3>Action-first</h3>
+          <p>Concrete steps that earn the drop — effort, cost floor, deadline. No hype.</p>
+        </div>
+        <div class="promise-item">
+          <h3>Official links only</h3>
+          <p>We link to project sites and Twitter — never to custodial claim pages.</p>
+        </div>
+        <div class="promise-item">
+          <h3>No wallet connect</h3>
+          <p>We never touch user funds. We don't sign, we don't custody, we don't ask.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>Latest entries</h2>
+        <span class="meta">Placeholder · curated set lands next</span>
+      </div>
+      <table class="listing">
+        <thead>
+          <tr>
+            <th>Project</th>
+            <th class="col-chain">Chain</th>
+            <th class="col-effort">Effort</th>
+            <th>Deadline</th>
+            <th>Risk</th>
+          </tr>
+        </thead>
+        <tbody>
+          {preview.map((a) => (
+            <tr>
+              <td class="project"><a href={`/airdrops/${a.slug}`}>{a.project}</a></td>
+              <td class="col-chain mono">{a.chain}</td>
+              <td class="col-effort mono">{a.effort}</td>
+              <td class="mono">{a.deadline}</td>
+              <td><span class={`tag risk-${a.risk}`}>{a.risk}</span></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p style="margin-top:1rem;"><a href="/airdrops">See the full index →</a></p>
+    </div>
+  </section>
+</Base>

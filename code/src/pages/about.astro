@@ -1,0 +1,41 @@
+---
+import Base from '../layouts/Base.astro';
+const title = 'About — web3-discover';
+const description = 'What web3-discover is, what it explicitly is not, and how we vet listings. The airdrop hunter\'s honest map.';
+---
+<Base title={title} description={description}>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker">About</div>
+      <h1>What this is.</h1>
+      <p class="lede">
+        web3-discover is the trusted curator for one thing: which airdrops are actually
+        live, what action earns them, and when the deadline is.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container" style="max-width:680px;">
+      <h2>What we are</h2>
+      <p>A hand-vetted directory of currently-claimable web3 airdrops, maintained daily.</p>
+      <p>Every entry shows the concrete action required, the effort it takes, the minimum cost, the deadline, and an honest risk flag.</p>
+
+      <h2 style="margin-top:2rem;">What we are not</h2>
+      <ul>
+        <li>Not a "claim now" portal — we link to official channels, never to custodial claim pages.</li>
+        <li>Not a paid-placement aggregator — sponsored entries, if any, are visually distinct and labelled.</li>
+        <li>Not a wallet — we never touch user funds, never ask for signatures.</li>
+        <li>Not a price terminal or yield aggregator.</li>
+      </ul>
+
+      <h2 style="margin-top:2rem;">How we vet</h2>
+      <p>Every listing is checked for: official project source, working claim/farming path, no impersonator domain, no obvious red flags. Suspected scams get flagged on the listing — not silently dropped.</p>
+
+      <p class="note" style="margin-top:2rem;">
+        This page lives at <span class="mono">/about</span>. Listings live at
+        <a href="/airdrops" class="mono">/airdrops</a>.
+      </p>
+    </div>
+  </section>
+</Base>

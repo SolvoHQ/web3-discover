@@ -1,0 +1,73 @@
+---
+import Base from '../../layouts/Base.astro';
+import { airdrops, type Airdrop } from '../../data/airdrops.ts';
+
+export function getStaticPaths() {
+  return airdrops.map((a) => ({
+    params: { slug: a.slug },
+    props: { airdrop: a },
+  }));
+}
+
+interface Props {
+  airdrop: Airdrop;
+}
+
+const { airdrop } = Astro.props as Props;
+const title = `${airdrop.project} airdrop guide — web3-discover`;
+const description = `${airdrop.project} (${airdrop.chain}) airdrop: ${airdrop.action} Effort ${airdrop.effort}, cost floor ${airdrop.costFloor}, deadline ${airdrop.deadline}. Risk: ${airdrop.risk}.`;
+---
+<Base title={title} description={description} ogType="article">
+  <section class="entry-head">
+    <div class="container">
+      <div class="crumbs"><a href="/airdrops">Airdrops</a> / {airdrop.project}</div>
+      <div class="kicker">{airdrop.chain}</div>
+      <h1>{airdrop.project}</h1>
+      <p class="lede">{airdrop.blurb}</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <dl class="entry-meta">
+        <div>
+          <dt>Action</dt>
+          <dd>{airdrop.action}</dd>
+        </div>
+        <div>
+          <dt>Effort</dt>
+          <dd class="mono">{airdrop.effort}</dd>
+        </div>
+        <div>
+          <dt>Cost floor</dt>
+          <dd class="mono">{airdrop.costFloor}</dd>
+        </div>
+        <div>
+          <dt>Deadline</dt>
+          <dd class="mono">{airdrop.deadline}</dd>
+        </div>
+        <div>
+          <dt>Risk</dt>
+          <dd><span class={`tag risk-${airdrop.risk}`}>{airdrop.risk}</span></dd>
+        </div>
+        <div>
+          <dt>Official</dt>
+          <dd><a href={airdrop.officialUrl} rel="noopener nofollow" target="_blank">{airdrop.officialUrl}</a></dd>
+        </div>
+        {airdrop.twitter && (
+          <div>
+            <dt>Twitter</dt>
+            <dd><a href={`https://twitter.com/${airdrop.twitter}`} rel="noopener nofollow" target="_blank">@{airdrop.twitter}</a></dd>
+          </div>
+        )}
+      </dl>
+
+      <div class="note">
+        Placeholder entry. Before acting on any listing, verify the official link
+        directly — never click a "claim" button on a third-party site.
+      </div>
+
+      <p style="margin-top:1.5rem;"><a href="/airdrops">← Back to all airdrops</a></p>
+    </div>
+  </section>
+</Base>

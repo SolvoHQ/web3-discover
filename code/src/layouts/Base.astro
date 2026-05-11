@@ -1,0 +1,58 @@
+---
+import '../styles/global.css';
+
+export interface Props {
+  title: string;
+  description: string;
+  canonical?: string;
+  ogType?: string;
+}
+
+const { title, description, canonical, ogType = 'website' } = Astro.props;
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const pathTrim = Astro.url.pathname.replace(/\/$/, '');
+const canonicalUrl = canonical ?? (pathTrim ? `${siteUrl}${pathTrim}` : siteUrl);
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:site_name" content="web3-discover" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="robots" content="index,follow" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f7f5ef'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='22' font-weight='700' text-anchor='middle' fill='%23c8531a'%3Ew%3C/text%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <header class="masthead">
+      <div class="container masthead-inner">
+        <a class="brand" href="/">web3-discover<span class="dot">.</span></a>
+        <nav class="nav">
+          <a href="/airdrops">Airdrops</a>
+          <a href="/about">About</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <p><strong>web3-discover</strong> — the airdrop hunter's honest map. Hand-vetted, scam-filtered, no paid placements pretending to be listings.</p>
+        <p>Listings are informational, not financial advice. Verify every official link before acting.</p>
+        <p style="margin-top:0.5rem;"><a href="/airdrops">Browse airdrops</a> &middot; <a href="/about">About</a></p>
+      </div>
+    </footer>
+  </body>
+</html>
