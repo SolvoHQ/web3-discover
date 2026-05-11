@@ -35,6 +35,13 @@ curl -X POST https://web3-discover.vercel.app/api/mcp \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
+## Machine-readable data sources
+
+- Full directory as JSON: https://web3-discover.vercel.app/api/airdrops.json (CC0, CORS-open, no auth)
+- Single entry as JSON: https://web3-discover.vercel.app/api/airdrops/<slug>.json
+- GitHub mirror (CC0): https://github.com/SolvoHQ/web3-discover-data
+- API + schema documentation: https://web3-discover.vercel.app/data
+
 ## Primary entry points for LLM crawlers
 
 - Homepage: https://web3-discover.vercel.app

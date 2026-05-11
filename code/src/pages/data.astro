@@ -1,0 +1,240 @@
+---
+import Base from '../layouts/Base.astro';
+import { listPublishedAirdrops } from '../lib/airdrops.ts';
+
+const entries = await listPublishedAirdrops();
+const exampleSlug = entries[0]?.slug ?? 'aster-stage-6';
+
+const title = 'Data — open JSON API + GitHub mirror';
+const description = `Free, CORS-open, CC0-licensed JSON API for ${entries.length} curated web3 airdrops. One curl, no signup, no auth. Mirrored on GitHub at SolvoHQ/web3-discover-data.`;
+
+const datasetJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Dataset',
+  name: 'web3-discover airdrop directory',
+  description,
+  license: 'https://creativecommons.org/publicdomain/zero/1.0/',
+  creator: { '@type': 'Organization', name: 'web3-discover' },
+  distribution: [
+    {
+      '@type': 'DataDownload',
+      encodingFormat: 'application/json',
+      contentUrl: 'https://web3-discover.vercel.app/api/airdrops.json',
+    },
+    {
+      '@type': 'DataDownload',
+      encodingFormat: 'application/json',
+      contentUrl: 'https://raw.githubusercontent.com/SolvoHQ/web3-discover-data/main/airdrops.json',
+    },
+  ],
+  keywords: ['airdrops', 'crypto', 'web3', 'dataset', 'airdrop-tracker'],
+};
+---
+<Base title={title} description={description} extraJsonLd={datasetJsonLd}>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker">Open data</div>
+      <h1>The directory, as JSON.</h1>
+      <p class="lede">
+        Every entry in our {entries.length}-strong curated airdrop directory is available as a single
+        CORS-open JSON endpoint. Free. No auth. No rate limit. <strong>CC0-licensed</strong> —
+        scrape it, embed it, build on it, fork it.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="data-grid">
+        <div class="data-card">
+          <div class="data-kicker">Full directory</div>
+          <h2>GET /api/airdrops.json</h2>
+          <p>All {entries.length} active entries in one response. ~50 KB. 5-minute edge cache.</p>
+          <pre><code>curl https://web3-discover.vercel.app/api/airdrops.json | jq '.entries | length'
+# → {entries.length}</code></pre>
+        </div>
+
+        <div class="data-card">
+          <div class="data-kicker">Single entry</div>
+          <h2>GET /api/airdrops/{'<slug>'}.json</h2>
+          <p>One entry by slug. 404 with a list of valid slugs if you typo.</p>
+          <pre><code>curl https://web3-discover.vercel.app/api/airdrops/{exampleSlug}.json</code></pre>
+        </div>
+      </div>
+
+      <h2 class="h-rule">JavaScript</h2>
+      <pre class="block"><code>{`const r = await fetch('https://web3-discover.vercel.app/api/airdrops.json');
+const { entries, count, generatedAt } = await r.json();
+console.log(\`\${count} airdrops, last refreshed \${generatedAt}\`);
+const verified = entries.filter(e => e.risk === 'verified');`}</code></pre>
+
+      <h2 class="h-rule">Per-entry schema</h2>
+      <p>
+        Schema mirrors <code>src/content/config.ts</code>. All fields are camelCase. Dates are ISO-8601
+        (<code>YYYY-MM-DD</code> for day-precision deadlines, full RFC-3339 for <code>generatedAt</code>).
+      </p>
+      <table class="schema">
+        <thead>
+          <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>slug</code></td><td>string</td><td>URL-safe id, matches <code>/airdrops/{'<slug>'}</code></td></tr>
+          <tr><td><code>project</code></td><td>string</td><td>Display name</td></tr>
+          <tr><td><code>chain</code></td><td>string</td><td>Human-readable chain or chains (e.g. <code>"Solana"</code>, <code>"Multi-chain (Solana / Ethereum / EVM L2s)"</code>)</td></tr>
+          <tr><td><code>blurb</code></td><td>string</td><td>One-sentence overview</td></tr>
+          <tr><td><code>action</code></td><td>string</td><td>What the user actually has to do</td></tr>
+          <tr><td><code>effort</code></td><td>string</td><td>Time estimate (e.g. <code>"15 min one-time"</code>)</td></tr>
+          <tr><td><code>costFloor</code></td><td>string</td><td>Minimum cost (e.g. <code>"gas only"</code>, <code>"$50+ collateral"</code>)</td></tr>
+          <tr><td><code>deadline</code></td><td>string</td><td><code>YYYY-MM-DD</code> for dated, free-text for ongoing</td></tr>
+          <tr><td><code>risk</code></td><td>enum</td><td><code>"verified"</code> | <code>"unverified"</code></td></tr>
+          <tr><td><code>officialUrl</code></td><td>string</td><td>Project homepage (no claim-button redirects)</td></tr>
+          <tr><td><code>twitter</code></td><td>string?</td><td>Handle without <code>@</code></td></tr>
+          <tr><td><code>addedOn</code></td><td>string</td><td><code>YYYY-MM-DD</code> first published</td></tr>
+          <tr><td><code>lastChecked</code></td><td>string</td><td><code>YYYY-MM-DD</code> last freshness verification</td></tr>
+          <tr><td><code>status</code></td><td>enum</td><td><code>"active"</code> (response excludes <code>"ended"</code>)</td></tr>
+          <tr><td><code>notes</code></td><td>string</td><td>Curator commentary, markdown body of the entry</td></tr>
+        </tbody>
+      </table>
+
+      <h2 class="h-rule">Response envelope</h2>
+      <pre class="block"><code>{`{
+  "generatedAt": "2026-05-11T15:26:51.381Z",
+  "count": ${entries.length},
+  "schemaVersion": 1,
+  "license": "CC0-1.0",
+  "source": "https://web3-discover.vercel.app",
+  "mirror": "https://github.com/SolvoHQ/web3-discover-data",
+  "entries": [ /* ${entries.length} airdrop entries */ ]
+}`}</code></pre>
+
+      <h2 class="h-rule">GitHub mirror</h2>
+      <p>
+        Same data, hosted in a public GitHub repo so you can pin a commit, diff against history,
+        or open issues against entries:
+      </p>
+      <p class="mirror-cta">
+        <a href="https://github.com/SolvoHQ/web3-discover-data"><strong>github.com/SolvoHQ/web3-discover-data →</strong></a>
+      </p>
+      <pre class="block"><code>curl https://raw.githubusercontent.com/SolvoHQ/web3-discover-data/main/airdrops.json</code></pre>
+
+      <h2 class="h-rule">License + attribution</h2>
+      <p>
+        Released under <a href="https://creativecommons.org/publicdomain/zero/1.0/"><strong>CC0 1.0 Universal</strong></a>
+        (public domain dedication). You can redistribute, modify, embed, or build commercial products
+        on top without permission or attribution. A back-link is appreciated, never required.
+      </p>
+
+      <h2 class="h-rule">Schema versioning</h2>
+      <p>
+        Current <code>schemaVersion</code> is <code>1</code>. Additive changes (new fields) will not bump
+        the version. Renames or type changes will bump <code>schemaVersion</code> and we'll keep the
+        previous version reachable at <code>/api/airdrops.v1.json</code> for at least 30 days after a bump.
+      </p>
+
+      <h2 class="h-rule">Also exposed as MCP</h2>
+      <p>
+        Same data, different access shape: <a href="/api/mcp"><code>/api/mcp</code></a> is a
+        <a href="https://spec.modelcontextprotocol.io/">Model Context Protocol</a> server (JSON-RPC 2.0)
+        for Claude / Cursor / Continue. JSON API for HTTP clients, MCP for LLMs.
+        See <a href="/tools"><strong>Tools</strong></a> for the MCP install snippet.
+      </p>
+
+      <p class="data-foot">
+        Found a wrong entry, missing field, or want a new endpoint shape?
+        Open an issue at <a href="https://github.com/SolvoHQ/web3-discover-data/issues"><strong>SolvoHQ/web3-discover-data/issues</strong></a>.
+      </p>
+    </div>
+  </section>
+
+  <style>
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.25rem;
+      margin: 0.5rem 0 2rem;
+    }
+    .data-card {
+      padding: 1.25rem 1.25rem 1.1rem;
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+    }
+    .data-kicker {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink-soft);
+      margin-bottom: 0.4rem;
+    }
+    .data-card h2 {
+      margin: 0.1rem 0 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 1.05rem;
+      color: var(--accent);
+      word-break: break-word;
+    }
+    .data-card p {
+      margin: 0 0 0.75rem;
+      font-size: 0.95rem;
+    }
+    .data-card pre {
+      margin: 0;
+      background: #0e0f12;
+      color: #e6e6e6;
+      padding: 0.85rem 1rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      overflow-x: auto;
+    }
+    .data-card pre code { font-family: var(--font-mono); }
+
+    .h-rule {
+      margin: 2rem 0 0.6rem;
+      font-family: var(--font-serif);
+      font-size: 1.35rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--rule);
+    }
+    pre.block {
+      background: #0e0f12;
+      color: #e6e6e6;
+      padding: 1rem 1.1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      overflow-x: auto;
+      margin: 0.4rem 0 0.8rem;
+    }
+    pre.block code { font-family: var(--font-mono); }
+
+    table.schema {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.4rem 0 0.8rem;
+      font-size: 0.92rem;
+    }
+    table.schema th, table.schema td {
+      text-align: left;
+      padding: 0.45rem 0.5rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    table.schema th {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-soft);
+    }
+    table.schema code { font-family: var(--font-mono); font-size: 0.85rem; }
+
+    .mirror-cta { font-size: 1rem; margin: 0.4rem 0 1rem; }
+    .data-foot {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      font-size: 0.95rem;
+      color: var(--ink-soft);
+    }
+  </style>
+</Base>
