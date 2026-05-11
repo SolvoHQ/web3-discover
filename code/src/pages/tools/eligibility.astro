@@ -95,6 +95,7 @@ const softwareJsonLd = {
 
   <section class="section">
     <div class="container">
+      <div id="el-focus-banner" class="el-focus-banner" hidden></div>
       <div id="el-status" class="el-status" hidden></div>
       <div id="el-summary" class="el-summary" hidden></div>
       <div id="el-results" class="el-results" hidden></div>
@@ -174,6 +175,8 @@ const softwareJsonLd = {
     const ENTRIES = JSON.parse(document.getElementById('el-entries').textContent || '[]');
     const RULES = JSON.parse(document.getElementById('el-rules').textContent || '{}');
     const NO_RULE = JSON.parse(document.getElementById('el-no-rule').textContent || '{}');
+    const ENTRY_BY_SLUG = Object.fromEntries(ENTRIES.map((e) => [e.slug, e]));
+    let FOCUS_SLUG = null;
 
     // Same publicnode RPCs as /tools/wallet-check + /tools/token-holdings.
     // Public, CORS-open, no key. Per-host rate budget is shared across all of
@@ -204,6 +207,11 @@ const softwareJsonLd = {
 
     function escHtml(s) {
       return String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+
+    function cssEscape(s) {
+      if (window.CSS && typeof window.CSS.escape === 'function') return window.CSS.escape(s);
+      return String(s).replace(/[^a-zA-Z0-9_-]/g, (c) => '\\' + c);
     }
 
     function shortAddr(a) {
@@ -428,7 +436,7 @@ const softwareJsonLd = {
       const internal = '/airdrops/' + encodeURIComponent(entry.slug) + utm;
       const officialClass = bucket === 'eligible' ? 'el-card-action' : 'el-card-action-soft';
       return (
-        '<article class="el-card el-card-' + bucket + '">' +
+        '<article class="el-card el-card-' + bucket + '" data-slug="' + escHtml(entry.slug) + '">' +
           '<header class="el-card-head">' +
             '<a href="' + internal + '" class="el-card-project">' + escHtml(entry.project) + '</a>' +
             '<span class="tag risk-' + escHtml(entry.risk) + '">' + escHtml(entry.risk) + '</span>' +
@@ -542,7 +550,7 @@ const softwareJsonLd = {
             reason === 'off-chain-criteria' ? 'off-chain criteria (KYC / points / X)' :
             reason === 'multi-chain-too-loose' ? 'multi-chain — too loose to auto-evaluate' :
             'no machine-checkable rule';
-          html += '<li class="el-manual-item">';
+          html += '<li class="el-manual-item" data-slug="' + escHtml(entry.slug) + '">';
           html += '<a href="/airdrops/' + encodeURIComponent(entry.slug) + '?utm_source=eligibility&utm_medium=tool&utm_campaign=manual">' + escHtml(entry.project) + '</a>';
           html += ' <span class="el-manual-chain mono">' + escHtml(entry.chain) + '</span>';
           html += ' <span class="el-manual-reason">' + escHtml(reasonLabel) + '</span>';
@@ -555,7 +563,7 @@ const softwareJsonLd = {
         html += '<p class="el-bucket-note">Rules failed. Most likely safe to skip for this wallet.</p>';
         html += '<ul class="el-manual-list">';
         for (const { entry, verdict } of skip) {
-          html += '<li class="el-manual-item">';
+          html += '<li class="el-manual-item" data-slug="' + escHtml(entry.slug) + '">';
           html += '<a href="/airdrops/' + encodeURIComponent(entry.slug) + '?utm_source=eligibility&utm_medium=tool&utm_campaign=skip">' + escHtml(entry.project) + '</a>';
           html += ' <span class="el-manual-chain mono">' + escHtml(entry.chain) + '</span>';
           html += ' <span class="el-manual-reason">' + escHtml(verdict.detail) + '</span>';
@@ -570,6 +578,16 @@ const softwareJsonLd = {
       resultsEl.innerHTML = html;
       resultsEl.hidden = false;
       if (signupEl) signupEl.hidden = false;
+
+      // Focus deep-link from entry pages: scroll to the matching card/row and
+      // briefly highlight it. The focus slug stays sticky across re-runs.
+      if (FOCUS_SLUG) {
+        const target = resultsEl.querySelector('[data-slug="' + cssEscape(FOCUS_SLUG) + '"]');
+        if (target) {
+          target.classList.add('el-focused');
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
 
       // GoatCounter result event with the eligible count baked into title for funnel analysis.
       if (typeof window.goatcounter !== 'undefined' && window.goatcounter &&
@@ -666,6 +684,36 @@ const softwareJsonLd = {
       const form = document.getElementById('el-form');
       const evmInput = document.getElementById('el-evm');
       const solInput = document.getElementById('el-sol');
+
+      // Focus deep-link from entry pages (/airdrops/<slug> → ?focus=<slug>).
+      // Show a one-line banner that names the entry the user came from; the
+      // banner survives form re-submission. The actual scroll/highlight happens
+      // in renderResults after the verdict cards exist.
+      const qsInit = new URL(window.location.href).searchParams;
+      const focusSlug = qsInit.get('focus');
+      const banner = document.getElementById('el-focus-banner');
+      if (focusSlug && ENTRY_BY_SLUG[focusSlug] && banner) {
+        FOCUS_SLUG = focusSlug;
+        const e = ENTRY_BY_SLUG[focusSlug];
+        const hasRule = Object.prototype.hasOwnProperty.call(RULES, focusSlug);
+        const noRule = NO_RULE[focusSlug];
+        let context;
+        if (hasRule) {
+          context = "We'll auto-check this entry for you below.";
+        } else if (noRule === 'own-l1-no-cors-rpc') {
+          context = "Auto-check isn't possible (own L1/L2 — RPC not browser-reachable) — see the manual-check section.";
+        } else if (noRule === 'off-chain-criteria') {
+          context = "Auto-check isn't possible (KYC / Discord / X gates) — see the manual-check section.";
+        } else if (noRule === 'multi-chain-too-loose') {
+          context = "Auto-check isn't useful (multi-chain quests match everyone) — see the manual-check section.";
+        } else {
+          context = "We'll surface this entry's verdict below.";
+        }
+        banner.innerHTML =
+          '<strong>From the ' + escHtml(e.project) + ' page →</strong> ' + escHtml(context);
+        banner.hidden = false;
+      }
+
       form.addEventListener('submit', function (ev) {
         ev.preventDefault();
         const evmV = evmInput.value.trim();
@@ -771,6 +819,26 @@ const softwareJsonLd = {
       border-radius: 4px;
       margin-bottom: 1rem;
       font-size: 0.95rem;
+    }
+    .el-focus-banner {
+      padding: 0.7rem 0.95rem;
+      background: rgba(46, 133, 64, 0.08);
+      border: 1px solid rgba(46, 133, 64, 0.3);
+      border-left: 3px solid #2e8540;
+      border-radius: 4px;
+      margin-bottom: 0.85rem;
+      font-size: 0.92rem;
+      color: var(--ink, #222);
+    }
+    .el-focused {
+      animation: el-focus-pulse 1.6s ease-out 1;
+      outline: 2px solid var(--accent, #c8531a);
+      outline-offset: 2px;
+    }
+    @keyframes el-focus-pulse {
+      0%   { box-shadow: 0 0 0 0   rgba(200, 83, 26, 0.55); }
+      70%  { box-shadow: 0 0 0 12px rgba(200, 83, 26, 0); }
+      100% { box-shadow: 0 0 0 0   rgba(200, 83, 26, 0); }
     }
     .el-summary { margin-bottom: 1.5rem; }
     .el-summary-grid {

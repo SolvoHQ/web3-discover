@@ -6,6 +6,7 @@ import { buildSellCtaHref } from '../../lib/tokens.ts';
 import { LIFI_INTEGRATOR_KEY } from '../../lib/integrator.ts';
 import { listGuides, relatedGuideSlugsFor, GUIDE_SLUG_BY_THEME, type GuideEntry } from '../../lib/guides.ts';
 import InlineSignup from '../../components/InlineSignup.astro';
+import { RULES, NO_RULE_REASON } from '../../data/eligibility-rules.ts';
 
 export async function getStaticPaths() {
   const entries = await listPublishedAirdrops();
@@ -72,6 +73,32 @@ const articleJsonLd = {
 };
 
 const sellCta = buildSellCtaHref(entry.slug, data.project, data.chain, LIFI_INTEGRATOR_KEY);
+
+// Eligibility CTA — three variants. If we have a machine-checkable on-chain
+// rule for this slug, pitch the personal verdict directly. If the slug is in
+// the no-rule registry, the eligibility page still lists it under "manual
+// check needed", so the deep-link is useful (sees the reason + neighbours).
+// Otherwise (unlikely — slug missing from both) fall back to the generic CTA.
+const eligibilityHref = `/tools/eligibility?focus=${encodeURIComponent(entry.slug)}`;
+const hasRule = Object.prototype.hasOwnProperty.call(RULES, entry.slug);
+const noRule = NO_RULE_REASON[entry.slug];
+const eligibilityCta = hasRule
+  ? {
+      heading: `Does YOUR wallet qualify for ${data.project}?`,
+      blurb: `Paste a wallet and we evaluate this entry's on-chain rule alongside 13 others — no signature, no signup.`,
+      label: `Check my eligibility →`,
+    }
+  : noRule
+    ? {
+        heading: `Manual check: is ${data.project} worth your time?`,
+        blurb: `This entry can't be auto-checked (${noRule === 'own-l1-no-cors-rpc' ? 'own L1/L2 not browser-reachable' : noRule === 'off-chain-criteria' ? 'off-chain criteria — KYC / Discord / X' : 'too cross-chain to gate'}). Compare it against 14 auto-checkable entries side-by-side.`,
+        label: `See the eligibility dashboard →`,
+      }
+    : {
+        heading: `Does YOUR wallet qualify for ${data.project}?`,
+        blurb: `Run a personal verdict across all curated airdrops in one paste — non-custodial, browser-only.`,
+        label: `Check my eligibility →`,
+      };
 ---
 <Base title={title} description={description} ogType="article" extraJsonLd={articleJsonLd}>
   <section class="entry-head">
@@ -89,6 +116,14 @@ const sellCta = buildSellCtaHref(entry.slug, data.project, data.chain, LIFI_INTE
 
   <section>
     <div class="container">
+      <aside class="elig-cta" aria-labelledby="elig-cta-heading">
+        <div class="elig-cta-text">
+          <h2 id="elig-cta-heading">{eligibilityCta.heading}</h2>
+          <p>{eligibilityCta.blurb}</p>
+        </div>
+        <a class="elig-cta-btn" href={eligibilityHref} data-elig-cta>{eligibilityCta.label}</a>
+      </aside>
+
       <dl class="entry-meta">
         <div>
           <dt>Action</dt>
@@ -271,6 +306,45 @@ const sellCta = buildSellCtaHref(entry.slug, data.project, data.chain, LIFI_INTE
       margin: 0.5rem 0 0;
       font-size: 0.85rem;
       color: var(--ink-soft, #555);
+    }
+    .elig-cta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 0 0 1.25rem;
+      padding: 0.85rem 1rem;
+      background: #fffaf0;
+      border: 1px solid var(--accent, #c8531a);
+      border-left-width: 4px;
+      border-radius: 4px;
+    }
+    .elig-cta-text { flex: 1 1 auto; }
+    .elig-cta-text h2 {
+      margin: 0 0 0.2rem;
+      font-family: var(--font-serif, Georgia, serif);
+      font-size: 1.05rem;
+      line-height: 1.25;
+    }
+    .elig-cta-text p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--ink-soft, #555);
+    }
+    .elig-cta-btn {
+      flex: 0 0 auto;
+      padding: 0.55rem 0.95rem;
+      background: var(--accent, #c8531a);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .elig-cta-btn:hover { background: var(--warn, #a8741a); }
+    @media (max-width: 560px) {
+      .elig-cta { flex-direction: column; align-items: stretch; }
+      .elig-cta-btn { text-align: center; }
     }
   </style>
 </Base>

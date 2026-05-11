@@ -100,3 +100,16 @@ fs.writeFileSync(
   ) + '\n',
 );
 console.log(`wrote ${path.relative(ROOT, OUT_FILE)} — ${entries.length} entries`);
+
+// Mirror eligibility-rules.json into api/ so the MCP serverless function bundle
+// includes it. Vercel by default only ships files under api/; relative imports
+// from ../src don't survive the bundle.
+const ELIG_SRC = path.join(ROOT, 'src/data/eligibility-rules.json');
+const ELIG_DST = path.join(ROOT, 'api/_eligibility-rules.json');
+fs.copyFileSync(ELIG_SRC, ELIG_DST);
+const eligRules = JSON.parse(fs.readFileSync(ELIG_SRC, 'utf-8'));
+console.log(
+  `wrote ${path.relative(ROOT, ELIG_DST)} — ` +
+    `${Object.keys(eligRules.rules).length} rules + ` +
+    `${Object.keys(eligRules.noRuleReason).length} no-rule reasons`,
+);

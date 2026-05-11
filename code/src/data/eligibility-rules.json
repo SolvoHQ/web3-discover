@@ -1,0 +1,60 @@
+{
+  "rules": {
+    "linea-surge-points": { "kind": "chainTx", "chain": "linea", "minCount": 1 },
+    "base-coinbase-l2":   { "kind": "chainTx", "chain": "base",  "minCount": 1 },
+    "polymarket-poly":    { "kind": "chainTx", "chain": "polygon", "minCount": 1 },
+    "metamask-rewards-mask": { "kind": "chainTx", "chain": "ethereum", "minCount": 1 },
+    "rainbow-wallet-rnbw":   { "kind": "chainTx", "chain": "ethereum", "minCount": 1 },
+    "reya-rcp-points":   { "kind": "chainTx", "chain": "arbitrum", "minCount": 5 },
+    "ostium-points":     { "kind": "chainTx", "chain": "arbitrum", "minCount": 5 },
+    "pendle-boros-points": {
+      "kind": "any",
+      "rules": [
+        { "kind": "tokenBalance", "chain": "ethereum", "contract": "0x808507121B80c02388fAd14726482e061B8da827", "decimals": 18, "min": "1", "symbol": "PENDLE" },
+        { "kind": "chainTx", "chain": "arbitrum", "minCount": 1 }
+      ]
+    },
+    "etherfi-the-club": {
+      "kind": "any",
+      "rules": [
+        { "kind": "tokenBalance", "chain": "ethereum", "contract": "0xFe0c30065B384F05761f15d0CC899D4F9F9Cc0eB", "decimals": 18, "min": "1", "symbol": "ETHFI" },
+        { "kind": "chainTx", "chain": "ethereum", "minCount": 1 }
+      ]
+    },
+    "arbitrum-stip-unlock":       { "kind": "tokenBalance", "chain": "arbitrum", "contract": "0x912CE59144191C1204E64559FE8253a0e49E6548", "decimals": 18, "min": "1", "symbol": "ARB" },
+    "starknet-provisions-unlock": { "kind": "tokenBalance", "chain": "ethereum", "contract": "0xCa14007Eff0dB1f8135f4C25B34De49AB0d42766", "decimals": 18, "min": "1", "symbol": "STRK" },
+    "solayer-emerald":        { "kind": "solanaTx", "minCount": 1 },
+    "meteora-met-season-2":   { "kind": "solanaTx", "minCount": 1 },
+    "sanctum-infinity":       { "kind": "solanaTx", "minCount": 1 }
+  },
+  "noRuleReason": {
+    "monad-momentum":              "own-l1-no-cors-rpc",
+    "megaeth-terminal-points":     "own-l1-no-cors-rpc",
+    "plume-season-2":              "own-l1-no-cors-rpc",
+    "berachain-post-tge-incentives": "own-l1-no-cors-rpc",
+    "infrared-berachain":          "own-l1-no-cors-rpc",
+    "hyperliquid-hype-season-2":   "own-l1-no-cors-rpc",
+    "basedapp-season-3":           "own-l1-no-cors-rpc",
+    "hypurrfi-hyperevm":           "own-l1-no-cors-rpc",
+    "felix-protocol-hyperevm":     "own-l1-no-cors-rpc",
+    "fogo-flames-s2":              "own-l1-no-cors-rpc",
+    "ink-kraken-l2":               "own-l1-no-cors-rpc",
+    "katana-kat-incentives":       "own-l1-no-cors-rpc",
+    "walrus-storage":              "own-l1-no-cors-rpc",
+    "plasma-xpl":                  "own-l1-no-cors-rpc",
+    "aster-stage-6":               "own-l1-no-cors-rpc",
+    "mitosis-cross-chain-liquidity": "own-l1-no-cors-rpc",
+    "sahara-ai-first-unlock":      "own-l1-no-cors-rpc",
+    "extended-xvs-perps":          "own-l1-no-cors-rpc",
+    "momentum-mmt-unlock":         "own-l1-no-cors-rpc",
+    "glider-s2-portfolios":        "off-chain-criteria",
+    "backpack-season-4":           "off-chain-criteria",
+    "symbiotic-restaking-points":  "own-l1-no-cors-rpc",
+    "optimism-retropgf-unlock":    "own-l1-no-cors-rpc",
+    "sonic-labs-final-claim":      "own-l1-no-cors-rpc",
+    "virtuals-genesis":            "off-chain-criteria",
+    "wormhole-w-unlock":           "off-chain-criteria",
+    "galxe-quest-campaigns":       "multi-chain-too-loose",
+    "layer3-cube-quests":          "multi-chain-too-loose"
+  }
+}
