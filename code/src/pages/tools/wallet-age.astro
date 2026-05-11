@@ -1,0 +1,610 @@
+---
+import Base from '../../layouts/Base.astro';
+import InlineSignup from '../../components/InlineSignup.astro';
+
+const title = "Wallet age — how old is this address on each EVM chain?";
+const description = `Paste an EVM address. We binary-search public archive RPCs across Ethereum, Polygon, Arbitrum, Base, and BNB Chain to find the block of your first-ever transaction on each chain, then show the date + days alive. Client-side only, no signature, no signup.`;
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const softwareJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'web3-discover wallet age',
+  url: `${siteUrl}/tools/wallet-age`,
+  applicationCategory: 'UtilityApplication',
+  operatingSystem: 'Web',
+  description,
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  publisher: { '@type': 'Organization', name: 'web3-discover', url: siteUrl },
+};
+---
+<Base title={title} description={description} extraJsonLd={softwareJsonLd}>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker">Tools</div>
+      <h1>How old is your wallet?</h1>
+      <p class="lede">
+        Paste an EVM address (<code>0x…</code>). We binary-search archive RPCs on
+        Ethereum, Polygon, Arbitrum, Base, and BNB Chain to find the block of your
+        first outgoing transaction on each chain — then show the date and days
+        alive. Read-only, non-custodial, no signature, no signup.
+      </p>
+
+      <form id="wa-form" class="wa-form" autocomplete="off">
+        <label class="wa-label" for="wa-input">Wallet address</label>
+        <div class="wa-row">
+          <input
+            id="wa-input"
+            name="addr"
+            type="text"
+            placeholder="0x…"
+            spellcheck="false"
+            autocapitalize="off"
+            autocorrect="off"
+            required
+          />
+          <button type="submit" class="wa-btn">Check →</button>
+        </div>
+        <p class="wa-hint">
+          Try <a href="?addr=0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045">vitalik.eth</a>
+          or any wallet you control. Result takes ~6–10 seconds (~25 RPC calls per chain).
+        </p>
+      </form>
+
+      <p class="wa-companion">
+        Already checked age? Match this wallet against active airdrops at
+        <a href="/tools/wallet-check">/tools/wallet-check</a> or see what airdrop
+        tokens you already hold at <a href="/tools/token-holdings">/tools/token-holdings</a>.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div id="wa-status" class="wa-status" hidden></div>
+      <div id="wa-results" class="wa-results" hidden></div>
+      <div id="wa-signup" hidden>
+        <InlineSignup
+          source="tool-wallet-age"
+          copy="Established wallet? Get alerts for airdrops that reward longtime addresses."
+        />
+      </div>
+
+      <details class="wa-howitworks">
+        <summary>How this works (and what it doesn't do)</summary>
+        <div class="prose">
+          <ul>
+            <li>
+              <strong>Wallet age:</strong> we call
+              <code>eth_getTransactionCount(addr, blockN)</code> against drpc.org's
+              public archive RPCs (we tried publicnode first — its public Ethereum node
+              is pruned and refuses historical state queries). We binary-search the block
+              range to find the smallest block where the nonce is at least 1 — that's the
+              block of your first outgoing transaction. Then <code>eth_getBlockByNumber</code>
+              gives the timestamp.
+            </li>
+            <li>
+              <strong>"Outgoing" matters.</strong> The nonce only counts transactions
+              sent <em>from</em> this address. If a wallet only received funds and never
+              signed a transaction itself, its nonce stays at 0 and we'll report "no
+              outgoing activity" for that chain. (That doesn't mean the wallet has no
+              history — just no self-paid history.)
+            </li>
+            <li>
+              <strong>Chains covered:</strong> Ethereum mainnet, Polygon, Arbitrum One,
+              Base, and BNB Smart Chain. All five via drpc.org's open-CORS archive RPCs.
+            </li>
+            <li>
+              <strong>What we don't show:</strong> incoming-only history, ENS-resolved
+              ages, sub-block precision, or non-EVM chains (Solana doesn't have a cheap
+              public way to find the earliest signature without paginating millions of
+              entries).
+            </li>
+            <li>
+              <strong>Your address never reaches our servers.</strong> Requests go
+              browser → drpc.org directly. We don't log, store, or proxy.
+            </li>
+          </ul>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <script is:inline>
+    // Five EVM chains, each mapped to a free public archive RPC that:
+    //   - serves historical state (publicnode's free RPCs don't)
+    //   - returns permissive CORS (mirrors any Origin)
+    //   - has no signup / API key requirement
+    // We spread the chains across THREE hosts (drpc + 1rpc + mainnet.base.org)
+    // so a single host's rate budget doesn't bottleneck all 5 chains. drpc
+    // applies a per-IP burst limit shared across *all* its subdomains, so we
+    // additionally serialize drpc-hosted chains through a shared queue (see
+    // `bucket` field — calls with the same bucket run sequentially).
+    const CHAINS = [
+      { key: 'ethereum', rpc: 'https://eth.drpc.org',       bucket: 'drpc', label: 'Ethereum',  explorer: 'https://etherscan.io/block/' },
+      { key: 'polygon',  rpc: 'https://1rpc.io/matic',      bucket: '1rpc', label: 'Polygon',   explorer: 'https://polygonscan.com/block/' },
+      { key: 'arbitrum', rpc: 'https://arbitrum.drpc.org',  bucket: 'drpc', label: 'Arbitrum',  explorer: 'https://arbiscan.io/block/' },
+      { key: 'base',     rpc: 'https://mainnet.base.org',   bucket: 'base', label: 'Base',      explorer: 'https://basescan.org/block/' },
+      { key: 'bsc',      rpc: 'https://bsc.drpc.org',       bucket: 'drpc', label: 'BNB Chain', explorer: 'https://bscscan.com/block/' },
+    ];
+
+    // Per-bucket serial queue: one in-flight call per bucket at a time.
+    // Different buckets run concurrently. Used to throttle drpc.
+    const bucketQueues = new Map();
+    function runInBucket(bucket, fn) {
+      const prev = bucketQueues.get(bucket) || Promise.resolve();
+      const next = prev.catch(() => {}).then(fn);
+      bucketQueues.set(bucket, next);
+      return next;
+    }
+
+    const EVM_RX = /^0x[a-fA-F0-9]{40}$/;
+
+    function toHex(n) { return '0x' + n.toString(16); }
+
+    // drpc.org's public archive RPCs return 408/429/500/502/503 intermittently
+    // when we fire ~25 sequential getTransactionCount calls per chain — Arbitrum
+    // (large state) and BSC (busy chain) are the consistent flakers. Retry up to
+    // 5 times with exponential backoff starting at 400ms. Total worst-case extra
+    // wait per call: 0.4 + 0.9 + 2 + 4.5 + 10 ≈ 18s, but only on a chain that's
+    // actively throttling; chains that respond cleanly aren't slowed.
+    const RETRY_STATUSES = new Set([408, 425, 429, 500, 502, 503, 504]);
+
+    async function rpcCall(url, body) {
+      let lastErr;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        if (attempt > 0) {
+          const base = 400 * Math.pow(2.2, attempt - 1);
+          const jitter = Math.floor(Math.random() * 200);
+          await new Promise((r) => setTimeout(r, base + jitter));
+        }
+        try {
+          const r = await fetch(url, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+          if (RETRY_STATUSES.has(r.status)) {
+            lastErr = new Error('HTTP ' + r.status);
+            continue;
+          }
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const j = await r.json();
+          if (j.error) {
+            // Some drpc upstream-overload errors arrive as -32603 in the body.
+            const msg = j.error.message || 'rpc error';
+            if (/upstream|overloaded|busy|timeout|throttl/i.test(msg)) {
+              lastErr = new Error(msg);
+              continue;
+            }
+            throw new Error(msg);
+          }
+          return j.result;
+        } catch (err) {
+          lastErr = err;
+          // Network errors (TypeError: Failed to fetch) are retried; logical
+          // errors (rpc errors carried in body) bubble immediately.
+          if (err && err.message && err.message.startsWith('HTTP ')) continue;
+          if (err instanceof TypeError) continue;
+          throw err;
+        }
+      }
+      throw lastErr || new Error('rpc call failed');
+    }
+
+    // Small constant pause between sequential RPC calls within one chain's
+    // binary search. Spaces our requests out so we don't sustain a high enough
+    // rate to trigger drpc's rate limiter in the first place.
+    const INTER_CALL_DELAY_MS = 120;
+
+    async function nonceAt(chain, addr, blockTagOrHex) {
+      const hex = await runInBucket(chain.bucket, () =>
+        rpcCall(chain.rpc, {
+          jsonrpc: '2.0', id: 1, method: 'eth_getTransactionCount',
+          params: [addr, blockTagOrHex],
+        })
+      );
+      // Some archive nodes return a number-as-string; parseInt handles both.
+      return parseInt(hex, 16);
+    }
+
+    async function blockNumber(chain) {
+      const hex = await runInBucket(chain.bucket, () =>
+        rpcCall(chain.rpc, { jsonrpc: '2.0', id: 1, method: 'eth_blockNumber', params: [] })
+      );
+      return parseInt(hex, 16);
+    }
+
+    async function blockTimestamp(chain, blockNum) {
+      const blk = await runInBucket(chain.bucket, () =>
+        rpcCall(chain.rpc, {
+          jsonrpc: '2.0', id: 1, method: 'eth_getBlockByNumber',
+          params: [toHex(blockNum), false],
+        })
+      );
+      if (!blk || !blk.timestamp) throw new Error('no block');
+      return parseInt(blk.timestamp, 16);
+    }
+
+    // Binary search: smallest block N where nonce(addr, N) >= 1.
+    // Pre: latest-block nonce >= 1 (caller checks). Worst case ~ceil(log2(latest)) ≈ 28.
+    async function findFirstTxBlock(chain, addr, latestBlock) {
+      let lo = 0, hi = latestBlock;
+      let steps = 0;
+      while (lo < hi) {
+        const mid = (lo + hi) >>> 1;
+        let n;
+        try {
+          n = await nonceAt(chain, addr, toHex(mid));
+        } catch (err) {
+          throw new Error('archive query failed at block ' + mid + ': ' + err.message);
+        }
+        if (n >= 1) hi = mid;
+        else lo = mid + 1;
+        steps++;
+        if (steps > 40) throw new Error('binary search exceeded 40 steps');
+        await new Promise((r) => setTimeout(r, INTER_CALL_DELAY_MS));
+      }
+      return { firstTxBlock: lo, steps };
+    }
+
+    // Per-chain workflow:
+    //   1) latest nonce — if 0, wallet never sent on this chain, short-circuit.
+    //   2) latest block number — search ceiling.
+    //   3) archive sanity check: nonce at block 1. If equal to latest nonce AND
+    //      latest nonce > 0, the RPC probably isn't serving archive state (it's
+    //      returning the latest snapshot for every height). Abort gracefully so
+    //      we never display a wrong date.
+    //   4) binary-search first-tx block.
+    //   5) get its timestamp.
+    async function checkChain(chain, addr) {
+      try {
+        const latestNonce = await nonceAt(chain, addr, 'latest');
+        if (latestNonce === 0) {
+          return { chain, status: 'inactive', latestNonce };
+        }
+
+        const latest = await blockNumber(chain);
+
+        // Archive support probe. If nonce-at-block-1 equals latest nonce (and isn't
+        // an edge case like a wallet whose first-ever tx was in block 1), the node
+        // probably isn't archive. Most archive nodes return 0 at block 1 for
+        // any address minted after that block — which is almost every wallet.
+        let probe;
+        try {
+          probe = await nonceAt(chain, addr, toHex(1));
+        } catch (err) {
+          return { chain, status: 'no-archive', latestNonce, reason: err.message };
+        }
+        if (probe === latestNonce && latestNonce > 0) {
+          return { chain, status: 'no-archive', latestNonce };
+        }
+
+        const { firstTxBlock, steps } = await findFirstTxBlock(chain, addr, latest);
+        const ts = await blockTimestamp(chain, firstTxBlock);
+        return { chain, status: 'active', latestNonce, firstTxBlock, firstTxTs: ts, steps };
+      } catch (err) {
+        return { chain, status: 'error', error: err.message };
+      }
+    }
+
+    function detectFormat(addr) {
+      const v = addr.trim();
+      if (EVM_RX.test(v)) return { kind: 'evm', addr: v };
+      return { kind: 'unknown', addr: v };
+    }
+
+    function escHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+
+    function fmtDate(unixSec) {
+      const d = new Date(unixSec * 1000);
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(d.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function daysSince(unixSec) {
+      const nowSec = Math.floor(Date.now() / 1000);
+      return Math.max(0, Math.floor((nowSec - unixSec) / 86400));
+    }
+
+    function renderResults(format, results) {
+      const statusEl = document.getElementById('wa-status');
+      const resultsEl = document.getElementById('wa-results');
+      const signupEl = document.getElementById('wa-signup');
+
+      const shortAddr = format.addr.length > 14
+        ? format.addr.slice(0, 6) + '…' + format.addr.slice(-6)
+        : format.addr;
+
+      const active = results.filter((r) => r.status === 'active');
+      const inactive = results.filter((r) => r.status === 'inactive');
+      const errored = results.filter((r) => r.status === 'error' || r.status === 'no-archive');
+
+      if (active.length === 0) {
+        let msg = '<strong>No outgoing activity</strong> for <code>' + escHtml(shortAddr) +
+          '</code> on any of the 5 chains we check. Either this wallet has never signed a' +
+          ' transaction or it has only been used on chains outside our scope.';
+        if (errored.length > 0) {
+          msg += '<br><span class="wa-substatus">(' + errored.length + ' chain' +
+            (errored.length === 1 ? '' : 's') + ' had RPC errors and were skipped.)</span>';
+        }
+        statusEl.innerHTML = msg;
+        statusEl.hidden = false;
+        resultsEl.hidden = true;
+        if (signupEl) signupEl.hidden = true;
+        return;
+      }
+
+      // Pick the earliest first-tx among active chains; that's the "oldest age".
+      let oldest = active[0];
+      for (const r of active) if (r.firstTxTs < oldest.firstTxTs) oldest = r;
+      const oldestDays = daysSince(oldest.firstTxTs);
+      const oldestDate = fmtDate(oldest.firstTxTs);
+
+      statusEl.innerHTML =
+        '<strong>' + escHtml(shortAddr) + '</strong>’s earliest outgoing transaction is ' +
+        '<strong>' + oldestDays + '</strong> day' + (oldestDays === 1 ? '' : 's') + ' old — ' +
+        oldestDate + ' on ' + escHtml(oldest.chain.label) + '. Active on ' + active.length +
+        ' of ' + results.length + ' chains.';
+      statusEl.hidden = false;
+
+      let html = '<div class="wa-grid">';
+      for (const r of results) {
+        if (r.status === 'active') {
+          const days = daysSince(r.firstTxTs);
+          const date = fmtDate(r.firstTxTs);
+          html += '<div class="wa-card wa-card-active">';
+          html += '<div class="wa-card-chain">' + escHtml(r.chain.label) + '</div>';
+          html += '<div class="wa-card-date">' + escHtml(date) + '</div>';
+          html += '<div class="wa-card-days">' + days.toLocaleString() + ' day' + (days === 1 ? '' : 's') + ' alive</div>';
+          html += '<div class="wa-card-meta">';
+          html += 'Block <a href="' + r.chain.explorer + r.firstTxBlock + '" rel="nofollow noopener" target="_blank">' + r.firstTxBlock.toLocaleString() + '</a>';
+          html += ' · ' + r.latestNonce.toLocaleString() + ' tx' + (r.latestNonce === 1 ? '' : 's') + ' total';
+          html += '</div>';
+          html += '</div>';
+        } else if (r.status === 'inactive') {
+          html += '<div class="wa-card wa-card-inactive">';
+          html += '<div class="wa-card-chain">' + escHtml(r.chain.label) + '</div>';
+          html += '<div class="wa-card-date">—</div>';
+          html += '<div class="wa-card-days">No outgoing activity</div>';
+          html += '<div class="wa-card-meta">Nonce 0 (may have received funds only)</div>';
+          html += '</div>';
+        } else if (r.status === 'no-archive') {
+          html += '<div class="wa-card wa-card-skipped">';
+          html += '<div class="wa-card-chain">' + escHtml(r.chain.label) + '</div>';
+          html += '<div class="wa-card-date">?</div>';
+          html += '<div class="wa-card-days">' + r.latestNonce.toLocaleString() + ' tx' + (r.latestNonce === 1 ? '' : 's') + ' total</div>';
+          html += '<div class="wa-card-meta">Archive RPC unavailable — couldn’t resolve first-tx date</div>';
+          html += '</div>';
+        } else {
+          html += '<div class="wa-card wa-card-skipped">';
+          html += '<div class="wa-card-chain">' + escHtml(r.chain.label) + '</div>';
+          html += '<div class="wa-card-date">!</div>';
+          html += '<div class="wa-card-days">RPC error</div>';
+          html += '<div class="wa-card-meta">' + escHtml(r.error || 'unknown') + '</div>';
+          html += '</div>';
+        }
+      }
+      html += '</div>';
+
+      // Companion CTAs: route the user back into the directory using their wallet.
+      html += '<div class="wa-after-cta">';
+      html += '<a class="wa-after-cta-btn" href="/tools/wallet-check?addr=' + encodeURIComponent(format.addr) + '">';
+      html += 'See which airdrops match this wallet →</a>';
+      html += '<a class="wa-after-cta-btn-2" href="/tools/token-holdings?addr=' + encodeURIComponent(format.addr) + '">';
+      html += 'Check airdrop tokens this wallet holds →</a>';
+      html += '</div>';
+
+      resultsEl.innerHTML = html;
+      resultsEl.hidden = false;
+      if (signupEl) signupEl.hidden = false;
+
+      // GoatCounter event: count one "result-render" per successful check. Path is
+      // distinct from page view so usage is measurable separately from traffic.
+      if (typeof window.goatcounter !== 'undefined' && window.goatcounter &&
+          typeof window.goatcounter.count === 'function') {
+        window.goatcounter.count({
+          path: 'tool-wallet-age-result',
+          title: 'wallet-age result: ' + active.length + '/' + results.length + ' chains active',
+          event: true,
+        });
+      }
+    }
+
+    async function run(addr) {
+      const format = detectFormat(addr);
+      const statusEl = document.getElementById('wa-status');
+      const resultsEl = document.getElementById('wa-results');
+      const signupEl = document.getElementById('wa-signup');
+
+      if (format.kind !== 'evm') {
+        statusEl.innerHTML = 'Please paste a valid <strong>EVM address</strong> ' +
+          '(<code>0x</code> followed by 40 hex characters). Solana addresses aren’t ' +
+          'supported here — there’s no cheap public way to find their first signature.';
+        statusEl.hidden = false;
+        resultsEl.hidden = true;
+        if (signupEl) signupEl.hidden = true;
+        return;
+      }
+
+      statusEl.innerHTML = 'Checking 5 chains in parallel (~25 RPC calls each)…';
+      statusEl.hidden = false;
+      resultsEl.hidden = true;
+      if (signupEl) signupEl.hidden = true;
+
+      const results = await Promise.all(CHAINS.map((c) => checkChain(c, format.addr)));
+      renderResults(format, results);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.getElementById('wa-form');
+      const input = document.getElementById('wa-input');
+      form.addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        const v = input.value.trim();
+        if (!v) return;
+        // Reflect into URL so result is shareable / refreshable.
+        const url = new URL(window.location.href);
+        url.searchParams.set('addr', v);
+        history.replaceState(null, '', url.toString());
+        run(v);
+      });
+
+      // Auto-run on landing-with-query (e.g. ?addr=0x… from a link).
+      const urlAddr = new URL(window.location.href).searchParams.get('addr');
+      if (urlAddr) {
+        input.value = urlAddr;
+        run(urlAddr);
+      }
+    });
+  </script>
+
+  <style>
+    .kicker {
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent, #c8531a);
+      margin-bottom: 0.4rem;
+    }
+    .lede { font-family: var(--font-serif, Georgia, serif); font-size: 1.1rem; line-height: 1.55; }
+    .wa-form {
+      margin: 1.25rem 0;
+      padding: 1rem 1.1rem;
+      background: #fff;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-left: 4px solid var(--accent, #c8531a);
+      border-radius: 4px;
+    }
+    .wa-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      font-size: 0.92rem;
+    }
+    .wa-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .wa-row input[type="text"] {
+      flex: 1 1 320px;
+      min-width: 0;
+      padding: 0.55rem 0.7rem;
+      font-family: var(--font-mono, monospace);
+      font-size: 0.92rem;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 4px;
+      background: #fff;
+    }
+    .wa-row input[type="text"]:focus {
+      outline: 2px solid var(--accent, #c8531a);
+      outline-offset: -1px;
+    }
+    .wa-btn {
+      padding: 0.55rem 1rem;
+      background: var(--accent, #c8531a);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .wa-btn:hover { background: var(--warn, #a8741a); }
+    .wa-hint { margin: 0.5rem 0 0; font-size: 0.84rem; color: var(--ink-soft, #555); }
+    .wa-companion { margin-top: 1rem; font-size: 0.9rem; color: var(--ink-soft, #555); }
+    .wa-status {
+      padding: 0.85rem 1rem;
+      background: #fdfbf6;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-left: 3px solid var(--accent, #c8531a);
+      border-radius: 4px;
+      margin-bottom: 1.25rem;
+      line-height: 1.5;
+    }
+    .wa-substatus { display: inline-block; margin-top: 0.4rem; font-size: 0.86rem; color: var(--ink-soft, #555); }
+    .wa-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+    .wa-card {
+      padding: 0.9rem 1rem;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 4px;
+      background: #fff;
+    }
+    .wa-card-active { border-left: 3px solid var(--accent, #c8531a); }
+    .wa-card-inactive { opacity: 0.7; background: #fbfaf6; }
+    .wa-card-skipped { opacity: 0.7; background: #fbfaf6; border-left: 3px solid #a8741a; }
+    .wa-card-chain {
+      font-family: var(--font-mono, monospace);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink-soft, #555);
+      margin-bottom: 0.35rem;
+    }
+    .wa-card-date {
+      font-family: var(--font-serif, Georgia, serif);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--ink, #222);
+      line-height: 1.1;
+    }
+    .wa-card-days {
+      font-size: 0.96rem;
+      color: var(--ink, #222);
+      margin-top: 0.2rem;
+    }
+    .wa-card-meta {
+      margin-top: 0.45rem;
+      font-size: 0.82rem;
+      color: var(--ink-soft, #555);
+      font-family: var(--font-mono, monospace);
+    }
+    .wa-card-meta a { color: var(--accent, #c8531a); text-decoration: none; }
+    .wa-card-meta a:hover { text-decoration: underline; }
+    .wa-after-cta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 1rem 0 0;
+    }
+    .wa-after-cta-btn, .wa-after-cta-btn-2 {
+      flex: 1 1 240px;
+      padding: 0.6rem 0.9rem;
+      text-align: center;
+      background: var(--accent, #c8531a);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.92rem;
+    }
+    .wa-after-cta-btn-2 {
+      background: #fff;
+      color: var(--accent, #c8531a);
+      border: 1px solid var(--accent, #c8531a);
+    }
+    .wa-after-cta-btn:hover { background: var(--warn, #a8741a); }
+    .wa-after-cta-btn-2:hover { background: #fdfbf6; }
+    .wa-howitworks {
+      margin-top: 1.5rem;
+      padding: 0.85rem 1rem;
+      background: #fdfbf6;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 4px;
+    }
+    .wa-howitworks summary {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .wa-howitworks .prose { margin-top: 0.75rem; font-size: 0.92rem; line-height: 1.55; }
+    .wa-howitworks .prose ul { padding-left: 1.2rem; }
+    .wa-howitworks .prose li { margin-bottom: 0.5rem; }
+  </style>
+</Base>
