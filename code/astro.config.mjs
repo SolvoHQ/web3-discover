@@ -1,6 +1,8 @@
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 
+import react from '@astrojs/react';
+
 const SITE_URL = process.env.SITE_URL || 'https://web3-discover.vercel.app';
 
 export default defineConfig({
@@ -9,5 +11,5 @@ export default defineConfig({
   build: {
     format: 'directory',
   },
-  integrations: [sitemap()],
+  integrations: [sitemap(), react()],
 });

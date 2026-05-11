@@ -10,8 +10,10 @@ export interface ListMeta {
   filter: (e: AirdropEntry) => boolean;
 }
 
-const isOngoing = (e: AirdropEntry): boolean =>
-  !/^\d{4}-\d{2}-\d{2}$/.test(e.data.deadline.trim());
+const isOngoing = (e: AirdropEntry): boolean => {
+  const d = e.data.deadline == null ? '' : String(e.data.deadline).trim();
+  return !/^\d{4}-\d{2}-\d{2}$/.test(d);
+};
 
 const hay = (e: AirdropEntry): string =>
   `${e.data.blurb} ${e.data.action}`.toLowerCase();

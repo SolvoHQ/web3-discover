@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import LifiSwapWidget from '../../components/LifiSwapWidget.tsx';
 import {
   EVM_INTEGRATOR_ADDRESS,
   SOL_INTEGRATOR_ADDRESS,
@@ -10,7 +11,7 @@ import {
 import { SOLANA_MINTS, SLUG_SWAP_TARGETS, JUMPER_CHAIN_KEYS } from '../../lib/tokens.ts';
 
 const title = 'Swap airdrop tokens — web3-discover';
-const description = 'Embedded DEX-aggregator swap. Solana via Jupiter, EVM via LiFi/Jumper. Honest 30–50 bps integrator fee disclosed upfront. No KYC, no signup, non-custodial.';
+const description = 'Embedded DEX-aggregator swap. Solana via Jupiter, EVM via LiFi widget. Honest 30 bps (EVM) / 50 bps (Solana) integrator fee disclosed upfront. No KYC, no signup, non-custodial.';
 const lifiFeePct = (LIFI_FEE_BPS / 100).toFixed(2);
 const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
 ---
@@ -22,11 +23,11 @@ const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
       <p class="lede">
         Non-custodial, no signup, no KYC. Solana swaps route through
         <a href="https://jup.ag" rel="noopener" target="_blank">Jupiter</a>;
-        EVM swaps route through
-        <a href="https://jumper.exchange" rel="noopener" target="_blank">Jumper</a>
-        (powered by <a href="https://li.fi" rel="noopener" target="_blank">LiFi</a>).
-        We may earn an integrator fee of <strong>{jupiterFeePct}%</strong> (Solana)
-        or <strong>{lifiFeePct}%</strong> (EVM) on swaps initiated here — disclosed openly,
+        EVM swaps route through the embedded
+        <a href="https://li.fi" rel="noopener" target="_blank">LiFi</a> widget
+        (the same router that powers <a href="https://jumper.exchange" rel="noopener" target="_blank">jumper.exchange</a>).
+        We earn an integrator fee of <strong>{jupiterFeePct}%</strong> (Solana, pending PDA top-up)
+        or <strong>{lifiFeePct}%</strong> (EVM, live) on swaps initiated here — disclosed openly,
         baked into the quote you see. See our <a href="/disclosure">affiliate disclosure</a>.
       </p>
       <div id="preselect-banner" class="preselect-banner" hidden></div>
@@ -58,28 +59,25 @@ const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
 
   <section class="section section-alt">
     <div class="container">
-      <h2 id="evm">EVM — Jumper (LiFi)</h2>
+      <h2 id="evm">EVM — LiFi widget</h2>
       <p class="muted">
         Cross-chain aggregator across Ethereum, Arbitrum, Base, Optimism, Polygon, BSC, +20 more.
-        Our LiFi integrator account is live (key
-        <code data-integrator="evm-key">{LIFI_INTEGRATOR_KEY}</code>,
-        EVM fee recipient <code data-integrator="evm">{EVM_INTEGRATOR_ADDRESS}</code>),
-        but fees on the deeplink path below currently run at <strong>0 bps</strong> —
-        see "How the fee works" for the architectural honesty.
+        Integrator key <code data-integrator="evm-key">{LIFI_INTEGRATOR_KEY}</code>,
+        EVM fee recipient <code data-integrator="evm">{EVM_INTEGRATOR_ADDRESS}</code>.
+        Connect any EVM wallet (MetaMask / WalletConnect / Coinbase), pick tokens, swap —
+        the <strong>{lifiFeePct}%</strong> integrator fee appears as a line item in the quote
+        and is auto-forwarded by LiFi's FeeForwarder contract.
       </p>
 
-      <p>
-        <a id="jumper-cta" class="cta" href={`https://jumper.exchange/?utm_source=${LIFI_INTEGRATOR_KEY}&utm_medium=integrator&utm_campaign=swap`} rel="noopener" target="_blank">
-          Open Jumper swap →
-        </a>
-      </p>
+      <div class="lifi-host">
+        <LifiSwapWidget client:only="react">
+          <div slot="fallback" class="terminal-fallback">Loading LiFi widget…</div>
+        </LifiSwapWidget>
+      </div>
 
       <p class="micro">
-        Jumper's hosted frontend ignores integrator URL params for fee attribution — same is
-        true of every major EVM aggregator. The embedded LiFi Widget (v2 roadmap) is the
-        only path to non-zero EVM fees; until it ships, this section is informational and
-        the deeplink above routes you to jumper.exchange unmodified. If you prefer to
-        bypass us entirely, use <a href="https://jumper.exchange" rel="noopener" target="_blank">jumper.exchange</a> directly.
+        Prefer the standalone UI? Use <a href="https://jumper.exchange" rel="noopener" target="_blank">jumper.exchange</a> directly —
+        same LiFi router under the hood, no integrator fee on that path.
       </p>
     </div>
   </section>
@@ -98,16 +96,16 @@ const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
             top-up; we'll flip it on as soon as the wallet is funded.
           </li>
           <li>
-            <strong>EVM swaps via LiFi/Jumper:</strong> our integrator account
+            <strong>EVM swaps via LiFi:</strong> our integrator account
             (key <code>{LIFI_INTEGRATOR_KEY}</code>, EVM recipient <code>{EVM_INTEGRATOR_ADDRESS}</code>)
             is registered with the LiFi Partner Portal — fee dashboard at
             <a href="https://portal.li.fi/integrations" rel="noopener" target="_blank">portal.li.fi/integrations</a>.
-            <em>But</em> the deeplink CTA above earns <strong>0 bps</strong> today:
-            jumper.exchange's hosted UI ignores integrator URL params (true of every
-            major EVM aggregator). Embedding the LiFi Widget on this page — pending
-            in v2 — is the only path that flips fees on; once shipped, up to
-            <strong>{lifiFeePct}%</strong> will route to that address (FeeForwarder
-            auto-forwards instantly on supported chains).
+            The widget embedded above charges <strong>{lifiFeePct}%</strong> of the
+            from-amount, deducted by LiFi's router during the swap transaction itself
+            and forwarded to the address above by LiFi's FeeForwarder contract on
+            supported chains (Ethereum, Arbitrum, Base, Optimism, Polygon, BSC, +20 more).
+            Static jumper.exchange deeplinks earn 0 bps — true of every major EVM
+            aggregator — so the widget embed is the only path to fee accrual.
           </li>
           <li>
             <strong>You always see the fee in the quote.</strong> Neither Jupiter nor LiFi
@@ -193,45 +191,23 @@ const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
       return { kind: 'fallback' };
     }
 
-    function buildJumperUrl(target) {
-      const params = new URLSearchParams();
-      params.set('fromChain', target.fromChain);
-      if (target.fromToken) params.set('fromToken', target.fromToken);
-      if (target.toChain) params.set('toChain', target.toChain);
-      if (target.toToken) params.set('toToken', target.toToken);
-      params.set('utm_source', LIFI_KEY);
-      params.set('utm_medium', 'integrator');
-      params.set('utm_campaign', 'swap');
-      return 'https://jumper.exchange/?' + params.toString();
-    }
-
     const URL_PARAMS = new URLSearchParams(window.location.search);
     const slugParam = URL_PARAMS.get('slug');
     const tokenParam = URL_PARAMS.get('token');
     const chainParam = URL_PARAMS.get('chain');
     const RESOLVED = resolveTarget(slugParam, tokenParam, chainParam);
 
-    // EVM preselect: rewrite the Jumper CTA + show a banner above the fold.
+    // EVM preselect: LiFi React island reads the same registry + URL params and
+    // pre-fills its own form. We still surface a banner so the user sees the
+    // detected chain above the fold.
     if (RESOLVED.kind === 'evm') {
-      const url = buildJumperUrl(RESOLVED);
-      const cta = document.getElementById('jumper-cta');
-      if (cta) {
-        cta.setAttribute('href', url);
-        cta.textContent =
-          (RESOLVED.tokenLabel
-            ? 'Swap ' + RESOLVED.tokenLabel
-            : 'Open Jumper') +
-          ' on ' + RESOLVED.chainLabel + ' →';
-      }
       const banner = document.getElementById('preselect-banner');
       if (banner) {
         const projectLabel = tokenParam || RESOLVED.tokenLabel || RESOLVED.chainLabel;
         banner.innerHTML =
           '<strong>Detected:</strong> ' + escapeHtml(projectLabel) +
-          ' is an EVM token (' + escapeHtml(RESOLVED.chainLabel) + '). ' +
-          'Use Jumper for best execution → ' +
-          '<a class="banner-cta" href="' + url + '" target="_blank" rel="noopener">' +
-          'Open Jumper preset →</a>';
+          ' (' + escapeHtml(RESOLVED.chainLabel) + ', EVM). ' +
+          'The LiFi widget below is pre-selected for this chain — scroll to swap.';
         banner.hidden = false;
       }
     } else if (RESOLVED.kind === 'solana') {
@@ -318,6 +294,12 @@ const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
       color: var(--ink-soft);
       font-family: var(--font-mono);
       font-size: 0.9rem;
+    }
+    .lifi-host {
+      margin: 1.5rem 0;
+      display: flex;
+      justify-content: center;
+      min-height: 600px;
     }
     .section-alt { background: rgba(217, 212, 196, 0.18); padding: 2rem 0; border-block: 1px solid var(--rule); }
     .muted code { background: #fff; padding: 0.1em 0.4em; border-radius: 3px; border: 1px solid var(--rule); word-break: break-all; }

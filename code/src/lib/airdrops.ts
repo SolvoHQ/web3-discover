@@ -4,8 +4,9 @@ export type AirdropEntry = CollectionEntry<'airdrops'>;
 
 const ONGOING_SENTINEL = '9999-12-31';
 
-const normalizedDeadline = (raw: string): string => {
-  const trimmed = raw.trim();
+const normalizedDeadline = (raw: unknown): string => {
+  if (raw == null) return ONGOING_SENTINEL;
+  const trimmed = String(raw).trim();
   if (!trimmed) return ONGOING_SENTINEL;
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
   return ONGOING_SENTINEL;

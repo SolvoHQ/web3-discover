@@ -3,10 +3,12 @@ import { getCollection, type CollectionEntry } from 'astro:content';
 export type GuideEntry = CollectionEntry<'guides'>;
 export type GuideTheme = GuideEntry['data']['theme'];
 
+const asString = (raw: unknown): string => (raw == null ? '' : String(raw));
+
 export async function listGuides(): Promise<GuideEntry[]> {
   const entries = await getCollection('guides');
   return entries.sort((a, b) =>
-    b.data.publishedOn.localeCompare(a.data.publishedOn) ||
+    asString(b.data.publishedOn).localeCompare(asString(a.data.publishedOn)) ||
     a.data.title.localeCompare(b.data.title),
   );
 }
