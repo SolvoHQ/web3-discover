@@ -1,0 +1,155 @@
+---
+import Base from '../../layouts/Base.astro';
+import { listGuides, type GuideEntry } from '../../lib/guides.ts';
+
+export async function getStaticPaths() {
+  const guides = await listGuides();
+  return guides.map((entry) => ({
+    params: { slug: entry.slug },
+    props: { entry, all: guides },
+  }));
+}
+
+interface Props {
+  entry: GuideEntry;
+  all: GuideEntry[];
+}
+
+const { entry, all } = Astro.props as Props;
+const { data } = entry;
+const { Content } = await entry.render();
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const articleUrl = `${siteUrl}/guides/${entry.slug}`;
+const title = `${data.title} — web3-discover`;
+const description = data.blurb;
+
+function toIsoDate(raw: string): string {
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? raw : d.toISOString().slice(0, 10);
+}
+const datePublished = toIsoDate(data.publishedOn);
+const dateModified = toIsoDate(data.lastUpdated ?? data.publishedOn);
+
+const articleJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: data.title,
+  description: data.blurb,
+  url: articleUrl,
+  mainEntityOfPage: articleUrl,
+  datePublished,
+  dateModified,
+  author: { '@type': 'Organization', name: 'web3-discover' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'web3-discover',
+    logo: { '@type': 'ImageObject', url: `${siteUrl}/og-default.png` },
+  },
+  image: `${siteUrl}/og-default.png`,
+  about: 'airdrops',
+  keywords: ['airdrop', 'web3', 'crypto', data.theme].join(', '),
+};
+
+const others = all.filter((g) => g.slug !== entry.slug);
+---
+<Base title={title} description={description} ogType="article" extraJsonLd={articleJsonLd}>
+  <section class="entry-head">
+    <div class="container">
+      <div class="crumbs"><a href="/guides">Guides</a> / {data.title}</div>
+      <h1>{data.title}</h1>
+      <p class="lede">{data.blurb}</p>
+      <p class="last-verified" aria-label="Last updated">
+        <span class="lv-dot" aria-hidden="true"></span>
+        Updated: <time datetime={dateModified}>{dateModified}</time>
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <article class="entry-body guide-body">
+        <Content />
+      </article>
+
+      {others.length > 0 && (
+        <aside class="related" aria-labelledby="more-guides">
+          <h2 id="more-guides">More guides</h2>
+          <ul>
+            {others.map((g) => (
+              <li>
+                <a href={`/guides/${g.slug}`}>{g.data.title}</a>
+                <span class="related-blurb"> — {g.data.blurb}</span>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )}
+
+      <p style="margin-top:1.5rem;"><a href="/airdrops">← Browse live airdrops</a></p>
+    </div>
+  </section>
+
+  <style>
+    .last-verified {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      font-family: var(--font-mono, ui-monospace, monospace);
+      font-size: 0.78rem;
+      color: var(--ink-soft, #555);
+      background: rgba(217, 212, 196, 0.35);
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 999px;
+    }
+    .last-verified time { color: inherit; }
+    .lv-dot {
+      display: inline-block;
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 999px;
+      background: #2e8a3f;
+      box-shadow: 0 0 0 2px rgba(46, 138, 63, 0.18);
+    }
+    .guide-body :global(h2) {
+      font-family: var(--font-serif, Georgia, serif);
+      margin-top: 2rem;
+    }
+    .guide-body :global(h3) { margin-top: 1.5rem; }
+    .guide-body :global(table) {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.92rem;
+    }
+    .guide-body :global(table th),
+    .guide-body :global(table td) {
+      border: 1px solid var(--rule, #d9d4c4);
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    .guide-body :global(blockquote) {
+      border-left: 3px solid var(--accent, #c8531a);
+      padding: 0.25rem 1rem;
+      margin: 1rem 0;
+      background: rgba(217, 212, 196, 0.25);
+    }
+    .related {
+      margin-top: 2.5rem;
+      padding: 1rem 1.25rem;
+      border: 1px solid var(--rule, #d9d4c4);
+      background: rgba(217, 212, 196, 0.18);
+    }
+    .related h2 {
+      margin: 0 0 0.5rem;
+      font-family: var(--font-serif, Georgia, serif);
+      font-size: 1.05rem;
+    }
+    .related ul { margin: 0; padding-left: 1.2rem; }
+    .related li { margin-bottom: 0.4rem; }
+    .related-blurb { color: var(--ink-soft, #555); font-size: 0.92rem; }
+  </style>
+</Base>

@@ -19,4 +19,15 @@ const airdrops = defineCollection({
   }),
 });
 
-export const collections = { airdrops };
+const guides = defineCollection({
+  type: 'content',
+  schema: z.object({
+    title: z.string(),
+    blurb: z.string(),
+    theme: z.enum(['scams', 'taxes', 'hygiene']),
+    publishedOn: z.coerce.string(),
+    lastUpdated: z.coerce.string().optional(),
+  }),
+});
+
+export const collections = { airdrops, guides };

@@ -4,22 +4,30 @@ import { listPublishedAirdrops, type AirdropEntry } from '../../lib/airdrops.ts'
 import { SELL_EXCHANGES } from '../../lib/exchanges.ts';
 import { buildSellCtaHref } from '../../lib/tokens.ts';
 import { LIFI_INTEGRATOR_KEY } from '../../lib/integrator.ts';
+import { listGuides, relatedGuideSlugsFor, GUIDE_SLUG_BY_THEME, type GuideEntry } from '../../lib/guides.ts';
 
 export async function getStaticPaths() {
   const entries = await listPublishedAirdrops();
+  const guides = await listGuides();
   return entries.map((entry) => ({
     params: { slug: entry.slug },
-    props: { entry },
+    props: { entry, guides },
   }));
 }
 
 interface Props {
   entry: AirdropEntry;
+  guides: GuideEntry[];
 }
 
-const { entry } = Astro.props as Props;
+const { entry, guides } = Astro.props as Props;
 const { data } = entry;
 const { Content } = await entry.render();
+
+const guidesBySlug = new Map(guides.map((g) => [g.slug, g]));
+const relatedGuides = relatedGuideSlugsFor({ risk: data.risk })
+  .map((theme) => guidesBySlug.get(GUIDE_SLUG_BY_THEME[theme]))
+  .filter((g): g is GuideEntry => Boolean(g));
 
 const title = `${data.project} airdrop guide — web3-discover`;
 const description = `${data.project} (${data.chain}) airdrop: ${data.action} Effort ${data.effort}, cost floor ${data.costFloor}, deadline ${data.deadline}. Risk: ${data.risk}.`;
@@ -163,6 +171,21 @@ const sellCta = buildSellCtaHref(entry.slug, data.project, data.chain, LIFI_INTE
         </p>
       </aside>
 
+      {relatedGuides.length > 0 && (
+        <aside class="related-guides" aria-labelledby="related-guides-heading">
+          <h2 id="related-guides-heading">Related guides</h2>
+          <p class="rg-lede">Evergreen reading before you sign anything.</p>
+          <ul>
+            {relatedGuides.map((g) => (
+              <li>
+                <a href={`/guides/${g.slug}`}>{g.data.title}</a>
+                <span class="rg-blurb"> — {g.data.blurb}</span>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )}
+
       <p style="margin-top:1.5rem;"><a href="/airdrops">← Back to all airdrops</a></p>
     </div>
   </section>
@@ -190,5 +213,24 @@ const sellCta = buildSellCtaHref(entry.slug, data.project, data.chain, LIFI_INTE
       background: #2e8a3f;
       box-shadow: 0 0 0 2px rgba(46, 138, 63, 0.18);
     }
+    .related-guides {
+      margin-top: 2rem;
+      padding: 1rem 1.25rem;
+      border: 1px solid var(--rule, #d9d4c4);
+      background: rgba(217, 212, 196, 0.18);
+    }
+    .related-guides h2 {
+      margin: 0 0 0.4rem;
+      font-family: var(--font-serif, Georgia, serif);
+      font-size: 1.05rem;
+    }
+    .related-guides .rg-lede {
+      margin: 0 0 0.5rem;
+      color: var(--ink-soft, #555);
+      font-size: 0.9rem;
+    }
+    .related-guides ul { margin: 0; padding-left: 1.2rem; }
+    .related-guides li { margin-bottom: 0.4rem; }
+    .related-guides .rg-blurb { color: var(--ink-soft, #555); font-size: 0.9rem; }
   </style>
 </Base>

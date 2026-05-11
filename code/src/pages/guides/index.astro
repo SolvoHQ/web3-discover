@@ -1,0 +1,85 @@
+---
+import Base from '../../layouts/Base.astro';
+import { listGuides } from '../../lib/guides.ts';
+
+const guides = await listGuides();
+
+const title = 'Airdrop guides — web3-discover';
+const description =
+  'Evergreen guides for airdrop farmers: spotting scams, tax basics for US/EU, and wallet hygiene. Plain English, no jargon, no upsell.';
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+
+function toIsoDate(raw: string): string {
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? raw : d.toISOString().slice(0, 10);
+}
+
+const itemListJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'web3-discover — airdrop guides',
+  url: `${siteUrl}/guides`,
+  itemListElement: guides.map((g, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    url: `${siteUrl}/guides/${g.slug}`,
+    name: g.data.title,
+  })),
+};
+---
+<Base title={title} description={description} extraJsonLd={itemListJsonLd}>
+  <section class="entry-head">
+    <div class="container">
+      <div class="crumbs"><a href="/">Home</a> / Guides</div>
+      <h1>Airdrop guides</h1>
+      <p class="lede">
+        Evergreen reading for airdrop farmers. Plain English, skeptical-friendly, no jargon-by-default.
+        Updated when the underlying reality changes — not on a publishing calendar.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <ul class="guide-list">
+        {guides.map((g) => (
+          <li class="guide-item">
+            <h2><a href={`/guides/${g.slug}`}>{g.data.title}</a></h2>
+            <p class="guide-blurb">{g.data.blurb}</p>
+            <p class="guide-meta">
+              <time datetime={toIsoDate(g.data.lastUpdated ?? g.data.publishedOn)}>
+                Updated {toIsoDate(g.data.lastUpdated ?? g.data.publishedOn)}
+              </time>
+            </p>
+          </li>
+        ))}
+      </ul>
+
+      <p style="margin-top:2rem;"><a href="/airdrops">Browse live airdrops →</a></p>
+    </div>
+  </section>
+
+  <style>
+    .guide-list { list-style: none; padding: 0; margin: 0; }
+    .guide-item {
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--rule, #d9d4c4);
+    }
+    .guide-item:last-child { border-bottom: none; }
+    .guide-item h2 {
+      margin: 0 0 0.4rem;
+      font-family: var(--font-serif, Georgia, serif);
+      font-size: 1.35rem;
+    }
+    .guide-item h2 a { text-decoration: none; }
+    .guide-item h2 a:hover { text-decoration: underline; }
+    .guide-blurb { margin: 0 0 0.5rem; }
+    .guide-meta {
+      margin: 0;
+      font-family: var(--font-mono, ui-monospace, monospace);
+      font-size: 0.78rem;
+      color: var(--ink-soft, #555);
+    }
+  </style>
+</Base>
