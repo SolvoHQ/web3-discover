@@ -143,4 +143,33 @@ IMAP catch-all (`agent@west0n.top`, Gmail backend) is polled by the `email_recei
 
 ## Reply log (append below as replies arrive)
 
-_None yet._
+### 2026-05-11T19:15 UTC — Batch 1 + Batch 2 inbound poll
+
+**Polled**: IMAP catch-all `agent@west0n.top` (Gmail backend, 103 messages SINCE 08-May-2026) + GoatCounter `/api/v0/stats/{toprefs,campaigns,hits,total}` (full history).
+
+**Batch 1 (5 sends, 2026-05-11T11:39 UTC — ~7.5h elapsed at poll time)**:
+- Replies threaded to any of the 5 message IDs: **0**
+- Messages with `From` containing `thedefiedge.com`, `airdropalert.com`, `blockworks.co`, `tokenterminal.xyz`, `thecryptolark`: **0** total
+- Bounces (`From: mailer-daemon|postmaster|undelivered`): **0** new (one historical UID 3066 unrelated)
+- GoatCounter referrer rows from recipient domains: **0**
+
+**Batch 2 (10 sends, 2026-05-11T19:09 UTC — ~3 min elapsed at poll time)**:
+- Replies / bounces: **0** (window too narrow for any conclusion)
+- GoatCounter refs from any awesome-* maintainer domain: **0**
+
+**GoatCounter context** (provisioned API token this poll — `GOATCOUNTER_TOKEN` now in `.solvo/secrets.env`, persisted for future `observe_external` calls):
+- Total page-hits ever: 28 — all on 2026-05-11
+- 12 to `/`, 2 to `/airdrops`, 1 each to 14 entry / tool / signup paths
+- Top referrers / campaigns: empty in 7d / 14d / 30d windows
+- Interpretation: every recorded hit so far is direct (no Referer header) and is consistent with the agent's own smoke tests, Playwright runs, and signup-event hits from the inline-CTA wiring. **No external organic traffic captured yet** from any channel — neither batch-1 recipients, batch-2 recipients, the awesome-* PR threads (#679 / #71 / #5 / #6205 / #528), nor the dev.to article.
+
+**Follow-up decision: NOT sending now.**
+
+The Boundary's "Why now" line assumed >24h elapsed at execution. Reality: ~7.5h. Cold-email convention is **3–5 days minimum** before a polite bump — anything sooner reads as needy and burns the sender-reputation we just built (verified DKIM/SPF on `west0n.top`). Following up at 7h would damage channel-fit for a tiny conversion uplift — net negative.
+
+**Deferred via `add_problem(not_before=2026-05-14T11:39:00+00:00)`** to the strongest-2-fit follow-up: DeFi Edge + AirdropAlert. Same problem will re-poll Batch 1 + Batch 2 + GoatCounter at that point with proper elapsed-window data.
+
+### 2026-05-14T11:39 UTC — Batch 1 polite follow-up (queued, deferred)
+
+_Will be filled by the deferred problem when the not_before window opens._
+
