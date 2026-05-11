@@ -1,0 +1,67 @@
+---
+import Base from '../../../layouts/Base.astro';
+import AirdropTable from '../../../components/AirdropTable.astro';
+import { listPublishedAirdrops, type AirdropEntry } from '../../../lib/airdrops.ts';
+import { groupEntriesByChain, type ChainBucket } from '../../../lib/chains.ts';
+
+export async function getStaticPaths() {
+  const entries = await listPublishedAirdrops();
+  const buckets = groupEntriesByChain(entries, 1);
+  return buckets.map((bucket) => ({
+    params: { chain: bucket.slug },
+    props: { bucket },
+  }));
+}
+
+interface Props {
+  bucket: ChainBucket;
+}
+
+const { bucket } = Astro.props as Props;
+
+// Sort by deadline ascending (mirrors listPublishedAirdrops which already does).
+const entries: AirdropEntry[] = bucket.entries;
+
+const title = `${bucket.display} airdrops — web3-discover`;
+const description = `${entries.length} hand-vetted, scam-filtered airdrops on ${bucket.display}. Sorted by deadline, with effort, cost floor, and risk flag on every entry.`;
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const canonical = `${siteUrl}/airdrops/by-chain/${bucket.slug}`;
+
+const collectionJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: `${bucket.display} airdrops`,
+  description,
+  url: canonical,
+  isPartOf: { '@type': 'WebSite', name: 'web3-discover', url: siteUrl },
+  hasPart: entries.map((entry) => ({
+    '@type': 'Article',
+    name: `${entry.data.project} — ${entry.data.chain}`,
+    url: `${siteUrl}/airdrops/${entry.slug}`,
+  })),
+};
+---
+<Base title={title} description={description} canonical={canonical} extraJsonLd={collectionJsonLd}>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker"><a href="/airdrops">All airdrops</a> / by chain</div>
+      <h1>{bucket.display} airdrops</h1>
+      <p class="lede">
+        {entries.length === 1
+          ? `One active ${bucket.display} airdrop, vetted and scam-filtered.`
+          : `${entries.length} active airdrops on ${bucket.display}, sorted by deadline. Hand-vetted, scam-filtered.`}
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>{entries.length} entr{entries.length === 1 ? 'y' : 'ies'}</h2>
+        <span class="meta"><a href="/airdrops">← All chains</a></span>
+      </div>
+      <AirdropTable entries={entries} />
+    </div>
+  </section>
+</Base>

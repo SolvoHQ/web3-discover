@@ -1,0 +1,77 @@
+---
+import Base from '../../layouts/Base.astro';
+import AirdropTable from '../../components/AirdropTable.astro';
+import { listPublishedAirdrops } from '../../lib/airdrops.ts';
+
+// Boundary spec: /(^0|\$0|gas-only|free)/i — faithful to intent ("gas-only or
+// zero-cost") but with two corrections so the literal regex doesn't produce
+// false positives:
+//   1. `^0` in the literal would match "0.1+ ETH" (~$300) — anchor to a word
+//      boundary so only entries where cost is literally zero hit.
+//   2. Every entry writes "gas only" with a space, never "gas-only" — accept
+//      both.
+const FREE_RE = /^\$?0(?:\s|$|,)|\$0\b|\bgas[- ]?only\b|\bfree\b/i;
+
+const all = await listPublishedAirdrops();
+const entries = all.filter((entry) => FREE_RE.test(entry.data.costFloor));
+
+const title = `Free airdrops (gas-only / zero capital) — web3-discover`;
+const description = `${entries.length} hand-vetted web3 airdrops you can farm with no upfront capital — only gas. Sorted by deadline, with effort and risk flag on every entry.`;
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const canonical = `${siteUrl}/airdrops/free`;
+
+const collectionJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Free airdrops — gas-only or zero capital',
+  description,
+  url: canonical,
+  isPartOf: { '@type': 'WebSite', name: 'web3-discover', url: siteUrl },
+  hasPart: entries.map((entry) => ({
+    '@type': 'Article',
+    name: `${entry.data.project} — ${entry.data.chain}`,
+    url: `${siteUrl}/airdrops/${entry.slug}`,
+  })),
+};
+---
+<Base title={title} description={description} canonical={canonical} extraJsonLd={collectionJsonLd}>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker"><a href="/airdrops">All airdrops</a> / free</div>
+      <h1>Free airdrops</h1>
+      <p class="lede">
+        Airdrops with no upfront capital requirement — gas-only, contribution-based,
+        or zero-cost claims. Sorted by deadline, scam-filtered, with every claim path
+        verified against an official source.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>{entries.length} entr{entries.length === 1 ? 'y' : 'ies'}</h2>
+        <span class="meta"><a href="/airdrops">All airdrops</a></span>
+      </div>
+      {entries.length === 0 ? (
+        <p class="empty-note">
+          No free-tier airdrops in the directory right now — browse
+          <a href="/airdrops"> all active airdrops</a>.
+        </p>
+      ) : (
+        <AirdropTable entries={entries} />
+      )}
+    </div>
+  </section>
+
+  <style>
+    .empty-note {
+      margin: 1rem 0;
+      padding: 0.9rem 1.1rem;
+      border: 1px solid var(--rule, #d9d4c4);
+      background: rgba(217, 212, 196, 0.18);
+      border-radius: 4px;
+    }
+  </style>
+</Base>

@@ -1,0 +1,89 @@
+---
+import Base from '../../layouts/Base.astro';
+import AirdropTable from '../../components/AirdropTable.astro';
+import { listPublishedAirdrops } from '../../lib/airdrops.ts';
+
+const WINDOW_DAYS = 7;
+
+function toIsoDate(raw: string): string {
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? raw : d.toISOString().slice(0, 10);
+}
+
+const todayIso = new Date().toISOString().slice(0, 10);
+const horizon = new Date();
+horizon.setUTCDate(horizon.getUTCDate() + WINDOW_DAYS);
+const horizonIso = horizon.toISOString().slice(0, 10);
+
+const all = await listPublishedAirdrops();
+const entries = all.filter((entry) =>
+  (entry.data.events ?? []).some((ev) => {
+    const d = toIsoDate(ev.date);
+    return d >= todayIso && d <= horizonIso;
+  }),
+);
+
+const title = `Airdrops with deadlines this week — web3-discover`;
+const description = `${entries.length} hand-vetted web3 airdrops with dated milestones in the next ${WINDOW_DAYS} days. Snapshot, TGE, claim, or campaign close — sorted by deadline.`;
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const canonical = `${siteUrl}/airdrops/this-week`;
+
+const collectionJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Airdrops with deadlines this week',
+  description,
+  url: canonical,
+  isPartOf: { '@type': 'WebSite', name: 'web3-discover', url: siteUrl },
+  hasPart: entries.map((entry) => ({
+    '@type': 'Article',
+    name: `${entry.data.project} — ${entry.data.chain}`,
+    url: `${siteUrl}/airdrops/${entry.slug}`,
+  })),
+};
+---
+<Base title={title} description={description} canonical={canonical} extraJsonLd={collectionJsonLd}>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker"><a href="/airdrops">All airdrops</a> / this week</div>
+      <h1>This week</h1>
+      <p class="lede">
+        Airdrops with a dated milestone — snapshot, TGE, claim deadline, or campaign close —
+        between <time datetime={todayIso}>{todayIso}</time> and <time datetime={horizonIso}>{horizonIso}</time>.
+        Rebuilds daily from the source-of-truth entries.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>{entries.length} entr{entries.length === 1 ? 'y' : 'ies'} this week</h2>
+        <span class="meta">
+          <a href="/airdrops.ics">📅 Subscribe to the calendar feed</a> ·
+          <a href="/airdrops">All airdrops</a>
+        </span>
+      </div>
+      {entries.length === 0 ? (
+        <p class="empty-note">
+          No dated milestones in the next {WINDOW_DAYS} days. Browse all
+          <a href="/airdrops"> active airdrops</a>, or subscribe to the
+          <a href="/airdrops.ics"> calendar feed</a> to get notified when one lands.
+        </p>
+      ) : (
+        <AirdropTable entries={entries} />
+      )}
+    </div>
+  </section>
+
+  <style>
+    .empty-note {
+      margin: 1rem 0;
+      padding: 0.9rem 1.1rem;
+      border: 1px solid var(--rule, #d9d4c4);
+      background: rgba(217, 212, 196, 0.18);
+      border-radius: 4px;
+    }
+  </style>
+</Base>

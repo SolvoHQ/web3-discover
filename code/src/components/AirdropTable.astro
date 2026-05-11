@@ -1,0 +1,33 @@
+---
+import type { AirdropEntry } from '../lib/airdrops.ts';
+
+interface Props {
+  entries: AirdropEntry[];
+}
+
+const { entries } = Astro.props as Props;
+---
+<table class="listing">
+  <thead>
+    <tr>
+      <th>Project</th>
+      <th class="col-chain">Chain</th>
+      <th class="col-effort">Effort</th>
+      <th>Cost</th>
+      <th>Deadline</th>
+      <th>Risk</th>
+    </tr>
+  </thead>
+  <tbody>
+    {entries.map((entry) => (
+      <tr>
+        <td class="project"><a href={`/airdrops/${entry.slug}`}>{entry.data.project}</a></td>
+        <td class="col-chain mono">{entry.data.chain}</td>
+        <td class="col-effort mono">{entry.data.effort}</td>
+        <td class="mono">{entry.data.costFloor}</td>
+        <td class="mono">{entry.data.deadline}</td>
+        <td><span class={`tag risk-${entry.data.risk}`}>{entry.data.risk}</span></td>
+      </tr>
+    ))}
+  </tbody>
+</table>

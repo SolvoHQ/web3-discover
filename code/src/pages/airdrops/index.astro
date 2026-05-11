@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { listPublishedAirdrops } from '../../lib/airdrops.ts';
+import AirdropTable from '../../components/AirdropTable.astro';
 
 const entries = await listPublishedAirdrops();
 
@@ -42,30 +43,7 @@ const itemListJsonLd = {
         <h2>{entries.length} entries</h2>
         <span class="meta">{verifiedCount} verified · {unverifiedCount} unverified</span>
       </div>
-      <table class="listing">
-        <thead>
-          <tr>
-            <th>Project</th>
-            <th class="col-chain">Chain</th>
-            <th class="col-effort">Effort</th>
-            <th>Cost</th>
-            <th>Deadline</th>
-            <th>Risk</th>
-          </tr>
-        </thead>
-        <tbody>
-          {entries.map((entry) => (
-            <tr>
-              <td class="project"><a href={`/airdrops/${entry.slug}`}>{entry.data.project}</a></td>
-              <td class="col-chain mono">{entry.data.chain}</td>
-              <td class="col-effort mono">{entry.data.effort}</td>
-              <td class="mono">{entry.data.costFloor}</td>
-              <td class="mono">{entry.data.deadline}</td>
-              <td><span class={`tag risk-${entry.data.risk}`}>{entry.data.risk}</span></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <AirdropTable entries={entries} />
     </div>
   </section>
 </Base>
