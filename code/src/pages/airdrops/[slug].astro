@@ -45,6 +45,11 @@ function toIsoDate(raw: string): string {
 const lastChecked = toIsoDate(data.lastChecked ?? data.addedOn);
 const datePublished = toIsoDate(data.addedOn);
 
+// Show the calendar-subscription nudge only if this entry has at least one
+// event whose date is today or later (UTC).
+const todayUtc = new Date().toISOString().slice(0, 10);
+const hasFutureEvent = (data.events ?? []).some((ev) => toIsoDate(ev.date) >= todayUtc);
+
 const articleJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Article',
@@ -119,6 +124,16 @@ const sellCta = buildSellCtaHref(entry.slug, data.project, data.chain, LIFI_INTE
       <article class="entry-body">
         <Content />
       </article>
+
+      {hasFutureEvent && (
+        <aside class="cal-nudge" aria-label="Calendar subscription">
+          <strong>📅 This entry has a dated milestone.</strong>
+          <span>
+            {' '}Subscribe to the directory's <a href="/tools/calendar">deadline calendar</a>
+            {' '}— {data.project}'s milestone is in the feed, no signup, no email.
+          </span>
+        </aside>
+      )}
 
       <div class="note">
         Before acting on any listing, verify the official link directly — never click a "claim" button on a third-party site.
@@ -216,6 +231,17 @@ const sellCta = buildSellCtaHref(entry.slug, data.project, data.chain, LIFI_INTE
       background: #2e8a3f;
       box-shadow: 0 0 0 2px rgba(46, 138, 63, 0.18);
     }
+    .cal-nudge {
+      display: block;
+      margin: 1.25rem 0 0.5rem;
+      padding: 0.7rem 0.95rem;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-left: 3px solid var(--accent, #c8531a);
+      background: #fdfbf6;
+      border-radius: 4px;
+      font-size: 0.92rem;
+    }
+    .cal-nudge a { font-weight: 600; }
     .related-guides {
       margin-top: 2rem;
       padding: 1rem 1.25rem;

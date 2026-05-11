@@ -11,6 +11,9 @@ officialUrl: https://www.megaeth.com
 twitter: megaeth_labs
 addedOn: 2026-05-11
 lastChecked: 2026-05-11
+events:
+  - date: 2026-06-23
+    label: Terminal Points Season 1 ends
 ---
 
 MegaETH shipped one of the highest-performance EVM rollups (sub-10ms preconfs) to mainnet at the end of April 2026 alongside the MEGA token. Terminal Points Season 1 is the immediate post-TGE incentive window — explicitly time-bounded (closes Jun 23 2026), with weekly interactions across priority apps gating the bulk of the allocation.

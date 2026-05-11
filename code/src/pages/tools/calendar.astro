@@ -1,0 +1,250 @@
+---
+import Base from '../../layouts/Base.astro';
+import { listPublishedAirdrops } from '../../lib/airdrops.ts';
+
+const entries = await listPublishedAirdrops();
+
+interface UpcomingRow {
+  project: string;
+  slug: string;
+  date: string;
+  label: string;
+}
+function isoDateOnly(raw: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return raw;
+  return d.toISOString().slice(0, 10);
+}
+const today = new Date().toISOString().slice(0, 10);
+const upcoming: UpcomingRow[] = [];
+for (const e of entries) {
+  for (const ev of e.data.events ?? []) {
+    const date = isoDateOnly(ev.date);
+    if (date < today) continue;
+    upcoming.push({ project: e.data.project, slug: e.slug, date, label: ev.label });
+  }
+}
+upcoming.sort((a, b) => a.date.localeCompare(b.date));
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? 'https://web3-discover.vercel.app';
+const httpsIcs = `${siteUrl}/airdrops.ics`;
+const webcalIcs = httpsIcs.replace(/^https?:\/\//, 'webcal://');
+const googleHref = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(webcalIcs)}`;
+const outlookHref = `https://outlook.live.com/calendar/0/addcalendar?url=${encodeURIComponent(httpsIcs)}`;
+
+const title = 'Airdrop deadlines calendar — subscribe in Google / Apple Calendar';
+const description = `Subscribe to ${upcoming.length} upcoming airdrop deadline${
+  upcoming.length === 1 ? '' : 's'
+} plus a weekly directory review — pushed into the calendar app you already use. Updated as new entries are added.`;
+
+const softwareJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'web3-discover airdrop calendar',
+  url: `${siteUrl}/tools/calendar`,
+  applicationCategory: 'UtilityApplication',
+  operatingSystem: 'Web',
+  description,
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  publisher: { '@type': 'Organization', name: 'web3-discover', url: siteUrl },
+};
+---
+<Base title={title} description={description} extraJsonLd={softwareJsonLd}>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker">Tools</div>
+      <h1>Airdrop deadlines, pushed into your calendar.</h1>
+      <p class="lede">
+        Subscribe once, get reminded inside Google Calendar / Apple Calendar /
+        Outlook every time a curated airdrop hits a TGE, snapshot, unlock, or
+        season-end milestone. Plus a weekly Sunday directory review so you don't
+        forget to check the points.
+      </p>
+
+      <div class="cal-cta-row">
+        <a class="cal-cta cal-cta-google" href={googleHref} rel="noopener" target="_blank">
+          Add to Google Calendar
+        </a>
+        <a class="cal-cta cal-cta-apple" href={webcalIcs}>
+          Add to Apple Calendar
+        </a>
+        <a class="cal-cta cal-cta-outlook" href={outlookHref} rel="noopener" target="_blank">
+          Add to Outlook
+        </a>
+      </div>
+
+      <div class="cal-copy">
+        <label class="cal-copy-label" for="cal-url">Or copy the feed URL:</label>
+        <div class="cal-copy-row">
+          <input id="cal-url" type="text" readonly value={webcalIcs} />
+          <button id="cal-copy-btn" type="button" class="cal-copy-btn">Copy</button>
+        </div>
+        <p class="cal-hint">
+          Subscribing keeps the feed live — when we add a new dated milestone, it
+          appears in your calendar without doing anything. Direct HTTPS feed:
+          <a href={httpsIcs}><code>/airdrops.ics</code></a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>What's currently in the feed</h2>
+        <span class="meta">{upcoming.length} dated event{upcoming.length === 1 ? '' : 's'} + 1 weekly review</span>
+      </div>
+      {upcoming.length > 0 ? (
+        <table class="listing">
+          <thead>
+            <tr>
+              <th class="col-date">Date (UTC)</th>
+              <th>Project</th>
+              <th>Milestone</th>
+            </tr>
+          </thead>
+          <tbody>
+            {upcoming.map((row) => (
+              <tr>
+                <td class="mono">{row.date}</td>
+                <td class="project"><a href={`/airdrops/${row.slug}`}>{row.project}</a></td>
+                <td>{row.label}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p class="meta">
+          No dated milestones currently pending — the directory is mostly points
+          campaigns without fixed end dates. The weekly review reminder still
+          fires every Sunday at 09:00 UTC.
+        </p>
+      )}
+      <p style="margin-top:1rem;">
+        <a href="/airdrops">Browse the full directory →</a>
+        <span class="dim"> · </span>
+        <a href="/rss.xml">RSS feed</a>
+        <span class="dim"> · </span>
+        <a href="/llms.txt">LLM index</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2>How it works</h2>
+      <ul>
+        <li>
+          <strong>iCalendar (RFC 5545)</strong> feed at <code>/airdrops.ics</code> — the
+          same format Google / Apple / Outlook / Fastmail consume.
+        </li>
+        <li>
+          <strong>One global feed, no auth.</strong> Currently no per-user filtering;
+          all subscribers see the same dated milestones plus the Sunday reminder.
+        </li>
+        <li>
+          <strong>Auto-refresh.</strong> The feed is marked <code>REFRESH-INTERVAL</code>
+          1 day, so most clients re-poll daily. New milestones show up without any
+          action from you.
+        </li>
+        <li>
+          <strong>What counts as a dated event:</strong> TGE date, snapshot cutoff,
+          token unlock schedule, season-end date. "Ongoing" points campaigns aren't
+          calendarable per-entry but the Sunday review reminder covers them.
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <script>
+    const btn = document.getElementById('cal-copy-btn');
+    const input = document.getElementById('cal-url') as HTMLInputElement | null;
+    btn?.addEventListener('click', async () => {
+      if (!input) return;
+      try {
+        await navigator.clipboard.writeText(input.value);
+        const original = btn.textContent;
+        btn.textContent = 'Copied ✓';
+        setTimeout(() => {
+          btn.textContent = original ?? 'Copy';
+        }, 1500);
+      } catch {
+        input.select();
+        input.setSelectionRange(0, input.value.length);
+      }
+    });
+  </script>
+
+  <style>
+    .cal-cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin: 1.25rem 0 0.5rem;
+    }
+    .cal-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.55rem 0.95rem;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      background: #fff;
+      color: inherit;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.93rem;
+      transition: border-color 120ms ease, transform 120ms ease;
+    }
+    .cal-cta:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .cal-cta-google { border-color: #4285f4; color: #1a3a8f; }
+    .cal-cta-apple { border-color: #000; color: #000; }
+    .cal-cta-outlook { border-color: #0078d4; color: #04437a; }
+    .cal-copy {
+      margin-top: 1rem;
+      max-width: 640px;
+    }
+    .cal-copy-label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.35rem;
+      color: var(--ink-soft, #444);
+    }
+    .cal-copy-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .cal-copy-row input {
+      flex: 1 1 auto;
+      padding: 0.55rem 0.7rem;
+      font-family: var(--font-mono);
+      font-size: 0.86rem;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      background: #fdfbf6;
+    }
+    .cal-copy-btn {
+      padding: 0.55rem 0.95rem;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .cal-copy-btn:hover { border-color: var(--accent); }
+    .cal-hint {
+      margin-top: 0.6rem;
+      font-size: 0.85rem;
+      color: var(--ink-soft, #555);
+    }
+    .col-date { width: 11ch; }
+    .dim { color: #888; }
+  </style>
+</Base>

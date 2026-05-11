@@ -5,3 +5,6 @@ Sitemap: https://web3-discover.vercel.app/sitemap-index.xml
 
 # LLM-native entry point — Model Context Protocol server + machine-readable index
 # https://web3-discover.vercel.app/llms.txt
+
+# Subscribable airdrop deadline feed (iCalendar / RFC 5545)
+# https://web3-discover.vercel.app/airdrops.ics

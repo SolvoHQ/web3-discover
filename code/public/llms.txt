@@ -44,6 +44,8 @@ curl -X POST https://web3-discover.vercel.app/api/mcp \
 - Tools: https://web3-discover.vercel.app/tools
 - RSS: https://web3-discover.vercel.app/rss.xml
 - Sitemap: https://web3-discover.vercel.app/sitemap-index.xml
+- iCalendar deadline feed: https://web3-discover.vercel.app/airdrops.ics
+- Calendar subscribe page: https://web3-discover.vercel.app/tools/calendar
 
 ## Data policy
 

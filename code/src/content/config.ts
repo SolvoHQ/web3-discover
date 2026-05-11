@@ -16,6 +16,14 @@ const airdrops = defineCollection({
     addedOn: z.coerce.string(),
     lastChecked: z.coerce.string().optional(),
     status: z.enum(['active', 'ended']).default('active'),
+    events: z
+      .array(
+        z.object({
+          date: z.coerce.string(),
+          label: z.string(),
+        }),
+      )
+      .optional(),
   }),
 });
 

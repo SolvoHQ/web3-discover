@@ -11,6 +11,9 @@ officialUrl: https://solayer.org
 twitter: solayer_labs
 addedOn: 2026-05-11
 lastChecked: 2026-05-11
+events:
+  - date: 2026-05-11
+    label: LAYER community unlock
 ---
 
 Solayer is Solana's largest restaking layer. LAYER TGE'd earlier in 2025 but Season 2 "Emerald Rewards" is the active distribution path now — sSOL and sUSD deposits earn LAYER while you wait. The Emerald Card brings spend-based accrual into the same point pool.

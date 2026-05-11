@@ -4,7 +4,7 @@ import { listPublishedAirdrops } from '../../lib/airdrops.ts';
 
 const entries = await listPublishedAirdrops();
 const title = 'Tools — wallet-aware airdrop utilities';
-const description = `Three client-side, non-custodial tools paired with our ${entries.length} curated airdrop entries: wallet activity matching, token-holdings checking, and integrator-fee DEX swap.`;
+const description = `Four client-side, non-custodial tools paired with our ${entries.length} curated airdrop entries: wallet activity matching, token-holdings checking, integrator-fee DEX swap, and a calendar-subscribable deadline feed.`;
 ---
 <Base title={title} description={description}>
   <section class="hero">
@@ -12,8 +12,9 @@ const description = `Three client-side, non-custodial tools paired with our ${en
       <div class="kicker">Tools</div>
       <h1>Wallet-aware tools.</h1>
       <p class="lede">
-        All three tools run entirely in your browser. We never see your address,
-        we never custody, we never ask you to sign. Paste, get an answer, leave.
+        Three browser-only tools (never see your address, never custody, never
+        ask you to sign) plus one subscribe-and-forget calendar feed. Paste,
+        get an answer, leave — or subscribe once and let deadlines come to you.
       </p>
     </div>
   </section>
@@ -53,6 +54,18 @@ const description = `Three client-side, non-custodial tools paired with our ${en
             Pre-selects the right token when you land here from a listing.
           </p>
           <span class="tool-cta">Open swap →</span>
+        </a>
+
+        <a class="tool-card" href="/tools/calendar">
+          <div class="tool-kicker">Deadline reminders</div>
+          <h2>Calendar</h2>
+          <p>
+            Subscribe once in Google / Apple / Outlook. Every TGE, snapshot,
+            unlock, and season-end milestone from the directory gets pushed
+            into the calendar you already check. Plus a weekly Sunday review
+            reminder.
+          </p>
+          <span class="tool-cta">Subscribe →</span>
         </a>
       </div>
 

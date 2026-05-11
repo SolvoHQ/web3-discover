@@ -11,6 +11,9 @@ officialUrl: https://www.plasma.to
 twitter: Plasma
 addedOn: 2026-05-11
 lastChecked: 2026-05-11
+events:
+  - date: 2026-07-28
+    label: XPL token unlock
 ---
 
 Plasma's wedge is zero-fee stablecoin transfers settled to Bitcoin. XPL TGE'd in late September 2025 and has token unlocks scheduled for Apr 26 and Jul 28 2026. The ongoing reward path is staking inflation (~5%) plus ecosystem DeFi yield — this is no longer a pre-TGE airdrop play but it's an active points/staking ecosystem.
