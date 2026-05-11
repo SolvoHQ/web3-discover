@@ -75,9 +75,32 @@ Mastodon's 500-char limit; the script will throw if a generated toot exceeds.
 - Idempotency key per slug + 4-byte random suffix prevents duplicate posts
   on retry.
 
-v1 = manual invocation only. Automated daily cron is deferred until we know
-the post format actually converts (referrers in GoatCounter from `mastodon.social`
-or `web.mastodon.online` UA strings).
+## 7-day runway (`post-mastodon-runway.mjs`)
+
+After the 12-toot opener, a 7-day cadence runway is scheduled via Mastodon's
+own `scheduled_at` API parameter — **no Vercel cron slot consumed** (Hobby has
+only 2 daily-cron slots; both occupied by `digest` weekly + `sponsor-watch`
+daily). Each run schedules 7 toots, one per day at 13:00 UTC, covering 7
+content themes:
+
+| Day | Theme | Content |
+|-----|-------|---------|
+| 1 | `top-3-nearest-deadline` | Top-3 verified airdrops sorted by nearest deadline >= today (auto-pulled from `api/_airdrops.json`) |
+| 2 | `digest-tease` | Tease the weekly digest (timed 1h before Wed 14:00 UTC cron) |
+| 3 | `tool-wallet-check` | `/tools/wallet-check` nudge |
+| 4 | `tool-eligibility` | `/tools/eligibility` nudge |
+| 5 | `tool-historical-value` | `/tools/historical-value` nudge |
+| 6 | `vs-competitor` | `/vs/airdrops-io` pointer (links to 7 competitor pages) |
+| 7 | `dashboard-launch` | `/dashboard?addr=` 5-tool consolidation |
+
+Operations:
+- **Schedule next runway:** `node code/scripts/post-mastodon-runway.mjs`
+- **Dry-run all 7:** `--dry-run`
+- **Inspect queue:** `--list` (calls `GET /api/v1/scheduled_statuses`)
+- **Override start date:** `--start YYYY-MM-DD`
+
+A follow-up problem with `not_before='2026-05-18T22:00:00+00:00'` runs the
+next 7-day batch (and reviews / iterates content themes).
 
 ## What's next
 
