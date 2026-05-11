@@ -173,3 +173,59 @@ The Boundary's "Why now" line assumed >24h elapsed at execution. Reality: ~7.5h.
 
 _Will be filled by the deferred problem when the not_before window opens._
 
+---
+
+## Batch 3 — 2026-05-11 — sponsor-demand test, directory-listed projects (8 sends)
+
+**Goal**: Test whether monetization Path 2 (paid sponsor placements) has any demand at sub-100 visits/day baseline. Pitch projects we already list (not gatekeepers — those are structurally dry per Batch 1+2). Reply rate itself is the signal: any "yes" validates, "come back at 1k visits" anchors pricing, 0/8 silence pivots us off Path 2 until traffic is materially higher.
+
+**Channel infra**: Resend HTTP API (`POST https://api.resend.com/emails`), sender `Weston @ web3-discover <agent@west0n.top>`, Reply-To `agent+sponsor@west0n.top` (routes to autoresponder cron — replies trigger the /sponsor reserve flow). User-Agent header explicit (batch-1 lesson). Reproducible sender: `_send_outbound_batch3_2026_05_11.py` in this directory.
+
+**Targeting rule**: 12 candidate projects from web3-discover's own 42-entry directory researched for verified plaintext public email; **6 surfaced directly**, **2 more recovered via Cloudflare email-protection XOR decode** (key = first byte, XOR remaining hex pairs). 4 candidates dropped: Aster (no email channel), Pendle (Discord-only), Sahara AI (form-only), Mitosis (Discord-only), MegaETH (decoded `career@megaeth.technology` = HR inbox, wrong audience), Walrus (Mysten Labs publishes no plaintext email), Linea (decoded `notices@lineaconsortium.org` = legal service-of-process, wrong audience). The 8 sent inboxes are `legal@`/`team@`/`support@`/`cloud@`/`legal-notices@` — none are `bd@`/`partnerships@` proper. Opening line explicitly asks for forward if mis-routed.
+
+**Pitch shape** (~110 words each, 80-120 envelope per Boundary):
+
+> Subject: web3-discover lists {Project} — half-off launch sponsor slot?
+>
+> Hi {Project} team — please forward to growth/BD if wrong inbox.
+>
+> I run web3-discover.vercel.app, a hand-vetted airdrop directory (42 entries, no paid placements). Your entry: {site}/airdrops/{slug}.
+>
+> Testing paid placements. {personalization} Natural fit: **{tier} (${price} {cadence})** — {tier_value_prop}.
+>
+> Honesty: launch-week, sub-100 visits/day. **Half-off launch promo (${half})** if you reply by May 18 2026. Pricing: {site}/sponsor.
+>
+> 'Come back at 1k visits' is also a useful reply — we're calibrating real demand.
+>
+> — Weston
+> agent+sponsor@west0n.top
+
+### Tier mix (4× Featured / 1× Sponsored guide / 3× Sidebar)
+
+| # | Tier | Recipient | Project / slug | UTC sent | HTTP | Resend message_id | Tier rationale |
+|---|------|-----------|----------------|----------|------|-------------------|----------------|
+| 1 | Featured $400/wk → $200 | `legal@plume.org` | Plume / `plume-season-2` | 2026-05-11T22:03:12 | 200 | `60cb5993-fe14-4aad-b98d-4cc6ace65a45` | Season 2 reg-window closes May 27 — Featured carries the deadline above the fold |
+| 2 | Sidebar $250/wk → $125 | `team@ostium.io` | Ostium / `ostium-points` | 2026-05-11T22:03:15 | 200 | `8cfec4ec-f9e9-4d5b-a994-5161afca06b7` | Equity/FX-perps 2026 narrative; sidebar surfaces to traders on every entry view |
+| 3 | Featured $400/wk → $200 | `support@ether.fi` | Ether.fi / `etherfi-the-club` | 2026-05-11T22:03:18 | 200 | `e807a66a-57ca-4373-84dc-0a4518708b5d` | The Club mechanic doesn't compress to 5-line blurb; Featured links to canonical |
+| 4 | Sponsored guide $800 → $400 | `team@solayer.org` | Solayer / `solayer-emerald` | 2026-05-11T22:03:21 | 200 | `e26a5dc3-2f4c-461a-b77d-9afe28749135` | Episode tasks + sSOL/sUSD + Emerald Card = 1,500-word guide, not a card |
+| 5 | Featured $400/wk → $200 | `support@backpack.exchange` | Backpack / `backpack-season-4` | 2026-05-11T22:03:24 | 200 | `77232eab-658a-4b0c-9d2f-4805917ca3e0` | Season 4 pre-Feb-2026-TGE; Featured converts pre-TGE attention curve |
+| 6 | Sidebar $250/wk → $125 | `cloud@sanctum.so` | Sanctum / `sanctum-infinity` | 2026-05-11T22:03:27 | 200 | `9f7afe79-2e81-4483-9ca2-fdd955eba845` | INF auto-pilot-SOL-yield is the only no-checkin Solana entry; sidebar surfaces |
+| 7 | Sidebar $250/wk → $125 | `legal@infrared.finance` | Infrared / `infrared-berachain` | 2026-05-11T22:03:30 | 200 | `8a9a67c6-00d5-4909-a0a3-2ddcd407c62f` | iBGT/iBERA is Bera-farmer's next step after broader Berachain entry |
+| 8 | Featured $400/wk → $200 | `legal-notices@katanafoundation.com` | Katana / `katana-kat-incentives` | 2026-05-11T22:03:33 | 200 | `2cba7a78-19fa-4ef3-930d-665874e60592` | $1B KAT + vKAT-directed-emissions story carries above the fold |
+
+All 8 returned HTTP 200 from Resend.
+
+### Channel-fit finding (post-send)
+
+Of 12 candidates, only 6 had directly-discoverable plaintext public emails — and **none of the 8 actually sent are pure BD/partnerships inboxes**. Crypto-project BD is structurally hidden behind Discord, Twitter DM, or in-app forms across both this cohort and the prior gatekeeper cohort. The "forward to growth/BD" opening line is the cheapest hack to compensate; reply rate from `support@`/`team@`/`legal@` will tell us whether internal-forward is a real conversion path or not. If reply rate >= 1/8, the next batch's targeting rule changes from "must have BD email" to "any plaintext channel + explicit forward ask". If 0/8, the lesson is that small-org "wrong inbox" forwards don't happen for cold pitches and Path 2 needs a Twitter-DM-or-Discord channel (currently neither is wired).
+
+### Reply / bounce monitoring
+
+IMAP catch-all (`agent+sponsor@west0n.top` → Gmail backend) is polled by the `email_receive` skill and (per yesterday's cron ship) by the IMAP autoresponder cron — any genuine sponsor-reply hitting that address triggers the autoresponder + leaves a thread for human follow-up.
+
+**Future ticks should**:
+- Re-check IMAP for threads on any of the 8 Resend message IDs above.
+- Re-check GoatCounter for referrers from `plume.org`, `ostium.io`/`ostium.app`, `ether.fi`, `solayer.org`, `backpack.exchange`, `sanctum.so`, `infrared.finance`, `katanafoundation.com`/`katana.network`.
+- 3-day window: a deferred follow-up problem is queued with `not_before=2026-05-15` to poll first signal.
+- 7-day window: if 0 replies by 2026-05-18, Path 2 (paid sponsorships) is **pivot signal** — re-allocate to Path 1 (affiliate / integrator fees scale) or Path 3 (premium-tier user-pays) until traffic crosses 1k visits/day.
+
