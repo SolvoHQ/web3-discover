@@ -1,0 +1,70 @@
+---
+import Base from '../layouts/Base.astro';
+const title = 'Affiliate disclosure — web3-discover';
+const description = 'How web3-discover makes money, what links may earn us commission, and how editorial integrity is preserved. Plain English, FTC-style.';
+---
+<Base title={title} description={description}>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker">Disclosure</div>
+      <h1>How we make money.</h1>
+      <p class="lede">
+        Short version: some outbound links on this site may earn us a commission. The risk
+        flag, the listing position, and the words we use to describe a project are
+        <em>never</em> influenced by that commission.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="prose">
+        <h2>Where money comes from</h2>
+        <ul>
+          <li><strong>Affiliate / referral links to centralized exchanges.</strong> Each per-airdrop page has a "Where to sell your airdrop" footer listing major exchanges (Binance, OKX, MEXC, Bybit, and others). Some of those links are or may become referral-attributed — meaning if you sign up via our link and later trade, the exchange shares a portion of the trading fee with us. You pay the same fee either way.</li>
+          <li><strong>Sponsored slots.</strong> A single Featured slot at the top of <a href="/airdrops">/airdrops</a> may be paid placement. It is always visually distinct, labelled <strong>Sponsored</strong>, and explicitly linked back to this disclosure. See our <a href="/sponsor">sponsor page</a> for the offer.</li>
+          <li><strong>Adjacent affiliates.</strong> Where a listing genuinely requires a hardware wallet, on-ramp, bridge, or wallet extension, we may link the relevant service via referral. We do not spray affiliate links across listings where they don't add user value.</li>
+        </ul>
+
+        <h2>What we will not do</h2>
+        <ul>
+          <li>We will <strong>not</strong> change a project's risk flag for money. <code>verified</code>, <code>unverified</code>, and <code>suspect</code> are editorial assessments and are not for sale.</li>
+          <li>We will <strong>not</strong> drop a scam project's listing for money. Suspected scams are excluded entirely; we do not accept payment to "review" that decision.</li>
+          <li>We will <strong>not</strong> hide a paid placement. Every sponsored entry is labelled and visually distinct.</li>
+          <li>We will <strong>not</strong> recommend a CEX, wallet, bridge, or service we don't actually use ourselves.</li>
+        </ul>
+
+        <h2>How affiliate links are marked</h2>
+        <p>
+          Outbound links that are or may be referral-attributed carry <code>rel="sponsored"</code>
+          and open in a new tab. Direct exchange-homepage links without commission attribution
+          are also present for users who prefer them. Every per-airdrop page footer that contains
+          such links carries a short visible disclosure with a link back to this page.
+        </p>
+
+        <h2>Current state, honestly</h2>
+        <p>
+          As of <strong>May 2026</strong>, the "Where to sell" links on per-airdrop pages point to
+          the standard signup / homepage URLs of major exchanges. We are in the process of
+          replacing them with attributed referral URLs. When that flip happens, the links will
+          continue to work identically for you — the only change is that we may earn a
+          commission. The user-facing recommendations do not change.
+        </p>
+
+        <h2>Affecting our editorial independence</h2>
+        <p>
+          We treat editorial integrity as the only durable moat we have. A reader who finds out
+          we lied for a $50 affiliate commission will never come back, and they'll tell their
+          friends. Every commercial decision on this site is filtered through that lens first.
+        </p>
+
+        <h2>Questions</h2>
+        <p>
+          Email <a href="mailto:hello@west0n.top">hello@west0n.top</a> if anything on this page
+          isn't clear, or if you spot a link or listing that you think violates the rules above.
+          We take that seriously.
+        </p>
+      </div>
+    </div>
+  </section>
+</Base>

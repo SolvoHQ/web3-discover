@@ -31,6 +31,11 @@ const canonicalUrl = canonical ?? (pathTrim ? `${siteUrl}${pathTrim}` : siteUrl)
     <meta name="twitter:description" content={description} />
     <meta name="robots" content="index,follow" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f7f5ef'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='22' font-weight='700' text-anchor='middle' fill='%23c8531a'%3Ew%3C/text%3E%3C/svg%3E" />
+    <script
+      data-goatcounter="https://web3discover.goatcounter.com/count"
+      async
+      src="https://gc.zgo.at/count.js"
+    ></script>
   </head>
   <body>
     <header class="masthead">
@@ -51,7 +56,12 @@ const canonicalUrl = canonical ?? (pathTrim ? `${siteUrl}${pathTrim}` : siteUrl)
       <div class="container">
         <p><strong>web3-discover</strong> — the airdrop hunter's honest map. Hand-vetted, scam-filtered, no paid placements pretending to be listings.</p>
         <p>Listings are informational, not financial advice. Verify every official link before acting.</p>
-        <p style="margin-top:0.5rem;"><a href="/airdrops">Browse airdrops</a> &middot; <a href="/about">About</a></p>
+        <p class="footer-nav">
+          <a href="/airdrops">Airdrops</a> &middot;
+          <a href="/about">About</a> &middot;
+          <a href="/sponsor">Sponsor</a> &middot;
+          <a href="/disclosure">Affiliate disclosure</a>
+        </p>
       </div>
     </footer>
   </body>

@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { listPublishedAirdrops, type AirdropEntry } from '../../lib/airdrops.ts';
+import { SELL_EXCHANGES } from '../../lib/exchanges.ts';
 
 export async function getStaticPaths() {
   const entries = await listPublishedAirdrops();
@@ -73,6 +74,24 @@ const description = `${data.project} (${data.chain}) airdrop: ${data.action} Eff
       <div class="note">
         Before acting on any listing, verify the official link directly — never click a "claim" button on a third-party site.
       </div>
+
+      <aside class="sell-block" aria-labelledby="sell-heading">
+        <h2 id="sell-heading">Where to sell your {data.project} airdrop</h2>
+        <p class="sell-lede">
+          When the tokens land, you'll want a centralized exchange with real liquidity. These are the major venues that typically list new airdrop tokens fastest. Compare fees and KYC requirements for your region before depositing.
+        </p>
+        <ul class="sell-list">
+          {SELL_EXCHANGES.map((ex) => (
+            <li>
+              <a href={ex.url} rel="sponsored noopener" target="_blank">{ex.name}</a>
+              <span class="sell-note"> — {ex.note}</span>
+            </li>
+          ))}
+        </ul>
+        <p class="sell-disclosure">
+          We may earn a commission on some of these links — see our <a href="/disclosure">affiliate disclosure</a>. Listings are never influenced by commercial relationships.
+        </p>
+      </aside>
 
       <p style="margin-top:1.5rem;"><a href="/airdrops">← Back to all airdrops</a></p>
     </div>
