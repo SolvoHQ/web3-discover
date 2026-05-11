@@ -17,18 +17,45 @@ function parseFrontmatter(text) {
   const yaml = match[1];
   const body = match[2].trim();
   const data = {};
-  for (const line of yaml.split(/\r?\n/)) {
+  const lines = yaml.split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
     if (!line || /^\s*#/.test(line)) continue;
+    // events: array block — consume the indented list that follows.
+    if (/^events:\s*$/.test(line)) {
+      const events = [];
+      let cur = null;
+      while (i + 1 < lines.length && /^\s+/.test(lines[i + 1])) {
+        i++;
+        const sub = lines[i];
+        const dash = sub.match(/^\s+-\s+([a-zA-Z]+):\s*(.*)$/);
+        if (dash) {
+          if (cur) events.push(cur);
+          cur = {};
+          cur[dash[1]] = stripQuotes(dash[2]);
+          continue;
+        }
+        const kv = sub.match(/^\s+([a-zA-Z]+):\s*(.*)$/);
+        if (kv && cur) cur[kv[1]] = stripQuotes(kv[2]);
+      }
+      if (cur) events.push(cur);
+      if (events.length) data.events = events;
+      continue;
+    }
     const m = line.match(/^([a-zA-Z][a-zA-Z0-9_]*):\s*(.*)$/);
     if (!m) continue;
     const key = m[1];
-    let val = m[2].trim();
-    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-      val = val.slice(1, -1);
-    }
-    data[key] = val;
+    data[key] = stripQuotes(m[2].trim());
   }
   return { data, body };
+}
+
+function stripQuotes(v) {
+  const s = v.trim();
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    return s.slice(1, -1);
+  }
+  return s;
 }
 
 const files = fs.readdirSync(CONTENT_DIR).filter((f) => f.endsWith('.md'));
@@ -51,6 +78,7 @@ const entries = files
       addedOn: data.addedOn,
       lastChecked: data.lastChecked || data.addedOn,
       status: data.status || 'active',
+      events: Array.isArray(data.events) ? data.events : [],
       notes: body,
     };
   })

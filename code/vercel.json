@@ -1,5 +1,8 @@
 {
   "rewrites": [
     { "source": "/api/airdrops/:slug.json", "destination": "/api/airdrops/:slug" }
+  ],
+  "crons": [
+    { "path": "/api/cron/digest", "schedule": "0 14 * * 3" }
   ]
 }

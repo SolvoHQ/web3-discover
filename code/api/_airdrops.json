@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-11T16:29:47.030Z",
+  "generatedAt": "2026-05-11T16:40:05.641Z",
   "count": 42,
   "entries": [
     {
@@ -17,6 +17,12 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [
+        {
+          "date": "2026-05-11",
+          "label": "Season 3 BASED token distribution opens"
+        }
+      ],
       "notes": "BasedApp wraps Hyperliquid perps with a consumer-grade UX and ships a Visa-rail spend card. Season 3 ran through May 4 2026 (closed) and the claim distribution unlocks today. The Diamond formula weights consistent activity above burst volume — same pattern as Backpack, so a small daily presence beats one large pre-snapshot trade.\n\nThe card / payments leg matters mechanically: card-spend accrues Diamonds even when markets are flat. If you're already in the Hyperliquid ecosystem, BasedApp is a low-friction adjacent claim — but read the docs before granting wallet permissions; this is one of several Hyperliquid-native apps and the legitimate one is at based.one (verify the domain match)."
     },
     {
@@ -34,6 +40,12 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [
+        {
+          "date": "2026-05-15",
+          "label": "Core Contributors W unlock (legal-agreement schedule)"
+        }
+      ],
       "notes": "Wormhole's W 2.0 upgrade in Oct 2025 replaced annual cliff unlocks with bi-weekly releases (smoother supply curve, less concentrated sell pressure). The Core Contributors allocation is the exception — those tokens technically unlock bi-weekly to the Wormhole Foundation but remain time-locked under the original annual contractual schedule, with May 15 as the next contractual-release date.\n\nFor W holders, this means May 15 isn't an automatic supply event — it's a date past which Foundation-held contributor tokens become legally usable. Worth noting in the calendar but historically less price-sensitive than open cliff unlocks. Stake-for-governance + 4% yield remains the primary ongoing incentive surface."
     },
     {
@@ -51,6 +63,12 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [
+        {
+          "date": "2026-05-27",
+          "label": "Season 2 registration window closes"
+        }
+      ],
       "notes": "Plume is a tokenization-focused L2 with 280K+ holders and Series A funding from Galaxy and Haun Ventures. Season 2 expands the airdrop to a wider distribution of points-earners, but eligibility is gated on registration + Human Passport — wallets that miss the May 27 cutoff are excluded regardless of points balance.\n\nTreat this as a \"claim-flag\" event: the on-chain farming is mostly done; the action is the registration. The Human Passport requirement is the friction point — give yourself a few days in case score thresholds change late in the window."
     },
     {
@@ -68,6 +86,16 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [
+        {
+          "date": "2026-06-04",
+          "label": "Stage 6 ASTER claim window closes"
+        },
+        {
+          "date": "2026-06-07",
+          "label": "RWA Sprint Season 1 ends"
+        }
+      ],
       "notes": "Aster sits in the Stage-6 tail of its multi-stage airdrop — by design, late stages distribute smaller per-wallet allocations but to wider eligible pools (anti-sniper). The notable detail is the RWA Sprint: Aster lists tokenized commodity / ETF perps (XAU, XAG, OIL, QQQ, SPY) and is one of very few permissionless venues for that exposure, zero maker fees for the duration of the Sprint.\n\nTwo distinct events back-to-back means you can sequence: claim Stage 6 first (no cost), then redeploy any claimed ASTER as RWA-perp collateral to compound into Stage 7 points. If you skip the claim window, the allocation does not roll forward."
     },
     {
@@ -85,6 +113,12 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [
+        {
+          "date": "2026-06-04",
+          "label": "Ecosystem-allocation unlock cliff"
+        }
+      ],
       "notes": "Momentum is Sui's main concentrated-liquidity DEX, ranking among the top-3 venues for SUI/USDC volume. MMT itself was distributed primarily through the launch airdrop and continues to accrue via LP rewards and the ecosystem-allocation pool.\n\nThe Jun 4 unlock releases part of the ecosystem allocation — typically directed to grants, partner protocols, and incentive top-ups rather than dumped to market, but the supply impact still matters for LPs holding MMT-denominated yield. Worth pre-positioning if you're size-deploying liquidity."
     },
     {
@@ -102,6 +136,12 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [
+        {
+          "date": "2026-06-15",
+          "label": "Monthly STRK cliff unlock (~5% of circ. supply)"
+        }
+      ],
       "notes": "Starknet runs one of the longer-lived L2 airdrop programs — Provisions has cycled through multiple eligibility expansions (early dapp users → Stark Stark participants → various GitHub-contributor / ENS-holder cohorts). Worth re-checking eligibility on each round in case your wallet got re-classified.\n\nThe Jun 15 cliff is part of the standard monthly cliff schedule that runs through 2027 — predictable in cadence but each cliff has produced visible short-term selling pressure historically. If you're holding farmed STRK, plan around the cliffs rather than reacting to them."
     },
     {
@@ -119,6 +159,12 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [
+        {
+          "date": "2026-06-16",
+          "label": "DAO Treasury monthly cliff unlock (~2% of supply)"
+        }
+      ],
       "notes": "Arbitrum's most active retail-airdrop surface today isn't the original ARB drop (that closed in 2023) but the STIP / LTIPP program — the DAO grants ARB to dApps which then route it as user-incentives. Worth checking which apps are in the current round; rewards shift between dApps with each round.\n\nThe Jun 16 cliff is the standard monthly linear unlock running through Apr 2027 — historically ~2% of supply releases on the 16th. Predictable, well-known, but worth flagging in the calendar for farmers holding farmed ARB rewards."
     },
     {
@@ -136,6 +182,12 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [
+        {
+          "date": "2026-06-23",
+          "label": "Terminal Points Season 1 ends"
+        }
+      ],
       "notes": "MegaETH shipped one of the highest-performance EVM rollups (sub-10ms preconfs) to mainnet at the end of April 2026 alongside the MEGA token. Terminal Points Season 1 is the immediate post-TGE incentive window — explicitly time-bounded (closes Jun 23 2026), with weekly interactions across priority apps gating the bulk of the allocation.\n\nTime-bounded campaigns reward consistency over burst volume. If you start late in the season, focus on the highest-weight priority apps each week rather than spreading thin."
     },
     {
@@ -153,6 +205,12 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [
+        {
+          "date": "2026-06-26",
+          "label": "First post-TGE unlock cliff (1.03B SAHARA)"
+        }
+      ],
       "notes": "Sahara AI launched its SAHARA token earlier in 2026 with a community-distribution pre-allocation. The Jun 26 cliff is the first major team / investor unlock and historically sets the tone for vesting-driven sell pressure across the following weeks.\n\nFor farmers still earning via the data-contributor pool, the cliff is informational — your accrual continues but per-token economics worsen as supply expands. Worth pre-deciding whether you treat farmed SAHARA as a long-hold or a sell-at-each-unlock position; the answer changes which sub-quests are worth your time."
     },
     {
@@ -170,6 +228,12 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [
+        {
+          "date": "2026-06-30",
+          "label": "Core Contributors monthly cliff unlock"
+        }
+      ],
       "notes": "Optimism's RetroPGF rounds remain one of the most legitimate non-farming OP distribution paths — open-source maintainers, educators, and ecosystem builders have received 5–6 figure OP allocations in prior rounds. Round eligibility refreshes per round, so contribution history matters.\n\nThe Jun 30 cliff is the standard monthly unlock to Core Contributors — historically ~2.9% of circulating supply has released on the 30th. As with ARB and STRK, plan around it rather than reacting; the unlock is fully priced into forward markets but each event still produces visible spot-price impact."
     },
     {
@@ -187,6 +251,16 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [
+        {
+          "date": "2026-05-24",
+          "label": "Season 2 penalty-free claim opens"
+        },
+        {
+          "date": "2026-10-15",
+          "label": "Final claim deadline — unclaimed S burned"
+        }
+      ],
       "notes": "Sonic (Fantom's rebranded L1) ran two airdrop seasons and is now in the wind-down phase. The economics: claim before May 24 incurs a penalty haircut on the locked portion (S2 only); claim May 24–Oct 15 is penalty-free; miss Oct 15 and your unclaimed locked S is permanently burned.\n\nIf you forgot you farmed Sonic during the FTM-to-S transition, this is the last moment to recover the allocation. Hot wallets that interacted with sonicscan.org during 2025 are the most common eligibility path. The two dates split sharply: the penalty-free opening is what matters for most claimants — pre-May 24 claiming actively destroys value."
     },
     {
@@ -204,6 +278,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Backpack ships a self-custodial wallet, a regulated exchange (VARA license), and the Mad Lads NFT collection. The team published the TGE plan in February 2026 — 25% of the token goes to the community. Repeat SOL/USDC spot trades and 1–2× perps are the standard strategies.\n\nConsistency beats spike volume — projects in 2026 weight allocations by activity duration."
     },
     {
@@ -221,6 +296,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Base does not have a confirmed token. The \"exploring\" language is consistent with what large L2s say before formal announcement. If a Base token launches, eligibility will likely lean on long-term consistent activity rather than late-stage volume.\n\nThis entry is unverified because no points page or formal allocation exists. Treat it as exposure-via-usage, not a guaranteed claim."
     },
     {
@@ -238,6 +314,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "The original Berachain airdrop concluded at mainnet — but the Proof-of-Liquidity design means dApps continually distribute their own tokens to liquidity providers. Berachain itself becomes the venue for a portfolio of ongoing micro-airdrops."
     },
     {
@@ -255,6 +332,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Ether.fi already distributed an initial ETHFI airdrop; The Club layers consumer-grade rewards (debit card cashback, APY) on top of restaking. Loyalty tiers feed into future seasonal allocations and partner program multipliers."
     },
     {
@@ -272,6 +350,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Extended has been farming-grade since mid-2025. The team has stated \"all value accrues to the token\" — earlier participants are typically weighted higher. Q2 2026 TGE timing is community-inferred, not confirmed."
     },
     {
@@ -289,6 +368,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Felix is a Liquity-fork CDP on HyperEVM that issues feUSD. The points campaign weights stable-pool deposits and LP positions on HyperSwap higher than passive collateral. The team has guided publicly toward an end-of-2026 TGE, but no token is live yet — speculative airdrop status.\n\nCDP collateralization mechanics introduce real liquidation risk if your collateral asset (especially HYPE) drops fast. Maintain conservative LTV."
     },
     {
@@ -306,6 +386,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Fogo is built specifically for high-frequency onchain trading. Flames Season 2 lives at flames.fogo.io/season-2. Multiple dApps in the ecosystem qualify — diversifying activity across them is the canonical strategy."
     },
     {
@@ -323,6 +404,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Galxe is the closest thing to an \"airdrop ETF\" by usage surface — projects routinely launch their first allocation tasks here. Treat it as a screening layer for which projects to dig deeper on, not a guaranteed yield."
     },
     {
@@ -340,6 +422,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Glider's pitch is \"set-and-forget\" auto-rebalancing across chains. Season 2 points are explicitly stated to convert into airdrop allocation at TGE — formal commitment, not implication. Bridged liquidity earns points continuously."
     },
     {
@@ -357,6 +440,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Hyperliquid runs its own perp orderbook on a high-throughput L1 the team built themselves. The first airdrop (Nov 2024) was one of the largest in crypto history. ~39% of HYPE supply is allocated to \"future emissions\" — Season 2 farming behavior is anchored on consistent, time-weighted activity rather than wash volume.\n\nAlways trade through the official app linked from hyperfoundation.org. Never click \"claim\" buttons from third-party sites."
     },
     {
@@ -374,6 +458,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "HypurrFi rode the Hyperliquid Season 2 narrative to top-3 TVL on HyperEVM. Points multipliers favor stablecoin supply (lower risk) and HYPE looping (higher reward, real liquidation risk). The team has signaled but not formally committed to a TGE, so this is a speculative airdrop farm under the broader Hyperliquid ecosystem umbrella.\n\nDon't loop HYPE if you don't have a margin-of-safety understanding — the multipliers exist because the strategy carries real liquidation risk."
     },
     {
@@ -391,6 +476,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Infrared is the largest single sink for Berachain's PoL system — depositing BGT or BERA here turns the \"which validator do I direct emissions to\" decision into a single-click yield product. No token yet; speculation around an INFRA / RED airdrop is widely held but not officially confirmed.\n\nThis pairs naturally with the broader Berachain entry — Infrared captures the deeper-stack yield on top of basic chain participation."
     },
     {
@@ -408,6 +494,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Ink leans heavily on its ties to Kraken — a top CEX backing materially derisks the protocol. Allocation rules favor early Tydro and Nado users. Unverified rating reflects that final allocation criteria haven't been published."
     },
     {
@@ -425,6 +512,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Katana's incentives are publicly committed at $1B in KAT for ecosystem bootstrapping. POL stakers received part of an initial 15% airdrop — ongoing activity on Katana itself qualifies for continued emissions through vKAT-directed incentives."
     },
     {
@@ -442,6 +530,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Layer3 is a useful \"always-on\" airdrop surface because partner projects rotate through the platform constantly. Even if any single quest is small, the aggregate over months — plus CUBE accrual — is meaningful for low-effort users."
     },
     {
@@ -459,6 +548,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Consensys announced MetaMask MASK alongside the Linea ecosystem — activity inside Linea-native dApps converts into MASK tokens and fee discounts. This makes Linea a structurally privileged airdrop surface within the Consensys stack."
     },
     {
@@ -476,6 +566,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "MASK is an announced-but-not-yet-launched token. Consensys is rolling out MetaMask Rewards as a seasonal points system tied to onchain activity. There is no confirmed snapshot date or formal allocation table yet — entry is rated unverified because rules can shift before TGE.\n\nOnly act inside the official MetaMask app from metamask.io. Phishing extensions and lookalike sites remain one of the highest-loss vectors for crypto users."
     },
     {
@@ -493,6 +584,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Meteora's Dynamic Liquidity Market Maker concentrates LP positions for higher fee capture. After the first MET distribution, the team confirmed multiple future seasons. Season 2 points aren't displayed in the UI yet — accrual is happening server-side.\n\nPick pool risk that matches your tolerance. Stable pairs are calmer; volatile pairs earn more fees but expose you to impermanent loss."
     },
     {
@@ -510,6 +602,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Mitosis is positioning as a unified cross-chain settlement layer. Expedition vaults are the canonical participation surface — early depositors with longer lock periods are weighted higher in expected distribution."
     },
     {
@@ -527,6 +620,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Monad's parallel-EVM L1 finally went live in late 2025. MON has TGE'd but the ecosystem rewards budget is enormous and being distributed in waves, weighted by sustained mainnet usage rather than one-time bridge clicks. The Monad Momentum dashboard tracks partner-protocol participation that compounds forward rewards.\n\nStick to dApps that are explicitly Momentum-partnered — random new deployments on Monad don't necessarily earn anything."
     },
     {
@@ -544,6 +638,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Ostium is part of the 2026 equity-perp narrative — gold, silver, $SPX, and FX pairs are tradeable alongside crypto. The points program runs but no formal TGE date is published, so the entry is rated unverified."
     },
     {
@@ -561,6 +656,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Boros lets you trade off-chain yields (funding rates, real-world rates) with leverage. As a separate product line within Pendle, it operates its own incentive accrual — even Pendle veterans should check Boros independently."
     },
     {
@@ -578,6 +674,12 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [
+        {
+          "date": "2026-07-28",
+          "label": "XPL token unlock"
+        }
+      ],
       "notes": "Plasma's wedge is zero-fee stablecoin transfers settled to Bitcoin. XPL TGE'd in late September 2025 and has token unlocks scheduled for Apr 26 and Jul 28 2026. The ongoing reward path is staking inflation (~5%) plus ecosystem DeFi yield — this is no longer a pre-TGE airdrop play but it's an active points/staking ecosystem.\n\nWatch the unlock dates if you hold XPL — Apr 26 already passed; Jul 28 is the next supply event."
     },
     {
@@ -595,6 +697,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "At a ~$9B valuation Polymarket's POLY could be one of the largest single airdrops in crypto history. Trademark filings indicate the launch window is approaching. Trade across politics, sports, crypto, and finance markets — concentrated activity reads as farming behavior to the team's anti-sybil filters.\n\nVerified rating reflects the team's public commitments and trademark filings, not certainty of allocation size."
     },
     {
@@ -612,6 +715,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "RNBW is not yet live. The points program plus weekly ETH drops is a strong signal of a forthcoming token, but distribution mechanics have not been formally published. Always download Rainbow from rainbow.me — phishing clones of mobile wallets are common."
     },
     {
@@ -629,6 +733,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Reya emphasizes ongoing-activity weighting over snapshot moments — the team has telegraphed this both for sybil resistance and because the rollup-evolution timeline means later activity may matter more than early bursts."
     },
     {
@@ -646,6 +751,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Sanctum's INF is the \"index\" LST on Solana — it routes underlying SOL into a basket of validator LSTs and captures swap fees from the broader Sanctum LST router. CLOUD already TGE'd but the protocol still distributes real yield to INF holders without a points season.\n\nThis is the closest thing to \"auto-pilot Solana staking yield\" in this directory — no daily checkins, no quest grinding."
     },
     {
@@ -663,6 +769,12 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [
+        {
+          "date": "2026-05-11",
+          "label": "LAYER community unlock"
+        }
+      ],
       "notes": "Solayer is Solana's largest restaking layer. LAYER TGE'd earlier in 2025 but Season 2 \"Emerald Rewards\" is the active distribution path now — sSOL and sUSD deposits earn LAYER while you wait. The Emerald Card brings spend-based accrual into the same point pool.\n\nNext community unlock is May 11 2026 (today) — expect short-term price volatility around supply events."
     },
     {
@@ -680,6 +792,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Symbiotic's vault-and-network model means each network you support runs its own incentive program in parallel — choose vaults attached to networks with credible token plans rather than just maximizing yield."
     },
     {
@@ -697,6 +810,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Virtuals is the de-facto launchpad for tokenized AI agents on Base (with Solana expansion). Genesis Points are the gating mechanism for new agent launches — accruing them gives you allocation in the next Genesis batch, which is where most of the recent ecosystem alpha has lived.\n\nDAB requires daily claims to compound — set a reminder. Recognized Agent staking has higher reward density than passive veVIRTUAL."
     },
     {
@@ -714,6 +828,7 @@
       "addedOn": "2026-05-11",
       "lastChecked": "2026-05-11",
       "status": "active",
+      "events": [],
       "notes": "Walrus is the dominant decentralized blob-storage protocol on Sui. The WAL token is the unit of payment for storage and the staking asset for storage nodes. Slush wallet's \"Boosted WAL rewards\" promo stacks on top of base staking yield. The Walrus Voyager quest line on Galxe is the lowest-cost entry point if you just want exposure."
     }
   ]
