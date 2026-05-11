@@ -61,10 +61,11 @@ const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
       <h2 id="evm">EVM — Jumper (LiFi)</h2>
       <p class="muted">
         Cross-chain aggregator across Ethereum, Arbitrum, Base, Optimism, Polygon, BSC, +20 more.
-        Our integrator key is registered with LiFi for fee attribution:
-        <code data-integrator="evm-key">{LIFI_INTEGRATOR_KEY}</code><br/>
-        Fee-recipient EVM address:
-        <code data-integrator="evm">{EVM_INTEGRATOR_ADDRESS}</code>
+        Our LiFi integrator account is live (key
+        <code data-integrator="evm-key">{LIFI_INTEGRATOR_KEY}</code>,
+        EVM fee recipient <code data-integrator="evm">{EVM_INTEGRATOR_ADDRESS}</code>),
+        but fees on the deeplink path below currently run at <strong>0 bps</strong> —
+        see "How the fee works" for the architectural honesty.
       </p>
 
       <p>
@@ -74,10 +75,11 @@ const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
       </p>
 
       <p class="micro">
-        The embedded EVM widget is on the v2 roadmap (requires bundling LiFi's React widget).
-        For now the deeplink above carries our integrator UTM so LiFi can attribute swaps for
-        fee accrual once partner registration completes. If you prefer to bypass us, use
-        <a href="https://jumper.exchange" rel="noopener" target="_blank">jumper.exchange</a> directly.
+        Jumper's hosted frontend ignores integrator URL params for fee attribution — same is
+        true of every major EVM aggregator. The embedded LiFi Widget (v2 roadmap) is the
+        only path to non-zero EVM fees; until it ships, this section is informational and
+        the deeplink above routes you to jumper.exchange unmodified. If you prefer to
+        bypass us entirely, use <a href="https://jumper.exchange" rel="noopener" target="_blank">jumper.exchange</a> directly.
       </p>
     </div>
   </section>
@@ -96,11 +98,16 @@ const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
             top-up; we'll flip it on as soon as the wallet is funded.
           </li>
           <li>
-            <strong>EVM swaps via LiFi/Jumper:</strong> integrator key
-            <code>{LIFI_INTEGRATOR_KEY}</code> is attributed in the deeplink URL.
-            LiFi confirms partner registration before fees flow. Currently
-            <em>0 bps</em> are charged; once registered, up to <strong>{lifiFeePct}%</strong>
-            of the swap will route to <code>{EVM_INTEGRATOR_ADDRESS}</code>.
+            <strong>EVM swaps via LiFi/Jumper:</strong> our integrator account
+            (key <code>{LIFI_INTEGRATOR_KEY}</code>, EVM recipient <code>{EVM_INTEGRATOR_ADDRESS}</code>)
+            is registered with the LiFi Partner Portal — fee dashboard at
+            <a href="https://portal.li.fi/integrations" rel="noopener" target="_blank">portal.li.fi/integrations</a>.
+            <em>But</em> the deeplink CTA above earns <strong>0 bps</strong> today:
+            jumper.exchange's hosted UI ignores integrator URL params (true of every
+            major EVM aggregator). Embedding the LiFi Widget on this page — pending
+            in v2 — is the only path that flips fees on; once shipped, up to
+            <strong>{lifiFeePct}%</strong> will route to that address (FeeForwarder
+            auto-forwards instantly on supported chains).
           </li>
           <li>
             <strong>You always see the fee in the quote.</strong> Neither Jupiter nor LiFi
