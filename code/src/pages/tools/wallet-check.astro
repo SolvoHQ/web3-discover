@@ -1,0 +1,387 @@
+---
+import Base from '../../layouts/Base.astro';
+import { listPublishedAirdrops } from '../../lib/airdrops.ts';
+
+const entries = await listPublishedAirdrops();
+const entriesPayload = entries.map((e) => ({
+  slug: e.slug,
+  project: e.data.project,
+  chain: e.data.chain,
+  risk: e.data.risk,
+  deadline: e.data.deadline,
+  costFloor: e.data.costFloor,
+}));
+
+const title = "Wallet check — see which airdrops your wallet might qualify for";
+const description = `Paste an EVM or Solana address. We check on-chain tx history across 7 networks and match against ${entries.length} curated airdrops. Client-side only, non-custodial, no signature, no signup.`;
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const softwareJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'web3-discover wallet check',
+  url: `${siteUrl}/tools/wallet-check`,
+  applicationCategory: 'UtilityApplication',
+  operatingSystem: 'Web',
+  description,
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  publisher: { '@type': 'Organization', name: 'web3-discover', url: siteUrl },
+};
+---
+<Base title={title} description={description} extraJsonLd={softwareJsonLd}>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker">Tools</div>
+      <h1>Which airdrops could your wallet qualify for?</h1>
+      <p class="lede">
+        Paste an EVM (<code>0x…</code>) or Solana address. We check on-chain transaction
+        history across Ethereum, Base, Linea, Arbitrum, Polygon, BSC, and Solana,
+        then match against every curated airdrop on this site. Read-only, non-custodial,
+        no signature, no signup.
+      </p>
+
+      <form id="wc-form" class="wc-form" autocomplete="off">
+        <label class="wc-label" for="wc-input">Wallet address</label>
+        <div class="wc-row">
+          <input
+            id="wc-input"
+            name="addr"
+            type="text"
+            placeholder="0x… or Solana base58 address"
+            spellcheck="false"
+            autocapitalize="off"
+            autocorrect="off"
+            required
+          />
+          <button type="submit" class="wc-btn">Check →</button>
+        </div>
+        <p class="wc-hint">
+          Try <a href="?addr=0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045">a known EVM wallet</a>
+          or <a href="?addr=9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM">a Solana wallet</a>.
+        </p>
+      </form>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div id="wc-status" class="wc-status" hidden></div>
+      <div id="wc-results" class="wc-results" hidden></div>
+
+      <details class="wc-howitworks">
+        <summary>How this works (and what it doesn't do)</summary>
+        <div class="prose">
+          <ul>
+            <li>
+              <strong>EVM check:</strong> we call <code>eth_getTransactionCount</code> on
+              publicnode's RPC for each chain. A non-zero count = your wallet has signed
+              at least one tx on that chain.
+            </li>
+            <li>
+              <strong>Solana check:</strong> we call <code>getSignaturesForAddress</code>
+              with <code>limit: 1</code>. Any returned signature = your wallet has tx history.
+            </li>
+            <li>
+              <strong>Matching:</strong> for each chain we found activity on, we surface
+              every airdrop whose listed chain contains that network. Multi-chain entries
+              like "Ethereum / L2s" or "Base / Solana" will show up if you've touched any
+              of the listed chains.
+            </li>
+            <li>
+              <strong>This is a presence check, not eligibility.</strong> Most airdrops
+              have contract-level rules (bridged volume, specific dApps used, points earned).
+              We only tell you "you have used this chain — so these listings are worth a
+              look." Click through each entry for the real criteria.
+            </li>
+            <li>
+              <strong>Your address never leaves your browser bound for our servers.</strong>
+              Requests go directly from your browser to the public RPCs. We don't log,
+              store, or proxy.
+            </li>
+          </ul>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <script
+    is:inline
+    type="application/json"
+    id="wc-entries"
+    set:html={JSON.stringify(entriesPayload)}
+  ></script>
+
+  <script is:inline>
+    const ENTRIES = JSON.parse(document.getElementById('wc-entries').textContent || '[]');
+
+    // chain key → { rpc, label, needles[] }. `needles` is matched (case-insensitive,
+    // substring) against the entry's `chain` field to decide if an entry surfaces.
+    const EVM_CHAINS = [
+      { key: 'ethereum', rpc: 'https://ethereum-rpc.publicnode.com', label: 'Ethereum', needles: ['ethereum'] },
+      { key: 'base',     rpc: 'https://base-rpc.publicnode.com',     label: 'Base',     needles: ['base'] },
+      { key: 'linea',    rpc: 'https://linea-rpc.publicnode.com',    label: 'Linea',    needles: ['linea'] },
+      { key: 'arbitrum', rpc: 'https://arbitrum-one-rpc.publicnode.com', label: 'Arbitrum', needles: ['arbitrum'] },
+      { key: 'polygon',  rpc: 'https://polygon-bor-rpc.publicnode.com',  label: 'Polygon',  needles: ['polygon'] },
+      { key: 'bsc',      rpc: 'https://bsc-rpc.publicnode.com',      label: 'BSC',      needles: ['bsc', 'binance'] },
+    ];
+    const SOLANA = { key: 'solana', rpc: 'https://solana-rpc.publicnode.com', label: 'Solana', needles: ['solana'] };
+
+    const EVM_RX = /^0x[a-fA-F0-9]{40}$/;
+    const SOL_RX = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+    function detectFormat(addr) {
+      const v = addr.trim();
+      if (EVM_RX.test(v)) return { kind: 'evm', addr: v };
+      if (SOL_RX.test(v)) return { kind: 'solana', addr: v };
+      return { kind: 'unknown', addr: v };
+    }
+
+    async function rpcCall(url, body) {
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json();
+      if (j.error) throw new Error(j.error.message || 'rpc error');
+      return j.result;
+    }
+
+    async function checkEvmChain(chain, addr) {
+      try {
+        const hex = await rpcCall(chain.rpc, {
+          jsonrpc: '2.0', id: 1, method: 'eth_getTransactionCount',
+          params: [addr, 'latest'],
+        });
+        const n = parseInt(hex, 16);
+        return { chain, active: n > 0, count: n };
+      } catch (err) {
+        return { chain, active: false, error: err.message };
+      }
+    }
+
+    async function checkSolana(addr) {
+      try {
+        const sigs = await rpcCall(SOLANA.rpc, {
+          jsonrpc: '2.0', id: 1, method: 'getSignaturesForAddress',
+          params: [addr, { limit: 1 }],
+        });
+        return { chain: SOLANA, active: Array.isArray(sigs) && sigs.length > 0, count: sigs ? sigs.length : 0 };
+      } catch (err) {
+        return { chain: SOLANA, active: false, error: err.message };
+      }
+    }
+
+    function matchEntries(activeChains) {
+      const out = new Map();
+      for (const ch of activeChains) {
+        const list = [];
+        for (const e of ENTRIES) {
+          const hay = (e.chain || '').toLowerCase();
+          if (ch.needles.some((n) => hay.includes(n))) list.push(e);
+        }
+        out.set(ch.key, { chain: ch, entries: list });
+      }
+      return out;
+    }
+
+    function escHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+
+    function renderResults(format, results) {
+      const statusEl = document.getElementById('wc-status');
+      const resultsEl = document.getElementById('wc-results');
+
+      const active = results.filter((r) => r.active).map((r) => r.chain);
+      const errored = results.filter((r) => !r.active && r.error);
+
+      const shortAddr = format.addr.length > 14
+        ? format.addr.slice(0, 6) + '…' + format.addr.slice(-6)
+        : format.addr;
+
+      if (active.length === 0) {
+        statusEl.innerHTML =
+          '<strong>No activity detected</strong> for <code>' + escHtml(shortAddr) + '</code> on ' +
+          (format.kind === 'evm' ? 'any of the 6 EVM chains we check.' : 'Solana.') +
+          ' Either this wallet is fresh or it has been used on a network outside our scope.' +
+          ' <a href="/airdrops">Browse the full directory →</a>';
+        statusEl.hidden = false;
+        resultsEl.hidden = true;
+        return;
+      }
+
+      const byChain = matchEntries(active);
+      const totalMatches = Array.from(byChain.values()).reduce((s, b) => s + b.entries.length, 0);
+
+      statusEl.innerHTML =
+        '<strong>' + escHtml(shortAddr) + '</strong> is active on ' +
+        active.map((c) => '<span class="wc-chain-pill">' + escHtml(c.label) + '</span>').join(' ') +
+        '. <strong>' + totalMatches + '</strong> listing' + (totalMatches === 1 ? '' : 's') + ' below.';
+      statusEl.hidden = false;
+
+      let html = '';
+      for (const { chain, entries } of byChain.values()) {
+        html += '<section class="wc-chain-block">';
+        html += '<h3>' + escHtml(chain.label) + ' <span class="wc-chain-count">' + entries.length + ' listing' + (entries.length === 1 ? '' : 's') + '</span></h3>';
+        if (entries.length === 0) {
+          html += '<p class="wc-empty">No matching entries in our directory yet for ' + escHtml(chain.label) + '. We may not have covered it.</p>';
+        } else {
+          html += '<ul class="wc-list">';
+          for (const e of entries) {
+            html += '<li class="wc-item">';
+            html += '<a class="wc-item-link" href="/airdrops/' + escHtml(e.slug) + '">' + escHtml(e.project) + '</a>';
+            html += ' <span class="wc-item-chain">' + escHtml(e.chain) + '</span>';
+            html += ' <span class="tag risk-' + escHtml(e.risk) + '">' + escHtml(e.risk) + '</span>';
+            html += '<p class="wc-item-meta">Cost floor: <span class="mono">' + escHtml(e.costFloor) + '</span> · Deadline: <span class="mono">' + escHtml(e.deadline) + '</span></p>';
+            html += '</li>';
+          }
+          html += '</ul>';
+        }
+        html += '</section>';
+      }
+      if (errored.length > 0) {
+        html += '<p class="wc-errored">Couldn\'t reach RPC for: ' +
+          errored.map((r) => escHtml(r.chain.label)).join(', ') +
+          '. These chains were skipped — try again in a moment.</p>';
+      }
+      resultsEl.innerHTML = html;
+      resultsEl.hidden = false;
+    }
+
+    async function runCheck(rawAddr) {
+      const statusEl = document.getElementById('wc-status');
+      const resultsEl = document.getElementById('wc-results');
+      const format = detectFormat(rawAddr);
+
+      if (format.kind === 'unknown') {
+        statusEl.innerHTML = '<strong>Unrecognised address format.</strong> Expecting an EVM <code>0x</code>-prefixed address (40 hex chars) or a Solana base58 address (32–44 chars).';
+        statusEl.hidden = false;
+        resultsEl.hidden = true;
+        return;
+      }
+
+      statusEl.innerHTML = 'Checking ' + (format.kind === 'evm' ? '6 EVM chains' : 'Solana') + '…';
+      statusEl.hidden = false;
+      resultsEl.hidden = true;
+
+      let results;
+      if (format.kind === 'evm') {
+        results = await Promise.all(EVM_CHAINS.map((c) => checkEvmChain(c, format.addr)));
+      } else {
+        results = [await checkSolana(format.addr)];
+      }
+      renderResults(format, results);
+    }
+
+    document.getElementById('wc-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const v = document.getElementById('wc-input').value.trim();
+      if (!v) return;
+      const url = new URL(window.location.href);
+      url.searchParams.set('addr', v);
+      window.history.replaceState({}, '', url.toString());
+      runCheck(v);
+    });
+
+    const initial = new URLSearchParams(window.location.search).get('addr');
+    if (initial) {
+      document.getElementById('wc-input').value = initial;
+      runCheck(initial);
+    }
+  </script>
+
+  <style>
+    .wc-form { margin: 1.25rem 0 0; }
+    .wc-label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--ink-soft);
+      font-family: var(--font-mono);
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .wc-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .wc-row input[type="text"] {
+      flex: 1 1 320px;
+      min-width: 0;
+      padding: 0.7rem 0.85rem;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      background: #fff;
+      color: var(--ink);
+    }
+    .wc-row input[type="text"]:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: -1px;
+    }
+    .wc-btn {
+      padding: 0.7rem 1.2rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    .wc-btn:hover { background: var(--warn); }
+    .wc-hint { font-size: 0.85rem; color: var(--ink-soft); margin-top: 0.6rem; }
+    .wc-status {
+      padding: 0.85rem 1rem;
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-left: 4px solid var(--accent);
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+    .wc-chain-pill {
+      display: inline-block;
+      padding: 0.1em 0.55em;
+      margin: 0 0.15em;
+      background: var(--accent-soft);
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 0.82em;
+      color: var(--ink);
+    }
+    .wc-chain-block { margin: 1.25rem 0 0; }
+    .wc-chain-block h3 {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      font-family: var(--font-serif);
+    }
+    .wc-chain-count { font-size: 0.8rem; color: var(--ink-soft); font-family: var(--font-mono); font-weight: 400; }
+    .wc-list { list-style: none; padding: 0; margin: 0.4rem 0 0; }
+    .wc-item {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .wc-item:last-child { border-bottom: none; }
+    .wc-item-link { font-weight: 600; }
+    .wc-item-chain {
+      margin-left: 0.5rem;
+      color: var(--ink-soft);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+    }
+    .wc-item-meta { margin: 0.3rem 0 0; color: var(--ink-soft); font-size: 0.85rem; }
+    .wc-empty { color: var(--ink-soft); font-style: italic; }
+    .wc-errored { margin-top: 1rem; font-size: 0.85rem; color: var(--warn); }
+    .wc-howitworks {
+      margin-top: 2rem;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--rule);
+      background: rgba(217, 212, 196, 0.18);
+      border-radius: 4px;
+    }
+    .wc-howitworks summary { cursor: pointer; font-weight: 600; }
+    .wc-howitworks .prose { margin-top: 0.6rem; }
+  </style>
+</Base>

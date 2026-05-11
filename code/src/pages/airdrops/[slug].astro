@@ -146,6 +146,9 @@ const sellCta = buildSellCtaHref(entry.slug, data.project, data.chain, LIFI_INTE
             We earn an integrator fee shown openly in the quote; see
             <a href="/disclosure">disclosure</a>.
           </p>
+          <p class="sell-wallet-check">
+            Not sure if you qualify? <a href="/tools/wallet-check?addr=">Check your wallet against the directory →</a>
+          </p>
         </div>
 
         <details class="sell-cex">
@@ -232,5 +235,10 @@ const sellCta = buildSellCtaHref(entry.slug, data.project, data.chain, LIFI_INTE
     .related-guides ul { margin: 0; padding-left: 1.2rem; }
     .related-guides li { margin-bottom: 0.4rem; }
     .related-guides .rg-blurb { color: var(--ink-soft, #555); font-size: 0.9rem; }
+    .sell-wallet-check {
+      margin: 0.5rem 0 0;
+      font-size: 0.85rem;
+      color: var(--ink-soft, #555);
+    }
   </style>
 </Base>

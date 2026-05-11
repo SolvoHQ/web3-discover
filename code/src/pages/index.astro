@@ -17,7 +17,25 @@ const description = `A curated, scam-filtered directory of ${entries.length} cur
         No scams. No noise. No paid placements pretending to be listings.
         Just fresh, vetted opportunities you can act on.
       </p>
-      <p><a href="/airdrops"><strong>Browse {entries.length} active airdrops →</strong></a></p>
+
+      <form class="hero-check" action="/tools/wallet-check" method="get">
+        <label class="hero-check-label" for="hero-addr">Paste your wallet — see what you could farm</label>
+        <div class="hero-check-row">
+          <input
+            id="hero-addr"
+            name="addr"
+            type="text"
+            placeholder="0x… or Solana address"
+            spellcheck="false"
+            autocapitalize="off"
+            autocorrect="off"
+          />
+          <button type="submit">Check →</button>
+        </div>
+        <p class="hero-check-note">Read-only · no signature · no signup · client-side only</p>
+      </form>
+
+      <p><a href="/airdrops"><strong>Or browse {entries.length} active airdrops →</strong></a></p>
     </div>
   </section>
 
@@ -75,4 +93,49 @@ const description = `A curated, scam-filtered directory of ${entries.length} cur
       <p style="margin-top:1rem;"><a href="/airdrops">See the full index →</a></p>
     </div>
   </section>
+
+  <style>
+    .hero-check {
+      margin: 1.25rem 0;
+      padding: 1rem 1.1rem;
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-left: 4px solid var(--accent);
+      border-radius: 4px;
+    }
+    .hero-check-label {
+      display: block;
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      font-family: var(--font-mono);
+      margin-bottom: 0.4rem;
+    }
+    .hero-check-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .hero-check-row input[type="text"] {
+      flex: 1 1 280px;
+      min-width: 0;
+      padding: 0.65rem 0.8rem;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+    }
+    .hero-check-row input[type="text"]:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: -1px;
+    }
+    .hero-check-row button {
+      padding: 0.65rem 1rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .hero-check-row button:hover { background: var(--warn); }
+    .hero-check-note { margin: 0.5rem 0 0; font-size: 0.8rem; color: var(--ink-soft); }
+  </style>
 </Base>
