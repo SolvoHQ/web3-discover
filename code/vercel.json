@@ -5,6 +5,7 @@
     { "source": "/v/:hash", "destination": "/api/v?h=:hash" }
   ],
   "crons": [
-    { "path": "/api/cron/digest", "schedule": "0 14 * * 3" }
+    { "path": "/api/cron/digest", "schedule": "0 14 * * 3" },
+    { "path": "/api/cron/sponsor-watch", "schedule": "30 9 * * *" }
   ]
 }

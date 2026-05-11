@@ -1,69 +1,364 @@
 ---
 import Base from '../layouts/Base.astro';
+
 const title = 'Sponsor a listing — web3-discover';
-const description = 'Reach airdrop hunters directly. One Featured slot, visually distinct, never confused with our organic listings. Pricing and contact below.';
+const description = 'Three sponsorship tiers — Featured slot, sidebar promo, sponsored guide. Honest pricing, visible labels, no scam-flag-for-money.';
+
+const SITE = Astro.site?.toString().replace(/\/$/, '') ?? 'https://web3-discover.vercel.app';
+
+// Three sponsorship tiers. Pricing rationale:
+//   - We have ~0 baseline traffic, so we anchor BELOW typical crypto-newsletter
+//     "Featured" rates (most public rate cards we've seen sit at $300-1500/wk).
+//   - Featured slot at $400/wk = was the original pre-tier rate; honest anchor.
+//   - Sidebar at $250/wk = lower commitment, recurring impression across 42+
+//     entry pages (compounds with content cadence — gets cheaper-per-eyeball
+//     as directory grows).
+//   - Sponsored guide at $800 flat = evergreen indexable artifact; pays once,
+//     keeps earning organic clicks for the 30 days it stays live.
+// First sponsor on each tier locks the rate for a 90-day window.
+
+const TIERS = [
+  {
+    id: 'featured',
+    name: 'Featured slot',
+    tagline: 'Top of /airdrops index, visually distinct, never disguised.',
+    price: 400,
+    cadence: 'week',
+    bullets: [
+      "One slot at the top of /airdrops — separate background, clear 'Sponsored' label.",
+      'Per-project page with the same structured fields as organic listings (action, effort, cost floor, deadline, risk, official link).',
+      'Cross-link from any related organic listing where contextually honest.',
+      'One social post from the web3-discover account at launch, labelled #sponsored.',
+      'GoatCounter UTM tracking; we share raw click numbers weekly.',
+    ],
+    mock: 'featured',
+    sla: 'Goes live within 48h of agreement + asset delivery.',
+  },
+  {
+    id: 'sidebar',
+    name: 'Sidebar promo',
+    tagline: 'One sponsor card on every airdrop entry page (42+ pages and growing).',
+    price: 250,
+    cadence: 'week',
+    bullets: [
+      "Single sidebar card rendered on every /airdrops/<entry> page — labelled 'Sponsored'.",
+      'Up to 280 characters of copy + project name + your CTA link (UTM-tagged).',
+      "Impressions compound as the directory grows — new entries inherit your card automatically.",
+      'No swaps mid-week; one sponsor per week so the slot stays uncluttered.',
+      'Per-entry contextual exclusions on request (e.g. skip rival-protocol pages).',
+    ],
+    mock: 'sidebar',
+    sla: 'Goes live within 24h of asset delivery — single partial deploy.',
+  },
+  {
+    id: 'guide',
+    name: 'Sponsored guide',
+    tagline: 'Evergreen explainer in /guides, indexable, lives 30 days.',
+    price: 800,
+    cadence: 'flat',
+    bullets: [
+      "One editorial guide (~1,500 words) on a topic of your choice — written by us, you fact-check.",
+      "Internal links from related entries' 'Related guides' block so it accrues organic clicks.",
+      "Stays in /guides for 30 days; after that you can renew, or it converts to organic with a small 'Originally sponsored by X' footer.",
+      "Topics we'll accept: how-to flows, on-chain hygiene primers, comparison guides. Topics we won't: hype pieces, made-up vulnerability scares, anti-competitor hit jobs.",
+      "Full editorial control on framing — but we keep right of refusal on factual claims and tone.",
+    ],
+    mock: 'guide',
+    sla: 'First draft within 4 working days of brief; ~7 days end-to-end.',
+  },
+];
+
+// Helper: build the reserve mailto link with prefilled subject + structured body.
+// Body fields match what we need to draft a YES/NO without a back-and-forth.
+function buildReserveMailto(tierName: string) {
+  const subject = `Reserve ${tierName}`;
+  const body = [
+    `Tier: ${tierName}`,
+    `Project name:`,
+    `Official URL:`,
+    `Twitter handle:`,
+    `Desired start week (YYYY-MM-DD):`,
+    `Number of weeks (if applicable):`,
+    `What you want featured (airdrop / campaign / launch):`,
+    `Past traction signals (TVL, users, X followers, etc.):`,
+    `Contact name + email if different from sender:`,
+    ``,
+    `(web3-discover will reply within ~24h with availability + payment instructions. Autoresponder confirms receipt.)`,
+  ].join('\n');
+  const q = `subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  return `mailto:agent+sponsor@west0n.top?${q}`;
+}
+
+// JSON-LD: three sub-Offers under an AggregateOffer on the page.
+// Featured/Sidebar priced PER WEEK (P1W), Sponsored guide priced FLAT 30-day window (P30D).
+const offers = TIERS.map((t) => ({
+  '@type': 'Offer',
+  name: t.name,
+  description: t.tagline,
+  url: `${SITE}/sponsor#${t.id}`,
+  price: t.price.toString(),
+  priceCurrency: 'USD',
+  priceSpecification: {
+    '@type': 'UnitPriceSpecification',
+    price: t.price,
+    priceCurrency: 'USD',
+    referenceQuantity: {
+      '@type': 'QuantitativeValue',
+      value: 1,
+      unitText: t.cadence === 'week' ? 'WEEK' : 'EACH',
+    },
+    billingDuration: t.cadence === 'week' ? 'P1W' : 'P30D',
+  },
+  availability: 'https://schema.org/InStock',
+  category: 'sponsorship',
+  seller: {
+    '@type': 'Organization',
+    name: 'web3-discover',
+    url: SITE,
+  },
+}));
+
+const sponsorJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: 'web3-discover sponsorship slots',
+  description: 'Three honest sponsorship surfaces for projects running airdrops or campaigns: Featured slot, Sidebar promo, Sponsored guide.',
+  url: `${SITE}/sponsor`,
+  brand: { '@type': 'Organization', name: 'web3-discover' },
+  offers: {
+    '@type': 'AggregateOffer',
+    priceCurrency: 'USD',
+    lowPrice: Math.min(...TIERS.map((t) => t.price)),
+    highPrice: Math.max(...TIERS.map((t) => t.price)),
+    offerCount: TIERS.length,
+    offers,
+  },
+};
 ---
-<Base title={title} description={description}>
+<Base title={title} description={description} extraJsonLd={sponsorJsonLd}>
   <section class="hero">
     <div class="container">
       <div class="kicker">For projects</div>
-      <h1>Sponsor a Featured slot</h1>
+      <h1>Sponsor a listing</h1>
       <p class="lede">
         web3-discover reaches retail users who already know what an airdrop is and are
-        actively looking for the next one to farm. If your launch needs eyeballs from
-        that exact audience, the Featured slot at the top of <a href="/airdrops">/airdrops</a>
-        is for sale.
+        actively looking for the next one to farm. Three honest surfaces below —
+        visually distinct, always labelled, never disguised as organic.
+      </p>
+      <p class="hero-nav">
+        Jump to:
+        {TIERS.map((t, i) => (
+          <>
+            {i > 0 && <span class="sep"> · </span>}
+            <a href={`#${t.id}`}>{t.name} — ${t.price}{t.cadence === 'week' ? '/wk' : ' flat'}</a>
+          </>
+        ))}
       </p>
     </div>
   </section>
 
   <section class="section">
     <div class="container">
-      <div class="prose">
-        <h2>The offer</h2>
-        <ul>
-          <li><strong>One slot</strong> at the top of the index. Visually distinct (separate background + a clear "Sponsored" label). Never disguised as organic.</li>
-          <li><strong>Per-project page</strong> with the same structured fields as our organic listings — action, effort, cost floor, deadline, risk flag, official link. We write the copy; you approve before publish.</li>
-          <li><strong>Cross-link</strong> from any related listing where contextually honest.</li>
-          <li><strong>One social post</strong> from the web3-discover account at launch, clearly labelled <code>#sponsored</code>.</li>
-        </ul>
+      <div class="tiers">
+        {TIERS.map((t) => (
+          <article id={t.id} class="tier" aria-labelledby={`tier-${t.id}-h`}>
+            <header class="tier-head">
+              <h2 id={`tier-${t.id}-h`}>{t.name}</h2>
+              <div class="tier-price">
+                <span class="tier-price-num">${t.price}</span>
+                <span class="tier-price-cadence">{t.cadence === 'week' ? '/week' : ' (flat, 30-day window)'}</span>
+              </div>
+            </header>
+            <p class="tier-tagline">{t.tagline}</p>
 
+            <div class={`tier-mock mock-${t.mock}`} aria-hidden="true">
+              {t.mock === 'featured' && (
+                <div class="mockup mockup-featured">
+                  <div class="mock-label">SPONSORED</div>
+                  <div class="mock-row">
+                    <strong>YourProject</strong>
+                    <span class="mock-chain">Solana</span>
+                  </div>
+                  <div class="mock-blurb">Snapshot in 14 days — points → token claim.</div>
+                  <div class="mock-meta">deadline 2026-06-01 · effort 30m · risk verified</div>
+                </div>
+              )}
+              {t.mock === 'sidebar' && (
+                <div class="mockup mockup-sidebar">
+                  <div class="mock-label">SPONSORED</div>
+                  <div class="mock-row"><strong>YourProject</strong></div>
+                  <div class="mock-blurb">Modular DA layer with a points-to-token program — 280 chars max copy.</div>
+                  <a class="mock-cta">Visit YourProject →</a>
+                </div>
+              )}
+              {t.mock === 'guide' && (
+                <div class="mockup mockup-guide">
+                  <div class="mock-label">SPONSORED</div>
+                  <div class="mock-row mock-row-title">How to bridge to YourProject without losing the bag</div>
+                  <div class="mock-blurb">Editorial guide · ~1,500 words · lives at /guides/your-slug for 30 days · linked from related entries.</div>
+                </div>
+              )}
+            </div>
+
+            <ul class="tier-bullets">
+              {t.bullets.map((b) => <li>{b}</li>)}
+            </ul>
+
+            <p class="tier-sla"><strong>Turnaround:</strong> {t.sla}</p>
+
+            <div class="tier-cta-row">
+              <a class="tier-cta" href={buildReserveMailto(t.name)} data-reserve-tier={t.id}>
+                Reserve {t.name} →
+              </a>
+              <span class="tier-cta-note">Opens your mail client with a prefilled brief. Autoresponder confirms receipt; a human replies within 24h.</span>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div class="prose limits">
         <h2>What we won't do</h2>
         <ul>
-          <li>Change a project's <strong>risk flag</strong> for money. Verified means verified; suspect means suspect.</li>
-          <li>Hide the sponsorship. Every paid slot carries the <em>Sponsored</em> label and links to <a href="/disclosure">our disclosure</a>.</li>
+          <li>Change a project's <strong>risk flag</strong> for money. Verified means verified; suspect means suspect. <a href="/disclosure">See disclosure</a>.</li>
+          <li>Hide the sponsorship. Every paid placement carries the <em>Sponsored</em> label and links to our disclosure.</li>
           <li>List a project we wouldn't farm ourselves. We reserve the right to decline.</li>
+          <li>Sell anonymous sponsorship — sponsored entries carry the same identifying fields as organic ones.</li>
         </ul>
 
-        <h2>Pricing</h2>
+        <h2>Payment</h2>
         <p>
-          <strong>$400 / week</strong> introductory rate while we're growing baseline traffic.
-          Revised every 30 days as the audience grows — early sponsors keep their original rate
-          for a 90-day window. Payable in USDC, USDT (ETH/Solana/Base), or USD via invoice.
-        </p>
-
-        <h2>Contact</h2>
-        <p>
-          Email <a href="mailto:sponsorship@west0n.top"><strong>sponsorship@west0n.top</strong></a>
-          with: project name, official URL, the airdrop or campaign you want to feature,
-          desired start week, and any past traction signals (Twitter, Discord, docs).
-          Expect a reply within ~24 hours.
+          USDC / USDT on Ethereum, Solana, or Base — or USD by invoice. We send wallet addresses + an invoice in the
+          reply to your reservation email. <strong>First sponsor on each tier locks the rate for a 90-day window.</strong>
         </p>
 
         <h2>FAQ</h2>
-        <h3>Do you require KYC of the sponsor?</h3>
-        <p>No. We do require a working official URL, public Twitter handle, and a coherent
-        whitepaper / docs page. If something feels off, we walk away.</p>
-
         <h3>Can you guarantee impressions?</h3>
-        <p>No. We publish honest traffic numbers monthly on this page once we have meaningful
-        baseline data. If your slot underperforms a published baseline, we offer a pro-rated
-        credit.</p>
+        <p>
+          No. We publish honest traffic numbers monthly here once we have meaningful baseline data. If your slot
+          underperforms a published baseline, we offer a pro-rated credit. We don't fake numbers.
+        </p>
+
+        <h3>Do you require KYC of the sponsor?</h3>
+        <p>
+          No KYC. We do require a working official URL, public X/Twitter handle, and a coherent whitepaper / docs page.
+          If something feels off, we walk away.
+        </p>
 
         <h3>Can I sponsor and stay anonymous?</h3>
-        <p>No. Sponsored listings carry the same identifying fields as organic ones — that's
-        the point of the disclosure standard.</p>
+        <p>No. Sponsored placements carry the same identifying fields as organic ones — that's the point of the disclosure standard.</p>
+
+        <h3>Why not pay-per-click / impression?</h3>
+        <p>
+          Because performance ads on a small directory invite fraud-style optimization (auto-refresh tabs, etc.). Flat-rate
+          + honest weekly traffic numbers is fairer to both sides.
+        </p>
       </div>
     </div>
   </section>
+
+  <style>
+    .hero-nav { font-size: 0.9rem; color: var(--ink-soft, #555); margin-top: 0.5rem; }
+    .hero-nav .sep { color: var(--rule, #d9d4c4); }
+
+    .tiers {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      margin: 0 0 2.5rem;
+    }
+    @media (min-width: 880px) {
+      .tiers { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .tier {
+      display: flex;
+      flex-direction: column;
+      padding: 1.25rem;
+      background: #fdfbf6;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 6px;
+    }
+    .tier-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.6rem;
+      margin-bottom: 0.4rem;
+    }
+    .tier h2 {
+      margin: 0;
+      font-family: var(--font-serif, Georgia, serif);
+      font-size: 1.25rem;
+    }
+    .tier-price {
+      font-family: var(--font-mono, ui-monospace, monospace);
+      color: var(--accent, #c8531a);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .tier-price-num { font-size: 1.1rem; }
+    .tier-price-cadence { font-size: 0.78rem; color: var(--ink-soft, #555); font-weight: 400; }
+    .tier-tagline {
+      margin: 0 0 0.85rem;
+      color: var(--ink-soft, #555);
+      font-size: 0.92rem;
+    }
+
+    .tier-mock {
+      margin: 0 0 0.85rem;
+      padding: 0.75rem 0.85rem;
+      border: 1px dashed var(--rule, #d9d4c4);
+      background: rgba(217, 212, 196, 0.18);
+      border-radius: 4px;
+      min-height: 5.5rem;
+    }
+    .mock-label {
+      display: inline-block;
+      padding: 1px 6px;
+      font-family: var(--font-mono, ui-monospace, monospace);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      background: var(--accent, #c8531a);
+      color: #fff;
+      border-radius: 2px;
+      margin-bottom: 0.4rem;
+    }
+    .mock-row { font-family: var(--font-serif, Georgia, serif); font-size: 0.95rem; }
+    .mock-row-title { font-weight: 700; }
+    .mock-chain {
+      margin-left: 0.4rem;
+      font-family: var(--font-mono, ui-monospace, monospace);
+      font-size: 0.7rem;
+      color: var(--ink-soft, #555);
+      font-weight: 400;
+    }
+    .mock-blurb { font-size: 0.85rem; color: var(--ink, #222); margin: 0.25rem 0; }
+    .mock-meta { font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.7rem; color: var(--ink-soft, #555); }
+    .mock-cta { color: var(--accent, #c8531a); font-size: 0.85rem; font-weight: 600; }
+
+    .tier-bullets {
+      margin: 0 0 0.85rem;
+      padding-left: 1.05rem;
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+    .tier-bullets li { margin-bottom: 0.3rem; }
+    .tier-sla { margin: 0 0 0.85rem; font-size: 0.85rem; color: var(--ink-soft, #555); }
+
+    .tier-cta-row { margin-top: auto; }
+    .tier-cta {
+      display: inline-block;
+      padding: 0.55rem 1rem;
+      background: var(--accent, #c8531a);
+      color: #fff !important;
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: 4px;
+      font-size: 0.92rem;
+    }
+    .tier-cta:hover { background: var(--warn, #a8741a); }
+    .tier-cta-note { display: block; margin-top: 0.4rem; font-size: 0.78rem; color: var(--ink-soft, #555); }
+
+    .limits { margin-top: 2rem; }
+  </style>
 </Base>
