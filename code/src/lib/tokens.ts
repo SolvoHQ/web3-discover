@@ -216,9 +216,9 @@ export function buildJumperUrl(target: EvmTarget, integratorKey: string): string
 }
 
 // Build the CTA href that lives on each /airdrops/[slug] page. Solana and
-// fallback entries point at /tools/swap (where Jupiter Plugin runs); EVM
-// entries can deeplink straight to Jumper since there's nothing for us to
-// render in-page anyway (LiFi widget is v2 roadmap).
+// fallback entries point at /tools/swap (where the Solana-preset LiFi widget
+// runs); EVM entries can deeplink straight to Jumper or also land on /tools/swap
+// where the EVM-preset LiFi widget picks them up via the same registry.
 export function buildSellCtaHref(
   slug: string,
   projectName: string,

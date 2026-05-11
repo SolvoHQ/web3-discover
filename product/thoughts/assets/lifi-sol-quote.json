@@ -1,0 +1,521 @@
+{
+  "type": "lifi",
+  "id": "7ddefbe3-c4a6-42e6-86cc-02a527452d89:0",
+  "tool": "okx",
+  "toolDetails": {
+    "key": "okx",
+    "name": "OKX Dex Aggregator",
+    "logoURI": "https://raw.githubusercontent.com/lifinance/types/main/src/assets/icons/exchanges/okx.svg"
+  },
+  "action": {
+    "fromToken": {
+      "address": "So11111111111111111111111111111111111111112",
+      "chainId": 1151111081099710,
+      "symbol": "wSOL",
+      "decimals": 9,
+      "name": "wSOL",
+      "coinKey": "wSOL",
+      "logoURI": "https://assets.coingecko.com/coins/images/21629/standard/solana.jpg",
+      "priceUSD": "97.14",
+      "tags": [],
+      "verificationStatus": "unverified",
+      "verificationStatusBreakdown": []
+    },
+    "fromAmount": "100000000",
+    "toToken": {
+      "address": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      "chainId": 1151111081099710,
+      "symbol": "USDC",
+      "decimals": 6,
+      "name": "USD Coin",
+      "coinKey": "USDC",
+      "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+      "priceUSD": "0.999716",
+      "tags": [
+        "stablecoin"
+      ],
+      "verificationStatus": "unverified",
+      "verificationStatusBreakdown": []
+    },
+    "fromChainId": 1151111081099710,
+    "toChainId": 1151111081099710,
+    "slippage": 0.005,
+    "fromAddress": "yq3rC7gDm5qSxZvt1EhPxeMh8QG97tgM8qs67gLCmei",
+    "toAddress": "yq3rC7gDm5qSxZvt1EhPxeMh8QG97tgM8qs67gLCmei",
+    "destinationGasConsumption": "",
+    "destinationCallData": "0x00",
+    "jitoBundle": false
+  },
+  "estimate": {
+    "tool": "okx",
+    "approvalAddress": "0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE",
+    "toAmountMin": "9670427",
+    "toAmount": "9719022",
+    "fromAmount": "100000000",
+    "feeCosts": [
+      {
+        "name": "LIFI Fixed Fee",
+        "description": "Fixed LIFI fee, independent of any other fee",
+        "token": {
+          "address": "So11111111111111111111111111111111111111112",
+          "chainId": 1151111081099710,
+          "symbol": "wSOL",
+          "decimals": 9,
+          "name": "wSOL",
+          "coinKey": "wSOL",
+          "logoURI": "https://assets.coingecko.com/coins/images/21629/standard/solana.jpg",
+          "priceUSD": "97.14",
+          "tags": [],
+          "verificationStatus": "unverified",
+          "verificationStatusBreakdown": []
+        },
+        "amount": "550000",
+        "amountUSD": "0.0534",
+        "percentage": "0.0055",
+        "included": true,
+        "feeSplit": {
+          "integratorFee": "300000",
+          "lifiFee": "250000"
+        }
+      },
+      {
+        "name": "Rent Exemption Deposit",
+        "description": "A deposit needed to open a new token account, paid in native token. This deposit can be refunded when the account is closed.",
+        "token": {
+          "address": "11111111111111111111111111111111",
+          "chainId": 1151111081099710,
+          "symbol": "SOL",
+          "decimals": 9,
+          "name": "SOL",
+          "coinKey": "SOL",
+          "logoURI": "https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png",
+          "priceUSD": "97.62",
+          "tags": [
+            "major_asset"
+          ],
+          "verificationStatus": "unverified",
+          "verificationStatusBreakdown": []
+        },
+        "amount": "2039280",
+        "included": false,
+        "amountUSD": "0.19907451360000003",
+        "percentage": "0"
+      },
+      {
+        "name": "Rent Exemption Deposit",
+        "description": "A deposit needed to open a new token account, paid in native token. This deposit can be refunded when the account is closed.",
+        "token": {
+          "address": "11111111111111111111111111111111",
+          "chainId": 1151111081099710,
+          "symbol": "SOL",
+          "decimals": 9,
+          "name": "SOL",
+          "coinKey": "SOL",
+          "logoURI": "https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png",
+          "priceUSD": "97.62",
+          "tags": [
+            "major_asset"
+          ],
+          "verificationStatus": "unverified",
+          "verificationStatusBreakdown": []
+        },
+        "amount": "2039280",
+        "included": false,
+        "amountUSD": "0.19907451360000003",
+        "percentage": "0"
+      },
+      {
+        "name": "Rent Exemption Deposit",
+        "description": "A deposit needed to open a new token account, paid in native token. This deposit can be refunded when the account is closed.",
+        "token": {
+          "address": "11111111111111111111111111111111",
+          "chainId": 1151111081099710,
+          "symbol": "SOL",
+          "decimals": 9,
+          "name": "SOL",
+          "coinKey": "SOL",
+          "logoURI": "https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png",
+          "priceUSD": "97.62",
+          "tags": [
+            "major_asset"
+          ],
+          "verificationStatus": "unverified",
+          "verificationStatusBreakdown": []
+        },
+        "amount": "2039280",
+        "included": false,
+        "amountUSD": "0.19907451360000003",
+        "percentage": "0"
+      }
+    ],
+    "gasCosts": [
+      {
+        "token": {
+          "address": "11111111111111111111111111111111",
+          "chainId": 1151111081099710,
+          "symbol": "SOL",
+          "decimals": 9,
+          "name": "SOL",
+          "coinKey": "SOL",
+          "logoURI": "https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png",
+          "priceUSD": "97.62",
+          "tags": [
+            "major_asset"
+          ],
+          "verificationStatus": "unverified",
+          "verificationStatusBreakdown": []
+        },
+        "amount": "42613",
+        "amountUSD": "0.0041598810600000004",
+        "estimate": "42613",
+        "limit": "42613",
+        "price": "1",
+        "type": "SEND"
+      }
+    ],
+    "executionDuration": 0,
+    "fromAmountUSD": "9.7140",
+    "toAmountUSD": "9.7163",
+    "skipPermit": false
+  },
+  "includedSteps": [
+    {
+      "id": "f877e7bf-6779-4534-9671-5120fa8c396c",
+      "type": "protocol",
+      "action": {
+        "fromChainId": 1151111081099710,
+        "fromAmount": "100000000",
+        "fromToken": {
+          "address": "So11111111111111111111111111111111111111112",
+          "chainId": 1151111081099710,
+          "symbol": "wSOL",
+          "decimals": 9,
+          "name": "wSOL",
+          "coinKey": "wSOL",
+          "logoURI": "https://assets.coingecko.com/coins/images/21629/standard/solana.jpg",
+          "priceUSD": "97.14",
+          "tags": [],
+          "verificationStatus": "unverified",
+          "verificationStatusBreakdown": []
+        },
+        "toChainId": 1151111081099710,
+        "toToken": {
+          "address": "So11111111111111111111111111111111111111112",
+          "chainId": 1151111081099710,
+          "symbol": "wSOL",
+          "decimals": 9,
+          "name": "wSOL",
+          "coinKey": "wSOL",
+          "logoURI": "https://assets.coingecko.com/coins/images/21629/standard/solana.jpg",
+          "priceUSD": "97.14",
+          "tags": [],
+          "verificationStatus": "unverified",
+          "verificationStatusBreakdown": []
+        },
+        "fromAddress": "yq3rC7gDm5qSxZvt1EhPxeMh8QG97tgM8qs67gLCmei",
+        "toAddress": "yq3rC7gDm5qSxZvt1EhPxeMh8QG97tgM8qs67gLCmei",
+        "jitoBundle": false,
+        "integratorFees": {
+          "feePercent": 0.0055,
+          "sourceAmount": {
+            "s": 1,
+            "e": 8,
+            "c": [
+              100000000
+            ]
+          },
+          "totalFee": {
+            "s": 1,
+            "e": 5,
+            "c": [
+              550000
+            ]
+          },
+          "lifiFee": {
+            "s": 1,
+            "e": 5,
+            "c": [
+              250000
+            ]
+          },
+          "integratorFee": {
+            "s": 1,
+            "e": 5,
+            "c": [
+              300000
+            ]
+          },
+          "integratorConfig": {
+            "fee": 0.0025,
+            "feeType": "FIXED",
+            "chainWallets": {},
+            "defaultWallet": "0x325f56a0e7a818F07eFF5904c710E772529Fe41d",
+            "defaultSvmWalletAddress": "yq3rC7gDm5qSxZvt1EhPxeMh8QG97tgM8qs67gLCmei"
+          }
+        },
+        "integratorId": "web3-discover"
+      },
+      "estimate": {
+        "fromAmount": "100000000",
+        "toAmount": "99450000",
+        "toAmountMin": "99450000",
+        "tool": "feeCollection",
+        "approvalAddress": "0x0000000000000000000000000000000000000000",
+        "gasCosts": [
+          {
+            "type": "SEND",
+            "price": "1",
+            "estimate": "130000",
+            "limit": "169000",
+            "amount": "130000",
+            "amountUSD": "0.0127",
+            "token": {
+              "address": "11111111111111111111111111111111",
+              "chainId": 1151111081099710,
+              "symbol": "SOL",
+              "decimals": 9,
+              "name": "SOL",
+              "coinKey": "SOL",
+              "logoURI": "https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png",
+              "priceUSD": "97.62",
+              "tags": [
+                "major_asset"
+              ],
+              "verificationStatus": "unverified",
+              "verificationStatusBreakdown": []
+            }
+          }
+        ],
+        "feeCosts": [
+          {
+            "name": "LIFI Fixed Fee",
+            "description": "Fixed LIFI fee, independent of any other fee",
+            "token": {
+              "address": "So11111111111111111111111111111111111111112",
+              "chainId": 1151111081099710,
+              "symbol": "wSOL",
+              "decimals": 9,
+              "name": "wSOL",
+              "coinKey": "wSOL",
+              "logoURI": "https://assets.coingecko.com/coins/images/21629/standard/solana.jpg",
+              "priceUSD": "97.14",
+              "tags": [],
+              "verificationStatus": "unverified",
+              "verificationStatusBreakdown": []
+            },
+            "amount": "550000",
+            "amountUSD": "0.0534",
+            "percentage": "0.0055",
+            "included": true,
+            "feeSplit": {
+              "integratorFee": "300000",
+              "lifiFee": "250000"
+            }
+          },
+          {
+            "name": "Rent Exemption Deposit",
+            "description": "A deposit needed to open a new token account, paid in native token. This deposit can be refunded when the account is closed.",
+            "token": {
+              "address": "11111111111111111111111111111111",
+              "chainId": 1151111081099710,
+              "symbol": "SOL",
+              "decimals": 9,
+              "name": "SOL",
+              "coinKey": "SOL",
+              "logoURI": "https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png",
+              "priceUSD": "97.62",
+              "tags": [
+                "major_asset"
+              ],
+              "verificationStatus": "unverified",
+              "verificationStatusBreakdown": []
+            },
+            "amount": "2039280",
+            "included": false,
+            "amountUSD": "0.19907451360000003",
+            "percentage": "0"
+          },
+          {
+            "name": "Rent Exemption Deposit",
+            "description": "A deposit needed to open a new token account, paid in native token. This deposit can be refunded when the account is closed.",
+            "token": {
+              "address": "11111111111111111111111111111111",
+              "chainId": 1151111081099710,
+              "symbol": "SOL",
+              "decimals": 9,
+              "name": "SOL",
+              "coinKey": "SOL",
+              "logoURI": "https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png",
+              "priceUSD": "97.62",
+              "tags": [
+                "major_asset"
+              ],
+              "verificationStatus": "unverified",
+              "verificationStatusBreakdown": []
+            },
+            "amount": "2039280",
+            "included": false,
+            "amountUSD": "0.19907451360000003",
+            "percentage": "0"
+          }
+        ],
+        "executionDuration": 0
+      },
+      "tool": "feeCollection",
+      "toolDetails": {
+        "key": "feeCollection",
+        "name": "Integrator Fee",
+        "logoURI": "https://raw.githubusercontent.com/lifinance/types/main/src/assets/icons/protocols/feeCollection.svg"
+      }
+    },
+    {
+      "id": "c0cd6af9-371a-449f-8ebd-def720f2e7f4",
+      "type": "swap",
+      "action": {
+        "fromChainId": 1151111081099710,
+        "fromAmount": "99450000",
+        "fromToken": {
+          "address": "So11111111111111111111111111111111111111112",
+          "chainId": 1151111081099710,
+          "symbol": "wSOL",
+          "decimals": 9,
+          "name": "wSOL",
+          "coinKey": "wSOL",
+          "logoURI": "https://assets.coingecko.com/coins/images/21629/standard/solana.jpg",
+          "priceUSD": "97.14",
+          "tags": [],
+          "verificationStatus": "unverified",
+          "verificationStatusBreakdown": []
+        },
+        "toChainId": 1151111081099710,
+        "toToken": {
+          "address": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "chainId": 1151111081099710,
+          "symbol": "USDC",
+          "decimals": 6,
+          "name": "USD Coin",
+          "coinKey": "USDC",
+          "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+          "priceUSD": "0.999716",
+          "tags": [
+            "stablecoin"
+          ],
+          "verificationStatus": "unverified",
+          "verificationStatusBreakdown": []
+        },
+        "fromAddress": "yq3rC7gDm5qSxZvt1EhPxeMh8QG97tgM8qs67gLCmei",
+        "toAddress": "yq3rC7gDm5qSxZvt1EhPxeMh8QG97tgM8qs67gLCmei",
+        "jitoBundle": false,
+        "integratorFees": {
+          "feePercent": 0.0055,
+          "sourceAmount": {
+            "s": 1,
+            "e": 8,
+            "c": [
+              100000000
+            ]
+          },
+          "totalFee": {
+            "s": 1,
+            "e": 5,
+            "c": [
+              550000
+            ]
+          },
+          "lifiFee": {
+            "s": 1,
+            "e": 5,
+            "c": [
+              250000
+            ]
+          },
+          "integratorFee": {
+            "s": 1,
+            "e": 5,
+            "c": [
+              300000
+            ]
+          },
+          "integratorConfig": {
+            "fee": 0.0025,
+            "feeType": "FIXED",
+            "chainWallets": {},
+            "defaultWallet": "0x325f56a0e7a818F07eFF5904c710E772529Fe41d",
+            "defaultSvmWalletAddress": "yq3rC7gDm5qSxZvt1EhPxeMh8QG97tgM8qs67gLCmei"
+          }
+        },
+        "integratorId": "web3-discover"
+      },
+      "estimate": {
+        "tool": "okx",
+        "fromAmount": "99450000",
+        "toAmount": "9719022",
+        "toAmountMin": "9670427",
+        "approvalAddress": "2wQgmKii8TjfreSER4JvDZ6NSoeu49WNWDdJnFKpQWuj",
+        "executionDuration": 0,
+        "feeCosts": [
+          {
+            "name": "Rent Exemption Deposit",
+            "description": "A deposit needed to open a new token account, paid in native token. This deposit can be refunded when the account is closed.",
+            "token": {
+              "address": "11111111111111111111111111111111",
+              "chainId": 1151111081099710,
+              "symbol": "SOL",
+              "decimals": 9,
+              "name": "SOL",
+              "coinKey": "SOL",
+              "logoURI": "https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png",
+              "priceUSD": "97.62",
+              "tags": [
+                "major_asset"
+              ],
+              "verificationStatus": "unverified",
+              "verificationStatusBreakdown": []
+            },
+            "amount": "2039280",
+            "included": false,
+            "amountUSD": "0.19907451360000003",
+            "percentage": "0"
+          }
+        ],
+        "gasCosts": [
+          {
+            "type": "SEND",
+            "price": "1",
+            "estimate": "5000",
+            "limit": "6500",
+            "amount": "5000",
+            "amountUSD": "0.0005",
+            "token": {
+              "address": "11111111111111111111111111111111",
+              "chainId": 1151111081099710,
+              "symbol": "SOL",
+              "decimals": 9,
+              "name": "SOL",
+              "coinKey": "SOL",
+              "logoURI": "https://s2.coinmarketcap.com/static/img/coins/64x64/5426.png",
+              "priceUSD": "97.62",
+              "tags": [
+                "major_asset"
+              ],
+              "verificationStatus": "unverified",
+              "verificationStatusBreakdown": []
+            }
+          }
+        ]
+      },
+      "tool": "okx",
+      "toolDetails": {
+        "key": "okx",
+        "name": "OKX Dex Aggregator",
+        "logoURI": "https://raw.githubusercontent.com/lifinance/types/main/src/assets/icons/exchanges/okx.svg"
+      }
+    }
+  ],
+  "integrator": "web3-discover",
+  "executionType": "transaction",
+  "transactionRequest": {
+    "data": "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQAIDA6O2sdoxO1iAnqTxrVh0sxJp5IYHzdkbyKFL4ZIzQYDaJ8H5OmDkjv1XloAfrAFfHzb57jMU7PBsjRDsaBYfJ8W12UYZfIY/vmZhZvwy6ykp5NrTVuLpVKBhyTRuq/Fsosr6KBDwvsGE48VNy5ZiBdrgJL6HE/6k6ZdUSeuA9GBAwZGb+UhFzL/7K26csOb57yM5bvF9xJrLEObOkAAAAAoPQ3SgjVP7wrjsOIn03zYnKJm+xfd+PfLfM775OvcVQan1RcYx3TJKFZjmGkdXraLXrijm0ttXHNVWyEAAAAAQqvrEHk9GNbP1TBMlGbJ6CQ5nRcv5XBCEJLXaYRbcfCMlyWPTiSJ8bs9ECkUjg2DC1oTmdr/EIQEjnvY2+n4WR6MT6uJlElMjx5cEodEWykX1gxDx5qpWRYvXWAAWY0yBt324ddloZPZy+FGzut5rBy0he1fWzeROoz1hX7/AKkMQpvXwY9Q+BVtmvwc3ect9mjZqzvsr2tXDVdmZFrZyFLGY/ZnYaRGNebaiP4vN5yhFaUL+iFD6m0Y8HhGXcibCQQABQL9CAgABAAJAwQXAQAAAAAABQIGBwkA9dsnPH6XAAAIBgABCR8gCgEBCgQCHwEACgyQ0AMAAAAAAAkIBgACAB8gCgEBCgQCHwIACgzgkwQAAAAAAAkIBgADACEgCgEBCzYAAgMfIQsLEBESCgoIICULKBAREgoKJhMfIRQVFhcYGSkQERIaGxwdHgonIhAREiMkDA0ODwo5qilVsYRQHzW09qo7AAAAAJB87QUAAAAA7kyUAAAAAAAyAAMAAAAQZAABIcQiAQfoAwEAAAAAAAAABOJEZc3/X6dqB+D0EG0iqptTLTy/RV+7rnreiATEYd1TBAEGAggGAz0HAAkF5Ia7ies9HHOSWTJeD7FIKFw8onu4rQozmgKUD0WG4hADAQIDA3BrbKmpjN6xRikUpZpAY5l0fsxlDujtwGtkNCRGvit4m9i2BwMOCQUGCgcBAPNc+ipYoOIDDVGkZUWBw8MxIyZrA2MEZkUrLkFd79/JBQQFAwAHAQg="
+  },
+  "transactionId": "0xf5db273c7e970000"
+}

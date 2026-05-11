@@ -11,6 +11,8 @@ export const SOL_INTEGRATOR_ADDRESS = 'yq3rC7gDm5qSxZvt1EhPxeMh8QG97tgM8qs67gLCm
 // in .solvo/secrets.env (LIFI_API_KEY) — backend only, never bundle.
 // Fee attribution requires @lifi/widget React island OR server-side API proxy:
 // static jumper.exchange deeplinks ignore integrator URL params and pay zero.
+// LiFi handles BOTH EVM and SVM under the same integrator id. The portal has
+// two whitelisted recipients ("Default EVM" = EVM_INTEGRATOR_ADDRESS, "Default
+// SVM" = SOL_INTEGRATOR_ADDRESS); LiFi auto-picks the matching one per chain.
 export const LIFI_INTEGRATOR_KEY = 'web3-discover';
-export const LIFI_FEE_BPS = 30; // 0.30% — target once widget is embedded (currently 0 bps)
-export const JUPITER_FEE_BPS = 50; // 0.50% — only active once referral PDA is created
+export const LIFI_FEE_BPS = 30; // 0.30% — live on EVM and Solana via LiFi

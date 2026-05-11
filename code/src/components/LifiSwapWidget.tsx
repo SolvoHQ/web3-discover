@@ -1,6 +1,8 @@
 import { LiFiWidget, type WidgetConfig } from '@lifi/widget';
 import { useMemo } from 'react';
 
+const SOLANA_CHAIN_ID = 1151111081099710;
+
 const JUMPER_KEY_TO_CHAIN_ID: Record<string, number> = {
   ETH: 1,
   ARB: 42161,
@@ -20,29 +22,39 @@ const JUMPER_KEY_TO_CHAIN_ID: Record<string, number> = {
 
 type SlugTarget =
   | { kind: 'evm'; fromChain: string; fromToken?: string; chainLabel: string; tokenLabel?: string }
-  | { kind: 'solana' }
+  | { kind: 'solana'; inputMint?: string; outputMint?: string; symbol?: string }
   | { kind: 'fallback' };
 
-function resolveFromUrl(): { fromChain?: number; fromToken?: string } {
-  if (typeof window === 'undefined') return {};
+function resolveFromUrl(
+  defaultChainId: number,
+): { fromChain: number; fromToken?: string } {
+  if (typeof window === 'undefined') return { fromChain: defaultChainId };
   try {
     const params = new URLSearchParams(window.location.search);
     const slug = params.get('slug');
     const chain = params.get('chain');
+    const token = params.get('token');
     const registryEl = document.getElementById('swap-registry');
     const registry = registryEl ? JSON.parse(registryEl.textContent || '{}') : {};
     const slugTargets: Record<string, SlugTarget> = registry.slugTargets || {};
     const jumperChains: Record<string, string> = registry.jumperChains || {};
+    const solanaMints: Record<string, string> = registry.solanaMints || {};
 
     let target: SlugTarget | null = null;
     if (slug && slugTargets[slug]) {
       target = slugTargets[slug];
+    } else if (token && solanaMints[token.toUpperCase().trim()]) {
+      target = { kind: 'solana', inputMint: solanaMints[token.toUpperCase().trim()] };
     } else if (chain) {
       const lower = chain.toLowerCase();
-      for (const [needle, key] of Object.entries(jumperChains)) {
-        if (lower.includes(needle)) {
-          target = { kind: 'evm', fromChain: key, chainLabel: needle };
-          break;
+      if (/\bsolana\b/.test(lower)) {
+        target = { kind: 'solana' };
+      } else {
+        for (const [needle, key] of Object.entries(jumperChains)) {
+          if (lower.includes(needle)) {
+            target = { kind: 'evm', fromChain: key, chainLabel: needle };
+            break;
+          }
         }
       }
     }
@@ -53,14 +65,21 @@ function resolveFromUrl(): { fromChain?: number; fromToken?: string } {
         return { fromChain: chainId, fromToken: target.fromToken };
       }
     }
+    if (target && target.kind === 'solana') {
+      return { fromChain: SOLANA_CHAIN_ID, fromToken: target.inputMint };
+    }
   } catch (err) {
     console.error('[web3-discover] lifi preselect parse failed:', err);
   }
-  return {};
+  return { fromChain: defaultChainId };
 }
 
-export default function LifiSwapWidget() {
-  const preselect = useMemo(() => resolveFromUrl(), []);
+type Props = {
+  defaultChainId?: number;
+};
+
+export default function LifiSwapWidget({ defaultChainId = 1 }: Props) {
+  const preselect = useMemo(() => resolveFromUrl(defaultChainId), [defaultChainId]);
 
   const config = useMemo<WidgetConfig>(
     () => ({
@@ -74,7 +93,7 @@ export default function LifiSwapWidget() {
       variant: 'compact',
       appearance: 'light',
       hiddenUI: ['poweredBy'],
-      fromChain: preselect.fromChain ?? 1,
+      fromChain: preselect.fromChain,
       fromToken: preselect.fromToken,
       theme: {
         container: {

@@ -6,14 +6,12 @@ import {
   SOL_INTEGRATOR_ADDRESS,
   LIFI_INTEGRATOR_KEY,
   LIFI_FEE_BPS,
-  JUPITER_FEE_BPS,
 } from '../../lib/integrator.ts';
 import { SOLANA_MINTS, SLUG_SWAP_TARGETS, JUMPER_CHAIN_KEYS } from '../../lib/tokens.ts';
 
 const title = 'Swap airdrop tokens — web3-discover';
-const description = 'Embedded DEX-aggregator swap. Solana via Jupiter, EVM via LiFi widget. Honest 30 bps (EVM) / 50 bps (Solana) integrator fee disclosed upfront. No KYC, no signup, non-custodial.';
+const description = 'Embedded LiFi DEX aggregator. EVM and Solana swaps both route through the same widget. Honest 30 bps integrator fee disclosed upfront. No KYC, no signup, non-custodial.';
 const lifiFeePct = (LIFI_FEE_BPS / 100).toFixed(2);
-const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
 ---
 <Base title={title} description={description}>
   <section class="hero">
@@ -21,14 +19,12 @@ const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
       <div class="kicker">Tools</div>
       <h1>Swap your airdrop tokens.</h1>
       <p class="lede">
-        Non-custodial, no signup, no KYC. Solana swaps route through
-        <a href="https://jup.ag" rel="noopener" target="_blank">Jupiter</a>;
-        EVM swaps route through the embedded
+        Non-custodial, no signup, no KYC. Both Solana and EVM swaps route through the same embedded
         <a href="https://li.fi" rel="noopener" target="_blank">LiFi</a> widget
-        (the same router that powers <a href="https://jumper.exchange" rel="noopener" target="_blank">jumper.exchange</a>).
-        We earn an integrator fee of <strong>{jupiterFeePct}%</strong> (Solana, pending PDA top-up)
-        or <strong>{lifiFeePct}%</strong> (EVM, live) on swaps initiated here — disclosed openly,
-        baked into the quote you see. See our <a href="/disclosure">affiliate disclosure</a>.
+        (the router that also powers <a href="https://jumper.exchange" rel="noopener" target="_blank">jumper.exchange</a>).
+        We earn an integrator fee of <strong>{lifiFeePct}%</strong> on swaps initiated here —
+        disclosed openly, baked into the quote you see (EVM live; Solana live). See our
+        <a href="/disclosure">affiliate disclosure</a>.
       </p>
       <div id="preselect-banner" class="preselect-banner" hidden></div>
     </div>
@@ -36,23 +32,25 @@ const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
 
   <section class="section">
     <div class="container">
-      <h2 id="solana">Solana — Jupiter</h2>
+      <h2 id="solana">Solana — LiFi widget</h2>
       <p class="muted">
-        Best execution across every Solana DEX. Connect Phantom / Solflare / any Solana wallet,
-        pick tokens, swap. Our integrator address is baked into the quote:
-        <code data-integrator="solana">{SOL_INTEGRATOR_ADDRESS}</code>
+        Routed via LiFi (which dispatches across Jupiter, OKX DEX, and other Solana aggregators
+        per quote). Connect Phantom / Solflare / any Solana wallet, pick tokens, swap. Our SVM
+        integrator address is baked into the quote:
+        <code data-integrator="solana">{SOL_INTEGRATOR_ADDRESS}</code>. The
+        <strong>{lifiFeePct}%</strong> integrator fee appears as a line item in the quote and is
+        auto-forwarded to the address above.
       </p>
 
-      <div id="integrated-terminal" class="terminal-host"
-        data-integrator-address={SOL_INTEGRATOR_ADDRESS}
-        data-integrator-fee-bps={JUPITER_FEE_BPS}>
-        <div class="terminal-fallback">Loading Jupiter Plugin…</div>
+      <div class="lifi-host">
+        <LifiSwapWidget client:only="react" defaultChainId={1151111081099710}>
+          <div slot="fallback" class="terminal-fallback">Loading LiFi widget (Solana)…</div>
+        </LifiSwapWidget>
       </div>
 
       <p class="micro">
-        If the widget doesn't load (script blocked / offline), use
-        <a href="https://jup.ag/swap/SOL-USDC" rel="noopener" target="_blank">jup.ag</a> directly —
-        same routing, no integrator fee.
+        Prefer a Solana-only UI? Use <a href="https://jup.ag/swap/SOL-USDC" rel="noopener" target="_blank">jup.ag</a> directly —
+        same routing, no integrator fee on that path.
       </p>
     </div>
   </section>
@@ -88,12 +86,13 @@ const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
       <div class="prose">
         <ul>
           <li>
-            <strong>Solana swaps via Jupiter:</strong> when fully wired,
-            up to <strong>{jupiterFeePct}%</strong> of the swap output is sent to our
-            integrator address (<code>{SOL_INTEGRATOR_ADDRESS}</code>) during the swap
-            transaction itself. No platform on top of the user — Jupiter's router does it.
-            Fee activation requires a Jupiter Referral PDA, which needs a small SOL gas
-            top-up; we'll flip it on as soon as the wallet is funded.
+            <strong>Solana swaps via LiFi:</strong> our integrator account is registered with
+            <a href="https://portal.li.fi/integrations" rel="noopener" target="_blank">portal.li.fi</a>
+            with a Solana fee-recipient (<code>{SOL_INTEGRATOR_ADDRESS}</code>) whitelisted as
+            "Default SVM". On every Solana quote LiFi attributes <strong>{lifiFeePct}%</strong> to
+            <code>integrator=web3-discover</code> in the swap transaction itself and forwards it
+            to the SVM address above — no claim step, no PDA setup. Under the hood LiFi dispatches
+            to Jupiter, OKX DEX, and other Solana aggregators based on best execution.
           </li>
           <li>
             <strong>EVM swaps via LiFi:</strong> our integrator account
@@ -123,12 +122,6 @@ const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
     </div>
   </section>
 
-  <!-- Jupiter Plugin (successor to Jupiter Terminal v3, which now calls a dead tokens.jup.ag host) -->
-  <script
-    src="https://plugin.jup.ag/main.js"
-    data-preload
-    defer
-  ></script>
   <script
     is:inline
     type="application/json"
@@ -140,143 +133,56 @@ const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
       lifiKey: LIFI_INTEGRATOR_KEY,
     })}
   ></script>
-  <script is:inline define:vars={{ solIntegrator: SOL_INTEGRATOR_ADDRESS, feeBps: JUPITER_FEE_BPS }}>
-    const REGISTRY = (() => {
-      try {
-        return JSON.parse(document.getElementById('swap-registry').textContent || '{}');
-      } catch (err) {
-        console.error('[web3-discover] swap registry parse failed:', err);
-        return {};
+  <script is:inline>
+    (function () {
+      const registryEl = document.getElementById('swap-registry');
+      if (!registryEl) return;
+      let registry;
+      try { registry = JSON.parse(registryEl.textContent || '{}'); } catch { return; }
+      const slugTargets = registry.slugTargets || {};
+      const solanaMints = registry.solanaMints || {};
+      const jumperChains = registry.jumperChains || {};
+      const params = new URLSearchParams(window.location.search);
+      const slug = params.get('slug');
+      const token = params.get('token');
+      const chain = params.get('chain');
+
+      let label = null;
+      let kind = null;
+      if (slug && slugTargets[slug]) {
+        const t = slugTargets[slug];
+        kind = t.kind;
+        label = t.tokenLabel || t.chainLabel || t.symbol || slug;
+      } else if (token && solanaMints[token.toUpperCase().trim()]) {
+        kind = 'solana';
+        label = token.toUpperCase().trim();
+      } else if (chain) {
+        const lower = chain.toLowerCase();
+        if (/\bsolana\b/.test(lower)) {
+          kind = 'solana';
+          label = 'Solana';
+        } else {
+          for (const needle in jumperChains) {
+            if (lower.indexOf(needle) !== -1) {
+              kind = 'evm';
+              label = needle.charAt(0).toUpperCase() + needle.slice(1);
+              break;
+            }
+          }
+        }
       }
+
+      if (!kind || !label) return;
+      const banner = document.getElementById('preselect-banner');
+      if (!banner) return;
+      const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+      const anchor = kind === 'solana' ? '#solana' : '#evm';
+      const ecosystem = kind === 'solana' ? 'Solana' : 'EVM';
+      banner.innerHTML =
+        '<strong>Detected:</strong> ' + esc(label) + ' (' + ecosystem + '). ' +
+        'The <a href="' + anchor + '">' + ecosystem + ' widget</a> below is pre-selected for this token — scroll to swap.';
+      banner.hidden = false;
     })();
-    const SOLANA_MINTS = REGISTRY.solanaMints || {};
-    const SLUG_TARGETS = REGISTRY.slugTargets || {};
-    const JUMPER_CHAINS = REGISTRY.jumperChains || {};
-    const LIFI_KEY = REGISTRY.lifiKey || '';
-
-    function detectJumperChain(chain) {
-      if (!chain) return null;
-      const lower = chain.toLowerCase();
-      const entries = Object.keys(JUMPER_CHAINS);
-      for (let i = 0; i < entries.length; i++) {
-        const needle = entries[i];
-        if (lower.indexOf(needle) !== -1) {
-          return {
-            key: JUMPER_CHAINS[needle],
-            label: needle.charAt(0).toUpperCase() + needle.slice(1),
-          };
-        }
-      }
-      return null;
-    }
-
-    function resolveTarget(slug, projectName, chain) {
-      if (slug && SLUG_TARGETS[slug]) return SLUG_TARGETS[slug];
-      if (projectName) {
-        const key = projectName.toUpperCase().trim();
-        if (SOLANA_MINTS[key]) {
-          return {
-            kind: 'solana',
-            inputMint: SOLANA_MINTS[key],
-            outputMint: SOLANA_MINTS.USDC,
-            symbol: key,
-          };
-        }
-      }
-      if (chain) {
-        if (/\bsolana\b/i.test(chain)) return { kind: 'fallback' };
-        const evm = detectJumperChain(chain);
-        if (evm) return { kind: 'evm', fromChain: evm.key, chainLabel: evm.label };
-      }
-      return { kind: 'fallback' };
-    }
-
-    const URL_PARAMS = new URLSearchParams(window.location.search);
-    const slugParam = URL_PARAMS.get('slug');
-    const tokenParam = URL_PARAMS.get('token');
-    const chainParam = URL_PARAMS.get('chain');
-    const RESOLVED = resolveTarget(slugParam, tokenParam, chainParam);
-
-    // EVM preselect: LiFi React island reads the same registry + URL params and
-    // pre-fills its own form. We still surface a banner so the user sees the
-    // detected chain above the fold.
-    if (RESOLVED.kind === 'evm') {
-      const banner = document.getElementById('preselect-banner');
-      if (banner) {
-        const projectLabel = tokenParam || RESOLVED.tokenLabel || RESOLVED.chainLabel;
-        banner.innerHTML =
-          '<strong>Detected:</strong> ' + escapeHtml(projectLabel) +
-          ' (' + escapeHtml(RESOLVED.chainLabel) + ', EVM). ' +
-          'The LiFi widget below is pre-selected for this chain — scroll to swap.';
-        banner.hidden = false;
-      }
-    } else if (RESOLVED.kind === 'solana') {
-      const banner = document.getElementById('preselect-banner');
-      if (banner) {
-        banner.innerHTML =
-          '<strong>Detected:</strong> ' + escapeHtml(RESOLVED.symbol) +
-          ' (Solana SPL) — Jupiter is pre-selecting it as the input below.';
-        banner.hidden = false;
-      }
-    }
-
-    function escapeHtml(s) {
-      return String(s).replace(/[&<>"']/g, function (c) {
-        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
-      });
-    }
-
-    function initJupiter(attempts) {
-      attempts = attempts || 0;
-      if (attempts > 60) {
-        const host = document.getElementById('integrated-terminal');
-        if (host) {
-          host.innerHTML =
-            '<p style="padding:1rem;color:#b54a14;">Jupiter Plugin failed to load (network or CDN). ' +
-            'Use <a href="https://jup.ag/swap/SOL-USDC" target="_blank" rel="noopener">jup.ag/swap</a> directly — ' +
-            'same routing, no integrator fee on that path.</p>';
-        }
-        return;
-      }
-      if (typeof window === 'undefined' || !window.Jupiter) {
-        setTimeout(function () { initJupiter(attempts + 1); }, 200);
-        return;
-      }
-      try {
-        // Default: SOL → USDC (the historical behaviour).
-        // ?slug=… / ?token=… : project token becomes the INPUT (selling the airdrop).
-        let initialInputMint = SOLANA_MINTS.SOL;
-        let initialOutputMint = SOLANA_MINTS.USDC;
-        if (RESOLVED.kind === 'solana') {
-          initialInputMint = RESOLVED.inputMint;
-          initialOutputMint = RESOLVED.outputMint || SOLANA_MINTS.USDC;
-        }
-
-        window.Jupiter.init({
-          displayMode: 'integrated',
-          integratedTargetId: 'integrated-terminal',
-          endpoint: 'https://solana-rpc.publicnode.com',
-          formProps: {
-            initialInputMint: initialInputMint,
-            initialOutputMint: initialOutputMint,
-          },
-          containerStyles: { maxHeight: '700px' },
-        });
-      } catch (err) {
-        console.error('[web3-discover] Jupiter init failed:', err);
-        const host = document.getElementById('integrated-terminal');
-        if (host) {
-          host.innerHTML =
-            '<p style="padding:1rem;color:#b54a14;">Jupiter Plugin init error: ' + (err && err.message ? err.message : 'unknown') +
-            '. Try <a href="https://jup.ag/swap/SOL-USDC" target="_blank" rel="noopener">jup.ag/swap</a> directly.</p>';
-        }
-      }
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function () { initJupiter(0); });
-    } else {
-      initJupiter(0);
-    }
   </script>
 
   <style>
