@@ -42,6 +42,11 @@ const description = `A curated, scam-filtered directory of ${entries.length} cur
         <span class="hero-sep"> · </span>
         <a href="/tools/calendar"><strong>Subscribe deadlines in Google / Apple Calendar →</strong></a>
       </p>
+
+      <p class="hero-newsletter">
+        <span class="hero-newsletter-label">📬 Or get the next freshness sweep by email:</span>
+        <a class="hero-newsletter-cta" href="/subscribe">Subscribe to the newsletter →</a>
+      </p>
     </div>
   </section>
 
@@ -143,5 +148,27 @@ const description = `A curated, scam-filtered directory of ${entries.length} cur
     }
     .hero-check-row button:hover { background: var(--warn); }
     .hero-check-note { margin: 0.5rem 0 0; font-size: 0.8rem; color: var(--ink-soft); }
+    .hero-newsletter {
+      margin: 1rem 0 0;
+      padding: 0.6rem 0.9rem;
+      background: rgba(217, 212, 196, 0.35);
+      border-left: 3px solid var(--accent);
+      border-radius: 3px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      align-items: baseline;
+      font-size: 0.95rem;
+    }
+    .hero-newsletter-label { color: var(--ink-soft); }
+    .hero-newsletter-cta {
+      font-weight: 600;
+      text-decoration: none;
+      padding: 0.3rem 0.7rem;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 3px;
+    }
+    .hero-newsletter-cta:hover { background: var(--warn); }
   </style>
 </Base>

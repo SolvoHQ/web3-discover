@@ -1,0 +1,213 @@
+---
+import Base from '../layouts/Base.astro';
+import { listPublishedAirdrops } from '../lib/airdrops.ts';
+
+const entries = await listPublishedAirdrops();
+const today = new Date().toISOString().slice(0, 10);
+const upcoming = entries
+  .filter((e) => /^\d{4}-\d{2}-\d{2}$/.test(e.data.deadline) && e.data.deadline >= today)
+  .slice(0, 3);
+
+const title = 'Subscribe — web3-discover';
+const description =
+  'Get a curated, scam-filtered weekly drop of vetted active airdrops in your inbox. ' +
+  'No paid placements, no hype, one-click unsubscribe. Free.';
+---
+<Base title={title} description={description}>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker">Newsletter</div>
+      <h1>Get the next freshness sweep, by email.</h1>
+      <p class="lede">
+        Hand-vetted active airdrops, sent when the directory updates. No paid placements,
+        no hype, one-click unsubscribe. Free.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container subscribe-grid">
+      <div>
+        <form id="subscribe-form" class="subscribe-form" novalidate>
+          <label class="sf-label" for="sf-email">Your email</label>
+          <input
+            id="sf-email"
+            name="email"
+            type="email"
+            required
+            placeholder="you@somewhere.xyz"
+            autocomplete="email"
+            spellcheck="false"
+            autocapitalize="off"
+          />
+
+          <label class="sf-label" for="sf-chain">Preferred chain <span class="sf-optional">(optional)</span></label>
+          <select id="sf-chain" name="chain">
+            <option value="">All chains</option>
+            <option value="solana">Solana</option>
+            <option value="ethereum">Ethereum &amp; L2s</option>
+            <option value="base">Base</option>
+            <option value="bitcoin">Bitcoin L2s</option>
+            <option value="cosmos">Cosmos / appchains</option>
+          </select>
+
+          <button type="submit" id="sf-submit">Subscribe →</button>
+          <p id="sf-status" class="sf-status" aria-live="polite"></p>
+        </form>
+
+        <p class="sf-fineprint">
+          We use Resend to deliver. Your address is stored only to send the newsletter.
+          Every email has a one-click unsubscribe link. No tracking pixels, no
+          re-sharing, no upsells. <a href="/disclosure">Affiliate disclosure</a>.
+        </p>
+      </div>
+
+      <aside class="subscribe-preview">
+        <h2>You'll get the next sweep first</h2>
+        <p class="sf-preview-lede">Welcome email includes the 3 deadline-soonest entries.<br/>Right now those are:</p>
+        <ul class="sf-preview-list">
+          {upcoming.length > 0 ? upcoming.map((e) => (
+            <li>
+              <a href={`/airdrops/${e.slug}`}>{e.data.project}</a>
+              <span class="mono"> · {e.data.chain}</span>
+              <span class="sf-deadline"> · deadline {e.data.deadline}</span>
+            </li>
+          )) : (
+            <li><em>No dated deadlines right now — all current entries are ongoing campaigns.</em></li>
+          )}
+        </ul>
+        <p class="sf-other-channels">
+          Prefer a different format?
+          <a href="/rss.xml">RSS</a> ·
+          <a href="/tools/calendar">Calendar (iCal)</a> ·
+          <a href="/llms.txt">MCP for LLMs</a>
+        </p>
+      </aside>
+    </div>
+  </section>
+
+  <style>
+    .subscribe-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 2.5rem;
+      align-items: start;
+    }
+    @media (max-width: 720px) {
+      .subscribe-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+    }
+    .subscribe-form {
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-left: 4px solid var(--accent);
+      border-radius: 4px;
+      padding: 1.25rem 1.25rem 1.4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+    .sf-label {
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      font-family: var(--font-mono);
+      margin-top: 0.35rem;
+    }
+    .sf-optional { text-transform: none; letter-spacing: 0; color: var(--ink-soft); }
+    .subscribe-form input[type="email"],
+    .subscribe-form select {
+      padding: 0.6rem 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      background: #fff;
+    }
+    .subscribe-form input[type="email"]:focus,
+    .subscribe-form select:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: -1px;
+    }
+    .subscribe-form button {
+      margin-top: 0.6rem;
+      padding: 0.7rem 1rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .subscribe-form button:hover { background: var(--warn); }
+    .subscribe-form button:disabled { background: #aaa; cursor: progress; }
+    .sf-status {
+      margin: 0.5rem 0 0;
+      min-height: 1.4em;
+      font-size: 0.9rem;
+      color: var(--ink-soft);
+    }
+    .sf-status.ok { color: var(--ok); }
+    .sf-status.err { color: var(--warn); }
+    .sf-fineprint {
+      margin-top: 0.9rem;
+      font-size: 0.83rem;
+      color: var(--ink-soft);
+      line-height: 1.5;
+    }
+    .subscribe-preview {
+      padding: 1.1rem 1.25rem;
+      background: rgba(217, 212, 196, 0.25);
+      border: 1px solid var(--rule);
+    }
+    .subscribe-preview h2 {
+      font-size: 1.05rem;
+      margin: 0 0 0.4rem;
+    }
+    .sf-preview-lede { margin: 0 0 0.7rem; color: var(--ink-soft); font-size: 0.9rem; }
+    .sf-preview-list { margin: 0; padding-left: 1.1rem; font-size: 0.92rem; }
+    .sf-preview-list li { margin-bottom: 0.45rem; }
+    .sf-deadline { color: var(--ink-soft); font-family: var(--font-mono); font-size: 0.85em; }
+    .sf-other-channels { margin: 0.9rem 0 0; font-size: 0.85rem; color: var(--ink-soft); }
+  </style>
+
+  <script is:inline>
+    (function () {
+      const form = document.getElementById('subscribe-form');
+      if (!form) return;
+      const status = document.getElementById('sf-status');
+      const btn = document.getElementById('sf-submit');
+      form.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const email = document.getElementById('sf-email').value.trim();
+        const chain = document.getElementById('sf-chain').value;
+        if (!email) { status.textContent = 'Please enter an email.'; status.className = 'sf-status err'; return; }
+        btn.disabled = true;
+        status.textContent = 'Sending welcome email…';
+        status.className = 'sf-status';
+        try {
+          const res = await fetch('/api/subscribe', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ email, chain }),
+          });
+          const j = await res.json().catch(() => ({}));
+          if (res.ok && j.ok) {
+            status.textContent = 'Subscribed. Check your inbox for the welcome email.';
+            status.className = 'sf-status ok';
+            form.reset();
+          } else {
+            status.textContent = (j && j.error) ? `Failed: ${j.error}` : 'Subscription failed — try again in a moment.';
+            status.className = 'sf-status err';
+          }
+        } catch (e) {
+          status.textContent = 'Network error — try again.';
+          status.className = 'sf-status err';
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    })();
+  </script>
+</Base>
