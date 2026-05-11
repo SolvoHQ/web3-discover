@@ -5,6 +5,7 @@ import { SELL_EXCHANGES } from '../../lib/exchanges.ts';
 import { buildSellCtaHref } from '../../lib/tokens.ts';
 import { LIFI_INTEGRATOR_KEY } from '../../lib/integrator.ts';
 import { listGuides, relatedGuideSlugsFor, GUIDE_SLUG_BY_THEME, type GuideEntry } from '../../lib/guides.ts';
+import InlineSignup from '../../components/InlineSignup.astro';
 
 export async function getStaticPaths() {
   const entries = await listPublishedAirdrops();
@@ -120,6 +121,11 @@ const sellCta = buildSellCtaHref(entry.slug, data.project, data.chain, LIFI_INTE
           </div>
         )}
       </dl>
+
+      <InlineSignup
+        source={`entry-${entry.slug}`}
+        copy={`Get notified when ${data.project} status changes.`}
+      />
 
       <article class="entry-body">
         <Content />

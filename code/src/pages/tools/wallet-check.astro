@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { listPublishedAirdrops } from '../../lib/airdrops.ts';
+import InlineSignup from '../../components/InlineSignup.astro';
 
 const entries = await listPublishedAirdrops();
 const entriesPayload = entries.map((e) => ({
@@ -72,6 +73,12 @@ const softwareJsonLd = {
     <div class="container">
       <div id="wc-status" class="wc-status" hidden></div>
       <div id="wc-results" class="wc-results" hidden></div>
+      <div id="wc-signup" hidden>
+        <InlineSignup
+          source="tool-wallet-check"
+          copy="Get alerts for airdrops that match your wallet."
+        />
+      </div>
 
       <details class="wc-howitworks">
         <summary>How this works (and what it doesn't do)</summary>
@@ -198,6 +205,7 @@ const softwareJsonLd = {
     function renderResults(format, results) {
       const statusEl = document.getElementById('wc-status');
       const resultsEl = document.getElementById('wc-results');
+      const signupEl = document.getElementById('wc-signup');
 
       const active = results.filter((r) => r.active).map((r) => r.chain);
       const errored = results.filter((r) => !r.active && r.error);
@@ -214,6 +222,7 @@ const softwareJsonLd = {
           ' <a href="/airdrops">Browse the full directory →</a>';
         statusEl.hidden = false;
         resultsEl.hidden = true;
+        if (signupEl) signupEl.hidden = true;
         return;
       }
 
@@ -253,6 +262,7 @@ const softwareJsonLd = {
       }
       resultsEl.innerHTML = html;
       resultsEl.hidden = false;
+      if (signupEl) signupEl.hidden = totalMatches === 0;
     }
 
     async function runCheck(rawAddr) {

@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { listPublishedAirdrops } from '../../lib/airdrops.ts';
+import InlineSignup from '../../components/InlineSignup.astro';
 
 const entries = await listPublishedAirdrops();
 
@@ -53,6 +54,10 @@ const softwareJsonLd = {
 <Base title={title} description={description} extraJsonLd={softwareJsonLd}>
   <section class="hero">
     <div class="container">
+      <InlineSignup
+        source="tool-calendar"
+        copy="Prefer email? Get the same events as a weekly digest."
+      />
       <div class="kicker">Tools</div>
       <h1>Airdrop deadlines, pushed into your calendar.</h1>
       <p class="lede">

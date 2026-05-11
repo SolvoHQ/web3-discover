@@ -1,0 +1,163 @@
+---
+// Reusable inline newsletter signup. Posts to the same /api/subscribe
+// endpoint /subscribe.astro uses; attribution per surface lives on
+// GoatCounter (a custom event whose `path` encodes `source`).
+export interface Props {
+  source: string;
+  copy: string;
+}
+const { source, copy } = Astro.props as Props;
+
+// IDs are scoped by source so multiple instances on a page can't collide.
+const formId = `is-${source}`;
+const emailId = `${formId}-email`;
+const btnId = `${formId}-btn`;
+const statusId = `${formId}-status`;
+---
+<aside class="inline-signup" data-source={source}>
+  <form id={formId} class="is-form" novalidate>
+    <p class="is-copy">{copy}</p>
+    <div class="is-row">
+      <label class="is-sr" for={emailId}>Email</label>
+      <input
+        id={emailId}
+        name="email"
+        type="email"
+        required
+        placeholder="you@somewhere.xyz"
+        autocomplete="email"
+        spellcheck="false"
+        autocapitalize="off"
+      />
+      <button id={btnId} type="submit">Subscribe →</button>
+    </div>
+    <p id={statusId} class="is-status" aria-live="polite"></p>
+    <p class="is-fineprint">
+      One-click unsubscribe · no paid placements · <a href="/disclosure">disclosure</a>.
+    </p>
+  </form>
+</aside>
+
+<style>
+  .inline-signup {
+    margin: 1.5rem 0;
+    padding: 1rem 1.1rem 1.05rem;
+    background: #fdfbf6;
+    border: 1px solid var(--rule, #d9d4c4);
+    border-left: 3px solid var(--accent, #c8531a);
+    border-radius: 4px;
+  }
+  .is-form { display: flex; flex-direction: column; gap: 0.5rem; }
+  .is-copy {
+    margin: 0;
+    font-family: var(--font-serif, Georgia, serif);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--ink, #222);
+  }
+  .is-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .is-row input[type="email"] {
+    flex: 1 1 220px;
+    min-width: 0;
+    padding: 0.55rem 0.7rem;
+    font-family: var(--font-mono);
+    font-size: 0.92rem;
+    border: 1px solid var(--rule, #d9d4c4);
+    border-radius: 4px;
+    background: #fff;
+  }
+  .is-row input[type="email"]:focus {
+    outline: 2px solid var(--accent, #c8531a);
+    outline-offset: -1px;
+  }
+  .is-row button {
+    padding: 0.55rem 1rem;
+    background: var(--accent, #c8531a);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .is-row button:hover { background: var(--warn, #a8741a); }
+  .is-row button:disabled { background: #aaa; cursor: progress; }
+  .is-status {
+    margin: 0;
+    min-height: 1.3em;
+    font-size: 0.86rem;
+    color: var(--ink-soft, #555);
+  }
+  .is-status.ok { color: var(--ok, #2e8a3f); }
+  .is-status.err { color: var(--warn, #a8741a); }
+  .is-fineprint {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--ink-soft, #555);
+  }
+  .is-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+</style>
+
+<script is:inline define:vars={{ formId, source }}>
+  (function () {
+    var form = document.getElementById(formId);
+    if (!form) return;
+    var status = form.querySelector('.is-status');
+    var btn = form.querySelector('button[type="submit"]');
+    var emailInput = form.querySelector('input[type="email"]');
+    form.addEventListener('submit', async function (ev) {
+      ev.preventDefault();
+      var email = emailInput.value.trim();
+      if (!email) {
+        status.textContent = 'Please enter an email.';
+        status.className = 'is-status err';
+        return;
+      }
+      btn.disabled = true;
+      status.textContent = 'Sending welcome email…';
+      status.className = 'is-status';
+      try {
+        var res = await fetch('/api/subscribe', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ email: email, source: source }),
+        });
+        var j = await res.json().catch(function () { return {}; });
+        if (res.ok && j.ok) {
+          status.textContent = 'Subscribed. Check your inbox for the welcome email.';
+          status.className = 'is-status ok';
+          form.reset();
+          if (typeof window.goatcounter !== 'undefined' && window.goatcounter && typeof window.goatcounter.count === 'function') {
+            window.goatcounter.count({
+              path: 'signup-' + source,
+              title: 'inline signup: ' + source,
+              event: true,
+            });
+          }
+        } else {
+          status.textContent = (j && j.error) ? 'Failed: ' + j.error : 'Subscription failed — try again in a moment.';
+          status.className = 'is-status err';
+        }
+      } catch (e) {
+        status.textContent = 'Network error — try again.';
+        status.className = 'is-status err';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  })();
+</script>
