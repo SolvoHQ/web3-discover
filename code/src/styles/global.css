@@ -257,6 +257,41 @@ table.listing td.project a:hover { color: var(--accent); text-decoration: underl
   color: var(--ink-soft);
   font-style: italic;
 }
+.sell-primary {
+  padding: 0.85rem 1rem;
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+  margin: 0 0 0.85rem;
+}
+.sell-primary p { margin: 0.45rem 0; }
+.sell-primary p:first-child { margin-top: 0; }
+.sell-primary p:last-child { margin-bottom: 0; }
+.sell-cta {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff !important;
+  padding: 0.55rem 1rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.sell-cta:hover { background: var(--warn); text-decoration: none; }
+.sell-note-small {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+.sell-cex {
+  margin: 0.75rem 0 0;
+}
+.sell-cex summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  padding: 0.3rem 0;
+}
+.sell-cex summary:hover { color: var(--accent); }
+.sell-cex[open] summary { color: var(--ink); }
 
 .prose {
   font-family: var(--font-serif);

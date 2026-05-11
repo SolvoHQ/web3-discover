@@ -14,5 +14,8 @@
     "@astrojs/rss": "^4.0.18",
     "@astrojs/sitemap": "3.2.1",
     "astro": "^4.16.18"
+  },
+  "devDependencies": {
+    "ethers": "^6.16.0"
   }
 }

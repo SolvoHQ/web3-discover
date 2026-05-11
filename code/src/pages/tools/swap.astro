@@ -1,0 +1,216 @@
+---
+import Base from '../../layouts/Base.astro';
+import {
+  EVM_INTEGRATOR_ADDRESS,
+  SOL_INTEGRATOR_ADDRESS,
+  LIFI_INTEGRATOR_KEY,
+  LIFI_FEE_BPS,
+  JUPITER_FEE_BPS,
+} from '../../lib/integrator.ts';
+
+const title = 'Swap airdrop tokens — web3-discover';
+const description = 'Embedded DEX-aggregator swap. Solana via Jupiter, EVM via LiFi/Jumper. Honest 30–50 bps integrator fee disclosed upfront. No KYC, no signup, non-custodial.';
+const lifiFeePct = (LIFI_FEE_BPS / 100).toFixed(2);
+const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
+---
+<Base title={title} description={description}>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker">Tools</div>
+      <h1>Swap your airdrop tokens.</h1>
+      <p class="lede">
+        Non-custodial, no signup, no KYC. Solana swaps route through
+        <a href="https://jup.ag" rel="noopener" target="_blank">Jupiter</a>;
+        EVM swaps route through
+        <a href="https://jumper.exchange" rel="noopener" target="_blank">Jumper</a>
+        (powered by <a href="https://li.fi" rel="noopener" target="_blank">LiFi</a>).
+        We may earn an integrator fee of <strong>{jupiterFeePct}%</strong> (Solana)
+        or <strong>{lifiFeePct}%</strong> (EVM) on swaps initiated here — disclosed openly,
+        baked into the quote you see. See our <a href="/disclosure">affiliate disclosure</a>.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2 id="solana">Solana — Jupiter</h2>
+      <p class="muted">
+        Best execution across every Solana DEX. Connect Phantom / Solflare / any Solana wallet,
+        pick tokens, swap. Our integrator address is baked into the quote:
+        <code data-integrator="solana">{SOL_INTEGRATOR_ADDRESS}</code>
+      </p>
+
+      <div id="integrated-terminal" class="terminal-host"
+        data-integrator-address={SOL_INTEGRATOR_ADDRESS}
+        data-integrator-fee-bps={JUPITER_FEE_BPS}>
+        <div class="terminal-fallback">Loading Jupiter Terminal…</div>
+      </div>
+
+      <p class="micro">
+        If the widget doesn't load (script blocked / offline), use
+        <a href="https://jup.ag/swap/SOL-USDC" rel="noopener" target="_blank">jup.ag</a> directly —
+        same routing, no integrator fee.
+      </p>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="container">
+      <h2 id="evm">EVM — Jumper (LiFi)</h2>
+      <p class="muted">
+        Cross-chain aggregator across Ethereum, Arbitrum, Base, Optimism, Polygon, BSC, +20 more.
+        Our integrator key is registered with LiFi for fee attribution:
+        <code data-integrator="evm-key">{LIFI_INTEGRATOR_KEY}</code><br/>
+        Fee-recipient EVM address:
+        <code data-integrator="evm">{EVM_INTEGRATOR_ADDRESS}</code>
+      </p>
+
+      <p>
+        <a class="cta" href={`https://jumper.exchange/?utm_source=${LIFI_INTEGRATOR_KEY}&utm_medium=integrator&utm_campaign=swap`} rel="noopener" target="_blank">
+          Open Jumper swap →
+        </a>
+      </p>
+
+      <p class="micro">
+        The embedded EVM widget is on the v2 roadmap (requires bundling LiFi's React widget).
+        For now the deeplink above carries our integrator UTM so LiFi can attribute swaps for
+        fee accrual once partner registration completes. If you prefer to bypass us, use
+        <a href="https://jumper.exchange" rel="noopener" target="_blank">jumper.exchange</a> directly.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2>How the fee works (plain English)</h2>
+      <div class="prose">
+        <ul>
+          <li>
+            <strong>Solana swaps via Jupiter:</strong> when fully wired,
+            up to <strong>{jupiterFeePct}%</strong> of the swap output is sent to our
+            integrator address (<code>{SOL_INTEGRATOR_ADDRESS}</code>) during the swap
+            transaction itself. No platform on top of the user — Jupiter's router does it.
+            Fee activation requires a Jupiter Referral PDA, which needs a small SOL gas
+            top-up; we'll flip it on as soon as the wallet is funded.
+          </li>
+          <li>
+            <strong>EVM swaps via LiFi/Jumper:</strong> integrator key
+            <code>{LIFI_INTEGRATOR_KEY}</code> is attributed in the deeplink URL.
+            LiFi confirms partner registration before fees flow. Currently
+            <em>0 bps</em> are charged; once registered, up to <strong>{lifiFeePct}%</strong>
+            of the swap will route to <code>{EVM_INTEGRATOR_ADDRESS}</code>.
+          </li>
+          <li>
+            <strong>You always see the fee in the quote.</strong> Neither Jupiter nor LiFi
+            hides integrator fees — the quote ("you receive X") already nets out the fee.
+            If a hidden fee ever appears, that's a bug; email
+            <a href="mailto:hello@west0n.top">hello@west0n.top</a> and we'll refund.
+          </li>
+          <li>
+            <strong>Non-custodial.</strong> We never touch your tokens. The transaction is
+            signed from your wallet and broadcast directly. Our address only receives the
+            small integrator-fee portion.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Jupiter Plugin (successor to Jupiter Terminal v3, which now calls a dead tokens.jup.ag host) -->
+  <script
+    src="https://plugin.jup.ag/main.js"
+    data-preload
+    defer
+  ></script>
+  <script is:inline define:vars={{ solIntegrator: SOL_INTEGRATOR_ADDRESS, feeBps: JUPITER_FEE_BPS }}>
+    function initJupiter(attempts) {
+      attempts = attempts || 0;
+      if (attempts > 60) {
+        // 60 * 200ms = 12s; surrender
+        const host = document.getElementById('integrated-terminal');
+        if (host) {
+          host.innerHTML =
+            '<p style="padding:1rem;color:#b54a14;">Jupiter Plugin failed to load (network or CDN). ' +
+            'Use <a href="https://jup.ag/swap/SOL-USDC" target="_blank" rel="noopener">jup.ag/swap</a> directly — ' +
+            'same routing, no integrator fee on that path.</p>';
+        }
+        return;
+      }
+      if (typeof window === 'undefined' || !window.Jupiter) {
+        setTimeout(function () { initJupiter(attempts + 1); }, 200);
+        return;
+      }
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const tokenHint = params.get('token');
+        const KNOWN_MINTS = {
+          SOL: 'So11111111111111111111111111111111111111112',
+          USDC: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+          USDT: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+        };
+        const outputMint =
+          (tokenHint && KNOWN_MINTS[tokenHint.toUpperCase()]) ||
+          KNOWN_MINTS.USDC;
+
+        window.Jupiter.init({
+          displayMode: 'integrated',
+          integratedTargetId: 'integrated-terminal',
+          // api.mainnet-beta.solana.com now returns 403 for browser origins.
+          // publicnode.com Solana RPC is free, CORS-open, no API key.
+          endpoint: 'https://solana-rpc.publicnode.com',
+          formProps: {
+            initialOutputMint: outputMint,
+            initialInputMint: KNOWN_MINTS.SOL,
+          },
+          // platformFeeAndAccounts requires a Jupiter Referral PDA (gated on SOL gas).
+          // Will route fees to: ${solIntegrator} at ${feeBps} bps when activated.
+          containerStyles: { maxHeight: '700px' },
+        });
+      } catch (err) {
+        console.error('[web3-discover] Jupiter init failed:', err);
+        const host = document.getElementById('integrated-terminal');
+        if (host) {
+          host.innerHTML =
+            '<p style="padding:1rem;color:#b54a14;">Jupiter Plugin init error: ' + (err && err.message ? err.message : 'unknown') +
+            '. Try <a href="https://jup.ag/swap/SOL-USDC" target="_blank" rel="noopener">jup.ag/swap</a> directly.</p>';
+        }
+      }
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () { initJupiter(0); });
+    } else {
+      initJupiter(0);
+    }
+  </script>
+
+  <style>
+    .terminal-host {
+      margin: 1.5rem 0;
+      min-height: 600px;
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+    .terminal-fallback {
+      padding: 2rem;
+      text-align: center;
+      color: var(--ink-soft);
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+    }
+    .section-alt { background: rgba(217, 212, 196, 0.18); padding: 2rem 0; border-block: 1px solid var(--rule); }
+    .muted code { background: #fff; padding: 0.1em 0.4em; border-radius: 3px; border: 1px solid var(--rule); word-break: break-all; }
+    .cta {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff !important;
+      padding: 0.6rem 1.1rem;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .cta:hover { background: var(--warn); text-decoration: none; }
+    .micro { font-size: 0.85rem; color: var(--ink-soft); margin-top: 0.75rem; }
+  </style>
+</Base>

@@ -100,19 +100,44 @@ const articleJsonLd = {
 
       <aside class="sell-block" aria-labelledby="sell-heading">
         <h2 id="sell-heading">Where to sell your {data.project} airdrop</h2>
-        <p class="sell-lede">
-          When the tokens land, you'll want a centralized exchange with real liquidity. These are the major venues that typically list new airdrop tokens fastest. Compare fees and KYC requirements for your region before depositing.
-        </p>
-        <ul class="sell-list">
-          {SELL_EXCHANGES.map((ex) => (
-            <li>
-              <a href={ex.url} rel="sponsored noopener" target="_blank">{ex.name}</a>
-              <span class="sell-note"> — {ex.note}</span>
-            </li>
-          ))}
-        </ul>
+
+        <div class="sell-primary">
+          <p class="sell-lede" style="margin-top:0;">
+            <strong>Fastest path:</strong> swap on-chain via our embedded aggregator —
+            non-custodial, no KYC, no signup.
+          </p>
+          <p>
+            <a class="sell-cta" href={`/tools/swap?token=${encodeURIComponent(data.project)}&chain=${encodeURIComponent(data.chain)}`}>
+              Swap {data.project} on web3-discover →
+            </a>
+          </p>
+          <p class="sell-note-small">
+            Routes via Jupiter (Solana) or LiFi/Jumper (EVM) — best execution across DEXes.
+            We earn an integrator fee shown openly in the quote; see
+            <a href="/disclosure">disclosure</a>.
+          </p>
+        </div>
+
+        <details class="sell-cex">
+          <summary>Or sell on a centralized exchange ↓</summary>
+          <p class="sell-lede">
+            For large positions, deep order books on Binance / OKX / MEXC / Bybit often
+            give better fills than DEX liquidity. Compare fees and KYC requirements for your region.
+          </p>
+          <ul class="sell-list">
+            {SELL_EXCHANGES.map((ex) => (
+              <li>
+                <a href={ex.url} rel="sponsored noopener" target="_blank">{ex.name}</a>
+                <span class="sell-note"> — {ex.note}</span>
+              </li>
+            ))}
+          </ul>
+        </details>
+
         <p class="sell-disclosure">
-          We may earn a commission on some of these links — see our <a href="/disclosure">affiliate disclosure</a>. Listings are never influenced by commercial relationships.
+          We may earn a commission on swap and exchange links — see our
+          <a href="/disclosure">affiliate disclosure</a>. Listings are never influenced by
+          commercial relationships.
         </p>
       </aside>
 
