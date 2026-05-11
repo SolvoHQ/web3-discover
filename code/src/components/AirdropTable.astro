@@ -6,6 +6,25 @@ interface Props {
 }
 
 const { entries } = Astro.props as Props;
+
+const bucketEffort = (raw: string): 'low' | 'medium' | 'high' => {
+  const s = raw.toLowerCase();
+  if (s.includes('ongoing') || s.includes('daily') || s.includes('variable')) return 'high';
+  const hourHit = /(\d+\s*hr|hour)/.test(s);
+  const weeklyHit = s.includes('weekly') || s.includes('/wk') || s.includes('per week');
+  if (hourHit && weeklyHit) return 'high';
+  if (weeklyHit) {
+    const m = s.match(/~?(\d+)\s*min/);
+    if (m && parseInt(m[1], 10) <= 5) return 'low';
+    return 'medium';
+  }
+  if (hourHit) return 'medium';
+  const m = s.match(/~?(\d+)\s*min/);
+  if (m) {
+    return parseInt(m[1], 10) <= 15 ? 'low' : 'medium';
+  }
+  return 'medium';
+};
 ---
 <table class="listing">
   <thead>
@@ -20,7 +39,13 @@ const { entries } = Astro.props as Props;
   </thead>
   <tbody>
     {entries.map((entry) => (
-      <tr>
+      <tr
+        data-project={entry.data.project.toLowerCase()}
+        data-blurb={entry.data.blurb.toLowerCase()}
+        data-chain={entry.data.chain.toLowerCase()}
+        data-risk={entry.data.risk}
+        data-effort={bucketEffort(entry.data.effort)}
+      >
         <td class="project"><a href={`/airdrops/${entry.slug}`}>{entry.data.project}</a></td>
         <td class="col-chain mono">{entry.data.chain}</td>
         <td class="col-effort mono">{entry.data.effort}</td>

@@ -43,7 +43,171 @@ const itemListJsonLd = {
         <h2>{entries.length} entries</h2>
         <span class="meta">{verifiedCount} verified · {unverifiedCount} unverified</span>
       </div>
+
+      <div class="filter-strip" data-total={entries.length}>
+        <label class="filter-search">
+          <span class="sr-only">Search</span>
+          <input
+            type="search"
+            id="filter-q"
+            placeholder="Search project, blurb, or chain…"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </label>
+        <fieldset class="chip-group" data-filter="risk">
+          <legend>Risk</legend>
+          <label class="chip"><input type="checkbox" value="verified" /><span>verified</span></label>
+          <label class="chip"><input type="checkbox" value="unverified" /><span>unverified</span></label>
+        </fieldset>
+        <fieldset class="chip-group" data-filter="effort">
+          <legend>Effort</legend>
+          <label class="chip"><input type="checkbox" value="low" /><span>low</span></label>
+          <label class="chip"><input type="checkbox" value="medium" /><span>medium</span></label>
+          <label class="chip"><input type="checkbox" value="high" /><span>high</span></label>
+        </fieldset>
+        <div class="filter-count" aria-live="polite">
+          <span id="filter-shown">{entries.length}</span> of {entries.length} entries
+        </div>
+      </div>
+
       <AirdropTable entries={entries} />
+      <p id="filter-empty" class="filter-empty" hidden>No entries match — clear filters.</p>
     </div>
   </section>
+
+  <style>
+    .filter-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1rem;
+      align-items: center;
+      margin: 1rem 0 1.25rem;
+      padding: 0.75rem 0.9rem;
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.4);
+    }
+    .filter-search { flex: 1 1 240px; min-width: 200px; }
+    .filter-search input {
+      width: 100%;
+      padding: 0.5rem 0.7rem;
+      font: inherit;
+      font-size: 0.95rem;
+      border: 1px solid var(--rule);
+      border-radius: 3px;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    .filter-search input:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+      border-color: var(--accent);
+    }
+    .chip-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.4rem;
+      border: 0;
+      padding: 0;
+      margin: 0;
+    }
+    .chip-group legend {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink-soft);
+      margin-right: 0.25rem;
+      padding: 0;
+      float: left;
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      padding: 0.2em 0.6em;
+      border: 1px solid var(--rule);
+      border-radius: 2px;
+      cursor: pointer;
+      user-select: none;
+      color: var(--ink-soft);
+      background: transparent;
+      line-height: 1.4;
+    }
+    .chip:hover { border-color: var(--ink-soft); color: var(--ink); }
+    .chip input { position: absolute; opacity: 0; pointer-events: none; }
+    .chip:has(input:checked) {
+      background: var(--ink);
+      color: var(--bg);
+      border-color: var(--ink);
+    }
+    .filter-count {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      margin-left: auto;
+    }
+    .filter-empty {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--ink-soft);
+      padding: 1.25rem 0.6rem;
+      border-bottom: 1px solid var(--rule);
+      margin: 0;
+    }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+    }
+    @media (max-width: 640px) {
+      .filter-strip { gap: 0.6rem 0.75rem; }
+      .filter-search { flex: 1 1 100%; }
+      .filter-count { margin-left: 0; flex: 1 1 100%; }
+    }
+  </style>
+
+  <script>
+    (() => {
+      const strip = document.querySelector<HTMLElement>('.filter-strip');
+      const table = document.querySelector<HTMLTableElement>('section.section table.listing');
+      const shown = document.getElementById('filter-shown');
+      const emptyEl = document.getElementById('filter-empty');
+      const q = document.getElementById('filter-q') as HTMLInputElement | null;
+      if (!strip || !table || !shown || !emptyEl || !q) return;
+
+      const total = Number(strip.dataset.total || '0');
+      const rows = Array.from(table.querySelectorAll<HTMLTableRowElement>('tbody tr'));
+      const riskBoxes = Array.from(
+        strip.querySelectorAll<HTMLInputElement>('fieldset[data-filter="risk"] input[type="checkbox"]'),
+      );
+      const effortBoxes = Array.from(
+        strip.querySelectorAll<HTMLInputElement>('fieldset[data-filter="effort"] input[type="checkbox"]'),
+      );
+
+      const apply = () => {
+        const text = q.value.trim().toLowerCase();
+        const risks = riskBoxes.filter((b) => b.checked).map((b) => b.value);
+        const efforts = effortBoxes.filter((b) => b.checked).map((b) => b.value);
+        let visible = 0;
+        for (const row of rows) {
+          const hay = `${row.dataset.project || ''} ${row.dataset.blurb || ''} ${row.dataset.chain || ''}`;
+          const textOk = !text || hay.includes(text);
+          const riskOk = risks.length === 0 || risks.includes(row.dataset.risk || '');
+          const effortOk = efforts.length === 0 || efforts.includes(row.dataset.effort || '');
+          const match = textOk && riskOk && effortOk;
+          row.hidden = !match;
+          if (match) visible++;
+        }
+        shown.textContent = String(visible);
+        emptyEl.hidden = visible !== 0 || rows.length === 0;
+        table.hidden = visible === 0 && rows.length > 0;
+      };
+
+      q.addEventListener('input', apply);
+      for (const b of [...riskBoxes, ...effortBoxes]) b.addEventListener('change', apply);
+    })();
+  </script>
 </Base>
