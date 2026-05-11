@@ -1,0 +1,747 @@
+---
+import Base from '../../layouts/Base.astro';
+import InlineSignup from '../../components/InlineSignup.astro';
+import { HISTORICAL_AIRDROPS } from '../../data/historical-airdrops.ts';
+
+const airdrops = HISTORICAL_AIRDROPS;
+const airdropsPayload = airdrops;
+
+// Pre-compute the theoretical maximum if a wallet hit every base tier — used
+// as a teaser in the hero copy.
+const maxTotalUSD = airdrops.reduce((sum, a) => sum + a.baseAmount * a.claimPriceUSD, 0);
+const maxTotalFmt = '$' + Math.round(maxTotalUSD).toLocaleString('en-US');
+
+const title = `Historical airdrop calculator — what would you have made from ${airdrops.length} past airdrops?`;
+const description = `Paste any EVM or Solana address. We check ${airdrops.length} well-documented historical airdrops (UNI, ARB, OP, JTO, JUP, PYTH, BLUR, ENA, 1INCH, EIGEN) against the wallet using on-chain archive lookups, then total up what the base tier would have been worth at claim-day USD prices. Client-side only, non-custodial, no signature, no signup.`;
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const softwareJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'web3-discover historical airdrop calculator',
+  url: `${siteUrl}/tools/historical-value`,
+  applicationCategory: 'UtilityApplication',
+  operatingSystem: 'Web',
+  description,
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  publisher: { '@type': 'Organization', name: 'web3-discover', url: siteUrl },
+};
+---
+<Base title={title} description={description} extraJsonLd={softwareJsonLd}>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker">Tools · Nostalgia</div>
+      <h1>How much would <em>you</em> have made from past airdrops?</h1>
+      <p class="lede">
+        Paste an EVM (<code>0x…</code>) address, a Solana address, or both. We
+        check {airdrops.length} hand-picked historical airdrops against your
+        on-chain history and total up what the <strong>base tier</strong>
+        would have been worth at <strong>claim-day USD prices</strong>.
+        Maximum possible if you'd hit every single one: <strong class="mono">{maxTotalFmt}</strong>.
+        Read-only, non-custodial, no signature, no signup.
+      </p>
+
+      <form id="hv-form" class="hv-form" autocomplete="off">
+        <div class="hv-input-grid">
+          <div class="hv-input-cell">
+            <label class="hv-label" for="hv-evm">EVM address</label>
+            <input
+              id="hv-evm"
+              name="evm"
+              type="text"
+              placeholder="0x…"
+              spellcheck="false"
+              autocapitalize="off"
+              autocorrect="off"
+            />
+          </div>
+          <div class="hv-input-cell">
+            <label class="hv-label" for="hv-sol">Solana address</label>
+            <input
+              id="hv-sol"
+              name="sol"
+              type="text"
+              placeholder="base58 32–44 chars"
+              spellcheck="false"
+              autocapitalize="off"
+              autocorrect="off"
+            />
+          </div>
+        </div>
+        <div class="hv-actions">
+          <button type="submit" class="hv-btn">Tell me what I missed →</button>
+          <p class="hv-hint">
+            Either, or both. Try
+            <a href="?evm=0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045&sol=9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM">vitalik.eth + a public Solana wallet</a>.
+            Typically resolves in 4–8 seconds.
+          </p>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div id="hv-status" class="hv-status" hidden></div>
+      <div id="hv-summary" class="hv-summary" hidden></div>
+      <div id="hv-results" class="hv-results" hidden></div>
+      <div id="hv-signup" hidden>
+        <InlineSignup
+          source="tool-historical-value"
+          copy="Don't miss the NEXT one. We send a weekly digest of fresh airdrop opportunities — read in 3 minutes, no spam."
+        />
+      </div>
+
+      <details class="hv-howitworks">
+        <summary>How this works (and the honest caveats)</summary>
+        <div class="prose">
+          <ul>
+            <li>
+              <strong>{airdrops.length} hand-picked airdrops.</strong>
+              UNI, 1INCH, OP, ARB, BLUR, ENA, EIGEN, JTO, JUP, PYTH —
+              chosen because each one had a deterministic-ish eligibility
+              criterion we can approximate from on-chain reads.
+            </li>
+            <li>
+              <strong>Claim-day USD prices, hard-coded.</strong> We don't
+              hit a price oracle. Each airdrop's USD figure is the token
+              price at claim day, snapshotted by hand. If you'd held instead
+              of dumping you may have made more — or much less. Not financial
+              advice.
+            </li>
+            <li>
+              <strong>Base-tier amounts, hard-coded.</strong> Most airdrops
+              had multiple tiers; we use the LOWEST documented tier. Power
+              users got 10× — 100× more. If you genuinely qualified, treat
+              this number as a floor.
+            </li>
+            <li>
+              <strong>Heuristics, not authoritative claims.</strong>
+              "Had a tx on Arbitrum before Feb 6 2023" is a proxy for
+              Arbitrum's actual tiered criteria. Token-balance proxies (held
+              jitoSOL, held stETH, held USDe) miss wallets that already
+              redeemed. We surface <em>worth investigating</em>, not <em>you
+              definitely had this</em>.
+            </li>
+            <li>
+              <strong>Your address never reaches our servers.</strong>
+              Browser → drpc.org (archive reads) and publicnode (current
+              state) directly. We don't log, store, or proxy.
+            </li>
+          </ul>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <script
+    is:inline
+    type="application/json"
+    id="hv-airdrops"
+    set:html={JSON.stringify(airdropsPayload)}
+  ></script>
+
+  <script is:inline>
+    const AIRDROPS = JSON.parse(document.getElementById('hv-airdrops').textContent || '[]');
+
+    // Two RPC tiers: drpc for archive (historical block tx counts), publicnode
+    // for current state (balanceOf, getSignaturesForAddress, getTokenAccounts).
+    // No new providers introduced — matches /tools/wallet-age (drpc) and
+    // /tools/eligibility (publicnode).
+    const ARCHIVE_RPCS = {
+      ethereum: 'https://eth.drpc.org',
+      optimism: 'https://optimism.drpc.org',
+      arbitrum: 'https://arbitrum.drpc.org',
+      base:     'https://base.drpc.org',
+    };
+    const CURRENT_RPCS = {
+      ethereum: 'https://ethereum-rpc.publicnode.com',
+      optimism: 'https://optimism-rpc.publicnode.com',
+      arbitrum: 'https://arbitrum-one-rpc.publicnode.com',
+      base:     'https://base-rpc.publicnode.com',
+    };
+    const SOL_RPC = 'https://solana-rpc.publicnode.com';
+
+    const CHAIN_LABELS = {
+      ethereum: 'Ethereum',
+      optimism: 'Optimism',
+      arbitrum: 'Arbitrum',
+      base:     'Base',
+      solana:   'Solana',
+    };
+
+    const EVM_RX = /^0x[a-fA-F0-9]{40}$/;
+    const SOL_RX = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+    function escHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+
+    function shortAddr(a) {
+      return a && a.length > 14 ? a.slice(0, 6) + '…' + a.slice(-6) : a || '';
+    }
+
+    function fmtUSD(n) {
+      if (n >= 1000) return '$' + Math.round(n).toLocaleString('en-US');
+      if (n >= 10) return '$' + n.toFixed(0);
+      return '$' + n.toFixed(2);
+    }
+
+    function encodeBalanceOf(holder) {
+      const stripped = holder.toLowerCase().replace(/^0x/, '');
+      return '0x70a08231' + '0'.repeat(24) + stripped;
+    }
+
+    function hexToBigInt(h) {
+      if (!h || h === '0x') return 0n;
+      try { return BigInt(h); } catch { return 0n; }
+    }
+
+    async function rpcCall(url, body) {
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }
+
+    // ----- Phase 1: enumerate the reads we need -----
+    // Per-chain we bundle (a) the set of historical blocks at which we need
+    // tx count (drpc archive) and (b) the set of token contracts whose
+    // balance we need now (publicnode). Solana reads we just collect mints.
+    function collectNeeds(airdrops, addrs) {
+      const archiveTxByChainBlock = {}; // { chain: Set<blockNumber> }
+      const tokenBalancesByChain   = {}; // { chain: Set<contract> }
+      const solMintSet = new Set();
+      let needSolSig = false;
+      for (const a of airdrops) {
+        const c = a.eligibility;
+        if (c.kind === 'evmFirstTxBefore' && addrs.evm) {
+          if (!archiveTxByChainBlock[c.chain]) archiveTxByChainBlock[c.chain] = new Set();
+          archiveTxByChainBlock[c.chain].add(c.beforeBlock);
+        } else if (c.kind === 'evmHoldsToken' && addrs.evm) {
+          if (!tokenBalancesByChain[c.chain]) tokenBalancesByChain[c.chain] = new Set();
+          tokenBalancesByChain[c.chain].add(c.contract);
+        } else if (c.kind === 'solHasSignature' && addrs.sol) {
+          needSolSig = true;
+        } else if (c.kind === 'solHoldsMint' && addrs.sol) {
+          solMintSet.add(c.mint);
+        }
+      }
+      return { archiveTxByChainBlock, tokenBalancesByChain, needSolSig, solMintSet };
+    }
+
+    // Fan out one POST per (archive chain) with a batched array of
+    // eth_getTransactionCount calls (one per block we need). drpc accepts
+    // standard JSON-RPC batches. Returns { chain, byBlock: Map<block, count|null>, ok, error }.
+    async function fetchArchiveChain(chain, blocks, evmAddr) {
+      const url = ARCHIVE_RPCS[chain];
+      const blockArr = Array.from(blocks);
+      const reqs = blockArr.map((b, i) => ({
+        jsonrpc: '2.0', id: i, method: 'eth_getTransactionCount',
+        params: [evmAddr, '0x' + b.toString(16)],
+      }));
+      let body;
+      try {
+        body = await rpcCall(url, reqs);
+      } catch (err) {
+        return { chain, ok: false, error: err.message };
+      }
+      const byId = new Map();
+      for (const r of body) byId.set(r.id, r);
+      const byBlock = new Map();
+      for (let i = 0; i < blockArr.length; i++) {
+        const r = byId.get(i);
+        if (r && r.result != null && !r.error) byBlock.set(blockArr[i], parseInt(r.result, 16) || 0);
+        else byBlock.set(blockArr[i], null);
+      }
+      return { chain, ok: true, byBlock };
+    }
+
+    // Fan out one POST per (current-state chain) with a batched array of
+    // eth_call balanceOf reads.
+    async function fetchCurrentChain(chain, contracts, evmAddr) {
+      const url = CURRENT_RPCS[chain];
+      const contractArr = Array.from(contracts);
+      const reqs = contractArr.map((c, i) => ({
+        jsonrpc: '2.0', id: i, method: 'eth_call',
+        params: [{ to: c, data: encodeBalanceOf(evmAddr) }, 'latest'],
+      }));
+      let body;
+      try {
+        body = await rpcCall(url, reqs);
+      } catch (err) {
+        return { chain, ok: false, error: err.message };
+      }
+      const byId = new Map();
+      for (const r of body) byId.set(r.id, r);
+      const byContract = new Map();
+      for (let i = 0; i < contractArr.length; i++) {
+        const r = byId.get(i);
+        if (r && r.result != null && !r.error) byContract.set(contractArr[i], hexToBigInt(r.result));
+        else byContract.set(contractArr[i], null);
+      }
+      return { chain, ok: true, byContract };
+    }
+
+    async function fetchSolanaSignature(solAddr) {
+      try {
+        const j = await rpcCall(SOL_RPC, {
+          jsonrpc: '2.0', id: 1, method: 'getSignaturesForAddress',
+          params: [solAddr, { limit: 1 }],
+        });
+        if (j.error) return { ok: false, error: j.error.message };
+        return { ok: true, present: Array.isArray(j.result) && j.result.length > 0 };
+      } catch (err) { return { ok: false, error: err.message }; }
+    }
+
+    async function fetchSplBalance(solAddr, mint) {
+      try {
+        const j = await rpcCall(SOL_RPC, {
+          jsonrpc: '2.0', id: 1, method: 'getTokenAccountsByOwner',
+          params: [solAddr, { mint }, { encoding: 'jsonParsed' }],
+        });
+        if (j.error) return { ok: false, error: j.error.message };
+        let total = 0n;
+        for (const a of (j.result?.value || [])) {
+          const amt = a.account?.data?.parsed?.info?.tokenAmount?.amount;
+          if (amt) total += BigInt(amt);
+        }
+        return { ok: true, raw: total };
+      } catch (err) { return { ok: false, error: err.message }; }
+    }
+
+    // ----- Phase 2: evaluate -----
+    // Returns { eligible: bool, reason: string, status: 'eligible'|'not-eligible'|'unavailable' }
+    function evaluate(check, state) {
+      if (check.kind === 'evmFirstTxBefore') {
+        if (!state.evm) return { status: 'not-eligible', reason: 'No EVM address supplied' };
+        const chainData = state.archive[check.chain];
+        if (!chainData || !chainData.ok) return { status: 'unavailable', reason: 'Archive RPC unavailable for ' + CHAIN_LABELS[check.chain] };
+        const n = chainData.byBlock.get(check.beforeBlock);
+        if (n == null) return { status: 'unavailable', reason: 'Archive read failed' };
+        if (n > 0) return { status: 'eligible', reason: n.toLocaleString() + ' ' + CHAIN_LABELS[check.chain] + ' tx before ' + check.beforeDate };
+        return { status: 'not-eligible', reason: 'No ' + CHAIN_LABELS[check.chain] + ' activity before ' + check.beforeDate };
+      }
+      if (check.kind === 'evmHoldsToken') {
+        if (!state.evm) return { status: 'not-eligible', reason: 'No EVM address supplied' };
+        const chainData = state.current[check.chain];
+        if (!chainData || !chainData.ok) return { status: 'unavailable', reason: CHAIN_LABELS[check.chain] + ' RPC unavailable' };
+        const bal = chainData.byContract.get(check.contract);
+        if (bal == null) return { status: 'unavailable', reason: check.symbol + ' balance read failed' };
+        if (bal > 0n) return { status: 'eligible', reason: 'Currently holds ' + check.symbol };
+        return { status: 'not-eligible', reason: 'No ' + check.symbol + ' balance now' };
+      }
+      if (check.kind === 'solHasSignature') {
+        if (!state.sol) return { status: 'not-eligible', reason: 'No Solana address supplied' };
+        if (!state.solSig || !state.solSig.ok) return { status: 'unavailable', reason: 'Solana RPC unavailable' };
+        if (state.solSig.present) return { status: 'eligible', reason: 'Has Solana signature history' };
+        return { status: 'not-eligible', reason: 'No Solana signature history' };
+      }
+      if (check.kind === 'solHoldsMint') {
+        if (!state.sol) return { status: 'not-eligible', reason: 'No Solana address supplied' };
+        const entry = state.solMints && state.solMints[check.mint];
+        if (!entry) return { status: 'unavailable', reason: check.symbol + ' balance read missing' };
+        if (!entry.ok) return { status: 'unavailable', reason: check.symbol + ' balance read failed' };
+        if (entry.raw > 0n) return { status: 'eligible', reason: 'Currently holds ' + check.symbol };
+        return { status: 'not-eligible', reason: 'No ' + check.symbol + ' balance now' };
+      }
+      return { status: 'unavailable', reason: 'Unknown check kind' };
+    }
+
+    function renderRow(a, verdict, dollars) {
+      const cls = verdict.status === 'eligible' ? 'hv-row hv-row-hit' : (verdict.status === 'unavailable' ? 'hv-row hv-row-na' : 'hv-row hv-row-miss');
+      const valueCell = verdict.status === 'eligible'
+        ? '<span class="hv-row-amount mono">' + a.baseAmount.toLocaleString('en-US') + ' ' + escHtml(a.symbol) + '</span><br><span class="hv-row-usd mono">' + escHtml(fmtUSD(dollars)) + '</span>'
+        : (verdict.status === 'unavailable' ? '<span class="hv-row-skip">RPC error</span>' : '<span class="hv-row-skip">—</span>');
+      return (
+        '<tr class="' + cls + '">' +
+          '<td class="hv-row-project">' +
+            '<a href="' + escHtml(a.announceUrl) + '" rel="noopener" target="_blank">' + escHtml(a.project) + '</a>' +
+            '<span class="hv-row-date mono"> · ' + escHtml(a.claimDate) + '</span>' +
+          '</td>' +
+          '<td class="hv-row-price mono">' + escHtml(fmtUSD(a.claimPriceUSD)) + '</td>' +
+          '<td class="hv-row-verdict">' + escHtml(verdict.reason) + '</td>' +
+          '<td class="hv-row-value">' + valueCell + '</td>' +
+        '</tr>'
+      );
+    }
+
+    function renderResults(state, evmAddr, solAddr) {
+      const statusEl = document.getElementById('hv-status');
+      const summaryEl = document.getElementById('hv-summary');
+      const resultsEl = document.getElementById('hv-results');
+      const signupEl = document.getElementById('hv-signup');
+
+      let totalUSD = 0;
+      let hits = 0;
+      let unavail = 0;
+      const rows = [];
+      for (const a of AIRDROPS) {
+        const verdict = evaluate(a.eligibility, state);
+        const dollars = a.baseAmount * a.claimPriceUSD;
+        if (verdict.status === 'eligible') { hits++; totalUSD += dollars; }
+        else if (verdict.status === 'unavailable') unavail++;
+        rows.push({ a, verdict, dollars });
+      }
+      // Sort: eligible (highest USD first) → not-eligible → unavailable
+      rows.sort((x, y) => {
+        const orderX = x.verdict.status === 'eligible' ? 0 : (x.verdict.status === 'not-eligible' ? 1 : 2);
+        const orderY = y.verdict.status === 'eligible' ? 0 : (y.verdict.status === 'not-eligible' ? 1 : 2);
+        if (orderX !== orderY) return orderX - orderY;
+        if (x.verdict.status === 'eligible') return y.dollars - x.dollars;
+        return 0;
+      });
+
+      const inputLine = [];
+      if (evmAddr) inputLine.push('<strong>EVM</strong> <code>' + escHtml(shortAddr(evmAddr)) + '</code>');
+      if (solAddr) inputLine.push('<strong>SOL</strong> <code>' + escHtml(shortAddr(solAddr)) + '</code>');
+      statusEl.innerHTML =
+        'Checked <strong>' + AIRDROPS.length + '</strong> historical airdrops for ' + inputLine.join(' + ') + '.';
+      statusEl.hidden = false;
+
+      summaryEl.innerHTML =
+        '<div class="hv-summary-grid">' +
+          '<div class="hv-summary-cell hv-summary-total">' +
+            '<div class="hv-summary-num mono">' + escHtml(fmtUSD(totalUSD)) + '</div>' +
+            '<div class="hv-summary-lbl">Estimated base-tier value</div>' +
+          '</div>' +
+          '<div class="hv-summary-cell">' +
+            '<div class="hv-summary-num mono">' + hits + ' / ' + AIRDROPS.length + '</div>' +
+            '<div class="hv-summary-lbl">Eligible at base tier</div>' +
+          '</div>' +
+          (unavail > 0 ? '<div class="hv-summary-cell hv-summary-warn"><div class="hv-summary-num mono">' + unavail + '</div><div class="hv-summary-lbl">RPC unavailable</div></div>' : '') +
+        '</div>' +
+        (hits === 0
+          ? '<p class="hv-summary-zero"><strong>0 historical claims.</strong> Either this wallet is too new, or it ran on chains/tokens we didn\'t map. Try one with longer history — or focus on what\'s <em>still claimable</em> below.</p>'
+          : '<p class="hv-summary-caveat">' +
+            '<strong>Read this before celebrating.</strong> The total assumes you (a) actually met each criterion, (b) successfully claimed, and (c) sold at claim-day price. Real tiers had thresholds; you may have qualified for more, or nothing. This is a floor estimate.' +
+            '</p>');
+      summaryEl.hidden = false;
+
+      let html = '<table class="hv-table">' +
+        '<thead><tr><th>Airdrop</th><th>Claim-day $</th><th>This wallet</th><th class="hv-th-right">Base value</th></tr></thead>' +
+        '<tbody>';
+      for (const r of rows) html += renderRow(r.a, r.verdict, r.dollars);
+      html += '</tbody></table>';
+
+      // Cross-link to the live tools
+      html += '<div class="hv-crosslinks">' +
+        '<h3>Don\'t miss the next one</h3>' +
+        '<ul>' +
+          '<li>→ <a href="/tools/eligibility?evm=' + encodeURIComponent(evmAddr || '') + '&sol=' + encodeURIComponent(solAddr || '') + '"><strong>Eligibility verdict</strong></a> — what airdrops this wallet might qualify for <em>right now</em></li>' +
+          '<li>→ <a href="/airdrops"><strong>Live directory</strong></a> — every actively-farmable airdrop we track</li>' +
+          '<li>→ <a href="/tools/calendar"><strong>Calendar feed</strong></a> — TGE / snapshot / unlock dates pushed to Google/Apple/Outlook</li>' +
+        '</ul>' +
+        '</div>';
+
+      resultsEl.innerHTML = html;
+      resultsEl.hidden = false;
+      if (signupEl) signupEl.hidden = false;
+
+      // GoatCounter event with the result baked into title for funnel analysis.
+      if (typeof window.goatcounter !== 'undefined' && window.goatcounter &&
+          typeof window.goatcounter.count === 'function') {
+        window.goatcounter.count({
+          path: 'tool-historical-value-result',
+          title: 'historical-value result: ' + hits + '/' + AIRDROPS.length + ' eligible, ' + fmtUSD(totalUSD),
+          event: true,
+        });
+      }
+    }
+
+    async function run(rawEvm, rawSol) {
+      const statusEl = document.getElementById('hv-status');
+      const summaryEl = document.getElementById('hv-summary');
+      const resultsEl = document.getElementById('hv-results');
+      const signupEl = document.getElementById('hv-signup');
+
+      const evmAddr = rawEvm && EVM_RX.test(rawEvm.trim()) ? rawEvm.trim() : '';
+      const solAddr = rawSol && SOL_RX.test(rawSol.trim()) ? rawSol.trim() : '';
+
+      if (!evmAddr && !solAddr) {
+        statusEl.innerHTML = '<strong>Paste at least one address.</strong> EVM (<code>0x</code>+40 hex) and/or Solana (base58, 32–44 chars).';
+        statusEl.hidden = false;
+        summaryEl.hidden = true;
+        resultsEl.hidden = true;
+        if (signupEl) signupEl.hidden = true;
+        return;
+      }
+
+      statusEl.innerHTML = 'Checking ' + AIRDROPS.length + ' historical airdrops… (archive lookups can take a few seconds)';
+      statusEl.hidden = false;
+      summaryEl.hidden = true;
+      resultsEl.hidden = true;
+      if (signupEl) signupEl.hidden = true;
+
+      const needs = collectNeeds(AIRDROPS, { evm: evmAddr, sol: solAddr });
+
+      const archiveJobs = [];
+      if (evmAddr) {
+        for (const chain of Object.keys(needs.archiveTxByChainBlock)) {
+          archiveJobs.push(fetchArchiveChain(chain, needs.archiveTxByChainBlock[chain], evmAddr));
+        }
+      }
+      const currentJobs = [];
+      if (evmAddr) {
+        for (const chain of Object.keys(needs.tokenBalancesByChain)) {
+          currentJobs.push(fetchCurrentChain(chain, needs.tokenBalancesByChain[chain], evmAddr));
+        }
+      }
+      const solJobs = [];
+      if (solAddr && needs.needSolSig) solJobs.push(fetchSolanaSignature(solAddr).then((r) => ({ kind: 'sig', r })));
+      if (solAddr) {
+        for (const mint of needs.solMintSet) {
+          solJobs.push(fetchSplBalance(solAddr, mint).then((r) => ({ kind: 'mint', mint, r })));
+        }
+      }
+
+      const [archiveResults, currentResults, solResults] = await Promise.all([
+        Promise.all(archiveJobs),
+        Promise.all(currentJobs),
+        Promise.all(solJobs),
+      ]);
+
+      const archive = {};
+      for (const r of archiveResults) archive[r.chain] = r;
+      const current = {};
+      for (const r of currentResults) current[r.chain] = r;
+      let solSig = null;
+      const solMints = {};
+      for (const item of solResults) {
+        if (item.kind === 'sig') solSig = item.r;
+        else if (item.kind === 'mint') solMints[item.mint] = item.r;
+      }
+
+      renderResults({ evm: evmAddr, sol: solAddr, archive, current, solSig, solMints }, evmAddr, solAddr);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.getElementById('hv-form');
+      const evmInput = document.getElementById('hv-evm');
+      const solInput = document.getElementById('hv-sol');
+
+      form.addEventListener('submit', function (ev) {
+        ev.preventDefault();
+        const evmV = evmInput.value.trim();
+        const solV = solInput.value.trim();
+        if (!evmV && !solV) return;
+        const url = new URL(window.location.href);
+        if (evmV) url.searchParams.set('evm', evmV); else url.searchParams.delete('evm');
+        if (solV) url.searchParams.set('sol', solV); else url.searchParams.delete('sol');
+        history.replaceState(null, '', url.toString());
+        run(evmV, solV);
+      });
+
+      const qs = new URL(window.location.href).searchParams;
+      const qe = qs.get('evm');
+      const qsol = qs.get('sol');
+      const qaddr = qs.get('addr');
+      let presetE = qe, presetS = qsol;
+      if (!presetE && !presetS && qaddr) {
+        if (EVM_RX.test(qaddr)) presetE = qaddr;
+        else if (SOL_RX.test(qaddr)) presetS = qaddr;
+      }
+      if (presetE) evmInput.value = presetE;
+      if (presetS) solInput.value = presetS;
+      if (presetE || presetS) run(presetE || '', presetS || '');
+    });
+  </script>
+
+  <style>
+    .kicker {
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent, #c8531a);
+      margin-bottom: 0.4rem;
+    }
+    .lede { font-family: var(--font-serif, Georgia, serif); font-size: 1.1rem; line-height: 1.55; }
+    .hv-form {
+      margin: 1.25rem 0;
+      padding: 1rem 1.1rem;
+      background: #fff;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-left: 4px solid var(--accent, #c8531a);
+      border-radius: 4px;
+    }
+    .hv-input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    @media (max-width: 600px) {
+      .hv-input-grid { grid-template-columns: 1fr; }
+    }
+    .hv-label {
+      display: block;
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--ink-soft, #555);
+      font-family: var(--font-mono, monospace);
+      margin-bottom: 0.35rem;
+    }
+    .hv-input-cell input[type="text"] {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      font-family: var(--font-mono, monospace);
+      font-size: 0.9rem;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 4px;
+      background: #fff;
+      box-sizing: border-box;
+    }
+    .hv-input-cell input[type="text"]:focus {
+      outline: 2px solid var(--accent, #c8531a);
+      outline-offset: -1px;
+    }
+    .hv-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+      margin-top: 0.85rem;
+    }
+    .hv-btn {
+      padding: 0.6rem 1.1rem;
+      background: var(--accent, #c8531a);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    .hv-btn:hover { background: var(--warn, #a8741a); }
+    .hv-hint { margin: 0; font-size: 0.85rem; color: var(--ink-soft, #555); }
+    .hv-status {
+      padding: 0.85rem 1rem;
+      background: #fdfbf6;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-left: 3px solid var(--accent, #c8531a);
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+    .hv-summary { margin-bottom: 1.5rem; }
+    .hv-summary-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 0.5rem;
+      margin-bottom: 0.85rem;
+    }
+    @media (max-width: 600px) {
+      .hv-summary-grid { grid-template-columns: 1fr; }
+    }
+    .hv-summary-cell {
+      padding: 1rem 1.1rem;
+      background: #fff;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 4px;
+    }
+    .hv-summary-total {
+      border-left: 4px solid #2e8540;
+      background: linear-gradient(135deg, #fff 0%, #f0fff4 100%);
+    }
+    .hv-summary-warn {
+      border-left: 4px solid var(--warn, #a8741a);
+      background: rgba(200, 83, 26, 0.04);
+    }
+    .hv-summary-num {
+      font-family: var(--font-serif, Georgia, serif);
+      font-size: 2.1rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .hv-summary-lbl {
+      font-size: 0.82rem;
+      color: var(--ink-soft, #555);
+      margin-top: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .hv-summary-zero {
+      padding: 0.9rem 1rem;
+      background: #fdfbf6;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 4px;
+      margin: 0;
+      font-size: 0.95rem;
+    }
+    .hv-summary-caveat {
+      padding: 0.7rem 0.95rem;
+      background: rgba(200, 83, 26, 0.08);
+      border-left: 3px solid var(--warn, #a8741a);
+      border-radius: 3px;
+      font-size: 0.85rem;
+      color: var(--ink, #222);
+      margin: 0;
+    }
+    .hv-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+      background: #fff;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .hv-table th, .hv-table td {
+      padding: 0.7rem 0.85rem;
+      text-align: left;
+      border-bottom: 1px solid var(--rule, #d9d4c4);
+      font-size: 0.92rem;
+      vertical-align: top;
+    }
+    .hv-table th {
+      background: #fdfbf6;
+      font-weight: 700;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--ink-soft, #555);
+    }
+    .hv-th-right { text-align: right; }
+    .hv-row-hit { background: rgba(46, 133, 64, 0.06); }
+    .hv-row-miss td { color: var(--ink-soft, #777); }
+    .hv-row-na td { color: var(--ink-soft, #777); font-style: italic; }
+    .hv-row-project a { color: var(--ink, #222); font-weight: 600; text-decoration: none; }
+    .hv-row-project a:hover { color: var(--accent, #c8531a); text-decoration: underline; }
+    .hv-row-date { font-size: 0.78rem; color: var(--ink-soft, #888); font-weight: 400; }
+    .hv-row-verdict { font-size: 0.86rem; }
+    .hv-row-value { text-align: right; }
+    .hv-row-amount { font-size: 0.86rem; color: var(--ink-soft, #555); }
+    .hv-row-usd { font-weight: 700; color: #2e8540; font-size: 1rem; }
+    .hv-row-skip { color: var(--ink-soft, #999); }
+    .hv-crosslinks {
+      margin-top: 1.5rem;
+      padding: 1rem 1.1rem;
+      background: #fdfbf6;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 4px;
+    }
+    .hv-crosslinks h3 {
+      margin: 0 0 0.5rem;
+      font-family: var(--font-serif, Georgia, serif);
+      font-size: 1.15rem;
+    }
+    .hv-crosslinks ul { margin: 0; padding-left: 1.1rem; list-style: none; }
+    .hv-crosslinks li { margin-bottom: 0.4rem; font-size: 0.95rem; }
+    .hv-crosslinks a { color: var(--accent, #c8531a); }
+    .hv-howitworks {
+      margin-top: 2rem;
+      padding: 0.85rem 1rem;
+      background: #fdfbf6;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 4px;
+    }
+    .hv-howitworks summary { cursor: pointer; font-weight: 600; font-size: 0.95rem; }
+    .hv-howitworks .prose { margin-top: 0.75rem; font-size: 0.92rem; line-height: 1.55; }
+    .hv-howitworks .prose ul { padding-left: 1.2rem; }
+    .hv-howitworks .prose li { margin-bottom: 0.5rem; }
+  </style>
+</Base>

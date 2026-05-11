@@ -4,7 +4,7 @@ import { listPublishedAirdrops } from '../../lib/airdrops.ts';
 
 const entries = await listPublishedAirdrops();
 const title = 'Tools — wallet-aware airdrop utilities';
-const description = `Six client-side, non-custodial tools paired with our ${entries.length} curated airdrop entries: personalised eligibility verdict, wallet activity matching, token-holdings checking, wallet-age dating, integrator-fee DEX swap, and a calendar-subscribable deadline feed.`;
+const description = `Seven client-side, non-custodial tools paired with our ${entries.length} curated airdrop entries: personalised eligibility verdict, historical-value calculator, wallet activity matching, token-holdings checking, wallet-age dating, integrator-fee DEX swap, and a calendar-subscribable deadline feed.`;
 ---
 <Base title={title} description={description}>
   <section class="hero">
@@ -32,6 +32,18 @@ const description = `Six client-side, non-custodial tools paired with our ${entr
             <strong>skip</strong> — with a copy-paste shareable summary.
           </p>
           <span class="tool-cta">Get my verdict →</span>
+        </a>
+
+        <a class="tool-card tool-card-featured" href="/tools/historical-value">
+          <div class="tool-kicker">★ Nostalgia magnet</div>
+          <h2>Historical value</h2>
+          <p>
+            Paste a wallet, find out what <strong>10 past airdrops</strong>
+            (UNI, ARB, OP, JTO, JUP, PYTH, BLUR, ENA, 1INCH, EIGEN) would
+            have been worth at claim-day USD prices. Honest about being a
+            floor estimate — base-tier amounts only. Maximum possible: ~$50k.
+          </p>
+          <span class="tool-cta">What did I miss? →</span>
         </a>
 
         <a class="tool-card" href="/tools/wallet-check">
