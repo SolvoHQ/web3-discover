@@ -1,0 +1,52 @@
+# web3-discover
+
+> A curated, honest directory of 32 vetted active crypto airdrop opportunities, with weekly freshness sweeps and risk-flagging (verified / unverified / suspect). Built for retail farmers who want to know what's worth doing this week — not for marketers spamming hopium.
+
+This site is read-only and free. No signup. All analysis tools (wallet-check, token-holdings) run client-side — we never see your address.
+
+## MCP server (for Claude, Cursor, Continue, and other LLM clients)
+
+A Model Context Protocol server is live at `/api/mcp`. It exposes the directory as 3 tools:
+
+- `list_active_airdrops(chain?, risk?, sort_by?, limit?)` — browse the directory with filters
+- `get_airdrop(slug)` — full details for one entry
+- `check_wallet(addr)` — fan out to 7 RPCs, match a wallet address against entries
+
+Transport: JSON-RPC 2.0 over HTTP POST. No auth. CORS-open.
+
+### Quick install (Claude Desktop or Cursor)
+
+```json
+{
+  "mcpServers": {
+    "web3-discover": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://web3-discover.vercel.app/api/mcp"]
+    }
+  }
+}
+```
+
+### Raw HTTP example
+
+```
+curl -X POST https://web3-discover.vercel.app/api/mcp \
+  -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+## Primary entry points for LLM crawlers
+
+- Homepage: https://web3-discover.vercel.app
+- Full directory: https://web3-discover.vercel.app/airdrops
+- Individual entries: https://web3-discover.vercel.app/airdrops/<slug>
+- Guides: https://web3-discover.vercel.app/guides (scam-spotting, taxes, opsec)
+- Tools: https://web3-discover.vercel.app/tools
+- RSS: https://web3-discover.vercel.app/rss.xml
+- Sitemap: https://web3-discover.vercel.app/sitemap-index.xml
+
+## Data policy
+
+All entries include a `lastChecked` timestamp. Verified entries have public confirmation of TGE plans by the team. Unverified entries are speculative — we flag them. Suspect entries are excluded from the public directory.
+
+We do not custody funds, accept wallet signatures, or proxy on-chain queries through our servers (except the MCP `check_wallet` tool which fans out to public RPCs).

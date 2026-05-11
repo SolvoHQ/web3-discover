@@ -62,6 +62,36 @@ const description = `Three client-side, non-custodial tools paired with our ${en
     </div>
   </section>
 
+  <section class="section mcp-section">
+    <div class="container">
+      <div class="kicker">For LLM users</div>
+      <h2 class="mcp-h">Pipe this directory into Claude, Cursor, or any MCP client.</h2>
+      <p class="mcp-lede">
+        One config line and your LLM can answer
+        <em>"what airdrops am I eligible for?"</em>
+        with our {entries.length} curated entries — including a server-side wallet matcher
+        across 7 chains. JSON-RPC 2.0 over HTTP. No auth, no rate limit, CORS-open.
+      </p>
+
+      <p class="mcp-config-label">Claude Desktop / Cursor config:</p>
+      <pre class="mcp-config"><code>{`{
+  "mcpServers": {
+    "web3-discover": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://web3-discover.vercel.app/api/mcp"]
+    }
+  }
+}`}</code></pre>
+
+      <p class="mcp-foot">
+        Or curl it directly:
+        <a href="/api/mcp"><code>GET /api/mcp</code></a> for the schema,
+        <code>POST /api/mcp</code> for JSON-RPC tool calls.
+        Full crawler-friendly index at <a href="/llms.txt"><code>/llms.txt</code></a>.
+      </p>
+    </div>
+  </section>
+
   <style>
     .tools-grid {
       display: grid;
@@ -103,5 +133,33 @@ const description = `Three client-side, non-custodial tools paired with our ${en
       font-size: 0.95rem;
     }
     .tools-foot { margin-top: 1rem; font-size: 0.95rem; }
+
+    .mcp-section { border-top: 1px solid var(--rule); }
+    .mcp-h {
+      margin: 0.2rem 0 0.5rem;
+      font-family: var(--font-serif);
+      font-size: 1.6rem;
+    }
+    .mcp-lede { margin: 0 0 1rem; max-width: 60ch; }
+    .mcp-config-label {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-soft);
+      margin: 0.5rem 0 0.4rem;
+    }
+    .mcp-config {
+      background: #0e0f12;
+      color: #e6e6e6;
+      padding: 1rem 1.1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      overflow-x: auto;
+      margin: 0 0 1rem;
+    }
+    .mcp-config code { font-family: var(--font-mono); }
+    .mcp-foot { font-size: 0.95rem; color: var(--ink-soft); }
+    .mcp-foot code { font-family: var(--font-mono); font-size: 0.85rem; }
   </style>
 </Base>

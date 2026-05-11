@@ -2,3 +2,6 @@ User-agent: *
 Allow: /
 
 Sitemap: https://web3-discover.vercel.app/sitemap-index.xml
+
+# LLM-native entry point — Model Context Protocol server + machine-readable index
+# https://web3-discover.vercel.app/llms.txt
