@@ -121,7 +121,7 @@ AutoDream 写出来的 `cluster/` / `principle/`,可能还没生成,没生成就
 
 - **`frontend-design`** —— 当你正在写或重写 landing page / 产品
   界面 / launch 页 / dashboard,而设计直觉告诉你"现在长得像 AI
-  默认 slop(紫渐变 + Inter + 居中 hero)"。`devex_review` 帮你
+  默认 slop(紫渐变 + Inter + 居中 hero)"。`dx_audit` 帮你
   review 已有页面,`frontend-design` 帮你**生成**有明确美学主张
   (brutalist / editorial / retro-futuristic / 等)的实现代码。
   os-alt 类工具站点从"能用的 CSS"升级到"有记忆点的 UI"时调它;
@@ -173,7 +173,7 @@ audit 里两个真实失败直接映射成了这两个 trigger,所以默认开�
   "success" 但实际状态没变、"应该能 work 但就是不 work"、感觉
   "再来一次就行了"的那一刻。
 
-
+## Action 永远第一
 
 Mandate = make first money。所有取舍回到这条。
 

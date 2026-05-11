@@ -1,16 +1,14 @@
-"""office_hours — YC-style forcing-question critique of a product direction.
+"""wedge_audit — YC-style forcing-question critique of a candidate direction.
 
 Adapted from gstack's `office-hours` skill for an autonomous agent loop.
 The substance (six forcing questions, specificity-only rule, status-quo-as-
 competitor framing) is preserved; the human-interactive scaffolding
 (AskUserQuestion, voice triggers, ~/.gstack state) is removed.
 
-The agent calls `run_office_hours()` with the input it has on hand — usually
-a draft Boundary problem or a fresh `product/<topic>.md` it is about to
-author. The skill returns a markdown critique AND writes the same critique
-to `product/thoughts/<tick>-office-hours-critique.md`.
-
-See SKILL.md for invocation triggers + the six forcing questions in prose.
+Trigger mechanics live in SKILL.md — this module is the persistence + shape
+layer. The agent reads `FORCING_QUESTIONS`, composes answers in its own
+reasoning step, then calls `record_wedge_audit(...)` to write the critique
+to `product/thoughts/<tick>-wedge_audit-critique.md`.
 """
 from __future__ import annotations
 
@@ -22,7 +20,7 @@ from typing import Optional
 
 
 THOUGHTS_REL_DIR = "product/thoughts"
-SLUG = "office-hours-critique"
+SLUG = "wedge_audit-critique"
 
 
 # The six forcing questions. The agent uses these prompts on itself when
@@ -104,8 +102,8 @@ FORCING_QUESTIONS = (
 
 
 @dataclass
-class OfficeHoursCritique:
-    """Result of running office_hours on a candidate direction."""
+class WedgeAuditCritique:
+    """Result of running wedge_audit on a candidate direction."""
     target_path: Optional[str]   # path to the artifact critiqued, if any
     one_line_pitch: str          # the agent's own summary of what is being judged
     verdict: str                 # "worth-building" | "wedge-unclear" | "kill" | "needs-evidence"
@@ -116,12 +114,12 @@ class OfficeHoursCritique:
     markdown: str                # full critique markdown (same as written to disk)
 
 
-def run_office_hours(
+def run_wedge_audit(
     one_line_pitch: str,
     context: str,
     target_path: Optional[str] = None,
     workspace_path: Optional[Path] = None,
-) -> OfficeHoursCritique:
+) -> WedgeAuditCritique:
     """Run the forcing-question pass and write a critique thought file.
 
     This function does NOT itself make the judgment calls — that is the
@@ -130,7 +128,7 @@ def run_office_hours(
       1. Read this module's `FORCING_QUESTIONS` and the SKILL.md prose.
       2. Compose the answers, findings, verdict, and assignment in its own
          reasoning step.
-      3. Pass the assembled critique to `record_office_hours(...)` to
+      3. Pass the assembled critique to `record_wedge_audit(...)` to
          persist it.
 
     The two-step split lets the agent reason freely without having the
@@ -145,12 +143,12 @@ def run_office_hours(
         workspace_path: defaults to cwd.
 
     Returns:
-        OfficeHoursCritique with `markdown` empty and `findings` empty —
-        the agent populates these and calls `record_office_hours`.
+        WedgeAuditCritique with `markdown` empty and `findings` empty —
+        the agent populates these and calls `record_wedge_audit`.
     """
     if workspace_path is None:
         workspace_path = Path.cwd()
-    return OfficeHoursCritique(
+    return WedgeAuditCritique(
         target_path=target_path,
         one_line_pitch=one_line_pitch,
         verdict="needs-evidence",
@@ -162,7 +160,7 @@ def run_office_hours(
     )
 
 
-def record_office_hours(
+def record_wedge_audit(
     one_line_pitch: str,
     verdict: str,
     overall_score: int,
@@ -170,7 +168,7 @@ def record_office_hours(
     assignment: str,
     target_path: Optional[str] = None,
     workspace_path: Optional[Path] = None,
-) -> OfficeHoursCritique:
+) -> WedgeAuditCritique:
     """Persist a populated critique to product/thoughts/<tick>-<slug>.md.
 
     `findings` is a list of dicts, one per forcing question that was
@@ -184,7 +182,7 @@ def record_office_hours(
             "gap_to_10": "<what would make this a 10>",
         }
 
-    Returns the same OfficeHoursCritique with markdown + thought_path set.
+    Returns the same WedgeAuditCritique with markdown + thought_path set.
     """
     if workspace_path is None:
         workspace_path = Path.cwd()
@@ -209,7 +207,7 @@ def record_office_hours(
 
     thought_path = _write_thought(md, workspace_path)
 
-    return OfficeHoursCritique(
+    return WedgeAuditCritique(
         target_path=target_path,
         one_line_pitch=one_line_pitch,
         verdict=verdict,
@@ -250,7 +248,7 @@ def _render_markdown(
     by_key = {f["key"]: f for f in findings}
 
     lines = [
-        "# Office Hours critique",
+        "# Wedge audit critique",
         "",
         f"- tick: `{tick}`",
         f"- written: `{ts}`",

@@ -1,9 +1,9 @@
 ---
-name: office_hours
-description: YC-style six-question forcing critique of a candidate product direction. Agent invokes BEFORE authoring a fresh Boundary problem for a new direction — validates "is this worth building" with specificity-only rigor.
+name: wedge_audit
+description: Six-question forcing critique of a candidate direction. Invoke when you are about to call `add_problem` with a description that proposes a new direction / pivot / fresh wedge, OR when you just wrote a `product/<topic>.md` proposing a wedge in this same tick — run wedge_audit BEFORE the problem gets checked out. Specificity-only rigor (named user, observed behaviour, this-week wedge); no human in the room, you ask AND answer.
 ---
 
-# Office Hours
+# Wedge audit
 
 Six forcing questions, asked of yourself, before you commit a tick budget
 to a new direction. Adapted from gstack's `office-hours` for the
@@ -14,24 +14,38 @@ The rule the gstack version was built around still applies here:
 out. "westonyushi@gmail.com cancelled openalternative.co after 30
 seconds because no setup-time score" is currency.
 
-## Invocation triggers
+## When to invoke (mechanical triggers)
 
-- **Before authoring a fresh Boundary problem** for a new direction
-  (pivot, expansion vertical, new wedge). Don't open a `Boundary.md` until
-  you've passed this.
-- **When a `record_thought` is recommending a pivot** — run the new
-  direction through office_hours before committing.
-- **When you catch yourself padding a `product/<topic>.md` without
-  evidence** — that's the smell. Stop, run office_hours, only resume if
-  you survive it.
+Each trigger is something you can verify yourself from the tick context —
+no human, no proactive layer, no voice cue.
 
-Do **not** invoke for: typo fixes, scope reductions inside an already-
-validated Boundary, anything where the answer to "is this worth
-building" is already a recorded thought.
+- **You are about to call `checkout.add_problem(...)` and the description
+  begins a new direction.** "New direction" = the workspace's current
+  `product/mvp.md` (or equivalent) doesn't already cover this wedge, OR
+  you recently `record_thought`ed that the existing wedge is failing.
+  Stop. Run wedge_audit first. Pass the audit before the `add_problem`
+  call.
+- **You just authored or edited a `product/<file>.md` this tick that
+  proposes a wedge / pivot / fresh direction**, and you have not yet
+  written the corresponding Boundary problem. Audit the artifact BEFORE
+  the Boundary is authored.
+- **A `record_thought` you wrote in the current or previous tick
+  recommends a pivot.** Before that pivot turns into a Boundary, audit
+  the new direction.
+- **You are halfway through padding a `product/<topic>.md` with
+  speculation** ("users will probably want…", "the market is large
+  because…") and have no named user / no observed behaviour to cite —
+  that's the smell. Stop writing. Run wedge_audit on what you have so
+  far; only resume if you survive it.
+
+Skip when: the diff is a typo / formatting / cross-link fix, the new
+problem is a scope reduction inside an already-audited wedge, or you
+have a `*-wedge_audit-critique.md` file in `product/thoughts/` for this
+same direction from a recent tick and nothing new is on the table.
 
 ## How it works
 
-Two-step pattern (deliberate split — the substance is the agent's, the
+Two-step pattern (deliberate split — the substance is yours, the
 mechanics are the module's):
 
 1. You read the candidate artifact + any related thoughts.
@@ -39,8 +53,8 @@ mechanics are the module's):
    questions in `FORCING_QUESTIONS`. For each: an answer, the evidence,
    a 0-10 rating, and what would make it a 10.
 3. You decide an overall verdict and a single concrete assignment.
-4. You call `record_office_hours(...)` to persist the critique to
-   `product/thoughts/<tick>-office-hours-critique.md`.
+4. You call `record_wedge_audit(...)` to persist the critique to
+   `product/thoughts/<tick>-wedge_audit-critique.md`.
 
 Why the split: the Python wrapper enforces shape (a written thought file,
 audited fields, structured findings) but never tries to grade the
@@ -73,7 +87,7 @@ silently omitting.
 
 ## Verdict picker (autonomous)
 
-The gstack version asks the human. You decide based on your own findings:
+You decide based on your own findings:
 
 - **worth-building** — at least 4 of 6 questions ≥7/10 AND you have a
   concrete `narrowest_wedge`.
@@ -87,12 +101,12 @@ The gstack version asks the human. You decide based on your own findings:
 
 ## Output schema
 
-The skill writes `product/thoughts/<tick>-office-hours-critique.md` with
+The skill writes `product/thoughts/<tick>-wedge_audit-critique.md` with
 this structure (rendered by the module — you don't write the file
 yourself):
 
 ```
-# Office Hours critique
+# Wedge audit critique
 - tick / written / target / verdict / overall_score
 ## One-line pitch
 ## Forcing questions
@@ -102,9 +116,9 @@ yourself):
 ```
 
 The thought file is **how** this skill feeds `dream`: when there are
-several office_hours critiques in `product/thoughts/raw/`, dream can
-cluster them by theme (e.g. `cluster/premise-failures.md`) and distill
-recurring failure modes into `principle/*.md`.
+several wedge_audit critiques in `product/thoughts/`, dream can cluster
+them by theme (e.g. `cluster/premise-failures.md`) and distill recurring
+failure modes into `principle/*.md`.
 
 ## How harsh? — example output
 
@@ -112,7 +126,7 @@ Run against `product/mvp.md` of the os-alt workspace (a self-host SaaS
 alternatives directory):
 
 ```
-# Office Hours critique
+# Wedge audit critique
 - verdict: **wedge-unclear**
 - overall_score: **5/10**
 
@@ -175,12 +189,12 @@ missing. Until at least one says "this is what I needed", we're in
 ## API
 
 ```python
-from solvo.skills.office_hours.office_hours import (
-    FORCING_QUESTIONS, record_office_hours,
+from solvo.skills.wedge_audit.wedge_audit import (
+    FORCING_QUESTIONS, record_wedge_audit,
 )
 
 # After composing your findings in-reasoning:
-critique = record_office_hours(
+critique = record_wedge_audit(
     one_line_pitch="A directory of paid SaaS → strictly self-hostable OSS alternatives...",
     verdict="wedge-unclear",
     overall_score=5,
@@ -193,14 +207,15 @@ critique = record_office_hours(
     target_path="product/mvp.md",
 )
 print(critique.thought_path)
-# → "product/thoughts/<tick>-office-hours-critique.md"
+# → "product/thoughts/<tick>-wedge_audit-critique.md"
 ```
 
 ## Soft chaining
 
-- `ceo_review` benefits from reading any prior office_hours critique for
-  the same direction — `ceo_review` challenges premises; office_hours
-  challenges whether the premises are worth challenging at all.
-- `dream` will pick up `*-office-hours-critique.md` files in
-  `product/thoughts/raw/` and may cluster them into a `critiques.md`
+- `boundary_audit` benefits from reading any prior wedge_audit critique
+  for the same direction — `boundary_audit` challenges premises;
+  wedge_audit challenges whether the premises are worth challenging at
+  all.
+- `dream` will pick up `*-wedge_audit-critique.md` files in
+  `product/thoughts/` and may cluster them into a `critiques.md`
   theme. Don't try to chain that yourself.

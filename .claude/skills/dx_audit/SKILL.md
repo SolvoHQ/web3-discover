@@ -1,26 +1,40 @@
 ---
-name: devex_review
-description: Pre-ship DX critique with persona + competitor + magical-moment framing. Agent invokes when a Boundary ships a DX-facing artifact (API, CLI, SDK, embed widget, public landing/docs page).
+name: dx_audit
+description: Pre-ship DX critique with persona + competitor + magical-moment framing. Invoke when you are about to `commit` or `deploy` a Boundary AND `git status` shows changes under any externally-facing path — concretely: `code/src/pages/`, `code/src/app/api/`, `code/src/cli/`, an SDK / npm / pip package source, a public docs site, a landing page meant to convert, or any first-touch surface a developer / user will hit before signing up. Skip if the diff is internal-only (build scripts, internal tooling, infra-as-code).
 ---
 
-# DevEx review
+# DX audit
 
 Pick a persona. Trace TTHW (Time To Hello World). Benchmark against
 real competitors. Design a magical moment. Then rate-then-fix across
 six passes. The gstack version asks the human; you pick autonomously.
 
-## Invocation triggers
+## When to invoke (mechanical triggers)
 
-- **Boundary ships a developer-facing artifact**: API endpoint, CLI
-  binary, SDK / package release, embed widget, MCP server, public
-  landing page meant to convert, docs page that will be a first-touch
-  surface.
-- **Boundary changes onboarding** for any developer-facing artifact
-  (install flow, getting-started, error messages on the failure path).
+Each trigger is something you can verify yourself from the current tick:
 
-Do **not** invoke for: internal-only tooling, content pages that
-inform but don't convert, refactors that don't change the developer
-surface.
+- **You are about to call `commit` or `deploy` AND `git status` shows
+  changes under an externally-facing path** — pages (`code/src/pages/`,
+  `code/src/app/`, `code/app/`), public HTTP API
+  (`code/src/app/api/`, `code/api/`, `code/server/routes/`), CLI
+  (`code/src/cli/`, `code/bin/`, or any file with `#!/usr/bin/env`),
+  an SDK / npm / pypi package source, or docs / marketing pages
+  (`code/docs/`, `code/content/`, landing / pricing / about).
+- **The Boundary's description mentions any of "API endpoint", "new
+  command", "SDK", "embed widget", "MCP server", "landing page",
+  "getting started", "onboarding", "install flow"** — even with no diff
+  yet, run dx_audit during design so the magical moment is shaped into
+  the spec, not retrofitted after.
+- **You just changed an error message a developer or user will see**
+  (toast, CLI stderr, build-time warning, page 500 / 404, install
+  error) — TTHW collapses fastest on a confusing first error.
+- **You just changed an onboarding / install / first-run path for a
+  developer-facing artifact** — that's the TTHW hotspot.
+
+Skip when: changes are limited to internal-only tooling (build scripts,
+internal cron, infra-as-code), content that informs but doesn't
+convert (blog post, internal README), or a refactor that doesn't
+change any developer-visible surface.
 
 ## Mode picker (autonomous)
 
@@ -98,7 +112,7 @@ command, GIF/video, guided tutorial with the dev's own data). Mode
 | `upgrade_path` | Upgrade & migration | Deprecation warnings; migration guides; codemods |
 | `tooling_fit` | Tooling fit | Editor, CI mode, types, cross-platform, dry-run |
 
-Full prompts in `PASSES` (Python tuple in `devex_review.py`).
+Full prompts in `PASSES` (Python tuple in `dx_audit.py`).
 
 For each pass: rate 0..10, state the finding referencing the persona
 ("a `<persona>` would hit this at minute X"), state what a 10 looks
@@ -113,14 +127,14 @@ accept with a documented reason.
 - **rebuild-onboarding** — `getting_started` ≤4 OR TTHW lands in Red
   Flag tier. The onboarding flow is the problem; do not ship and
   iterate-into-it. Re-design the install + first-run before re-running
-  this review.
+  this audit.
 
 ## Output schema
 
-`product/thoughts/<tick>-devex-review-critique.md`:
+`product/thoughts/<tick>-dx_audit-critique.md`:
 
 ```
-# DevEx review critique
+# DX audit critique
 - tick / written / target / mode / overall_score / ship_readiness
 ## Target developer persona      (who / context / tolerance / expects)
 ## TTHW                          (current minutes + tier vs target tier)
@@ -141,7 +155,7 @@ traffic). Mode picked as `expansion` because os-alt has zero DX-facing
 artifacts shipped yet and openalternative.co is a present competitor.
 
 ```
-# DevEx review critique
+# DX audit critique
 - target: code/src/pages/notion.astro (representative first vertical page)
 - mode: **expansion**
 - overall_score: **5/10**
@@ -196,9 +210,9 @@ both sections.
 ### Error messages & debugging — fight uncertainty
 **Finding (3/10).** If github.ts fetch failed in the daily build,
 the page silently renders an empty alternatives block — see
-eng-review issue #1. To the persona, that looks like "this SaaS has
-no OSS alternatives" — a content failure, not a fetch failure. Lost
-trust.
+architecture-audit issue #1. To the persona, that looks like "this
+SaaS has no OSS alternatives" — a content failure, not a fetch
+failure. Lost trust.
 **Fix.** Build-time guarantees the page has ≥N alternatives or fails
 the build for that page (skip the page rather than ship empty).
 
@@ -234,8 +248,8 @@ tier vs a Competitive 2-5 min target.
 
 ### 2. [P1] Empty alternatives block on github.ts failure
 _Pass_: `error_messages`
-Mirrors eng-review issue #1. Persona sees "no alternatives" not
-"data fetch failed". Trust killer.
+Mirrors architecture-audit issue #1. Persona sees "no alternatives"
+not "data fetch failed". Trust killer.
 **Fix.** Build fails the page on empty alternatives; skip rather
 than ship.
 
@@ -254,8 +268,8 @@ view, or deferred to TODOs.
 ## Next actions
 - Implement issue #1 (verdict line + setup_snippet) in this same
   Boundary if scope allows — otherwise carve a follow-up Boundary.
-- Coordinate issue #2 with the eng_review fix on github.ts (same
-  root cause, different surface).
+- Coordinate issue #2 with the architecture_audit fix on github.ts
+  (same root cause, different surface).
 - record_thought tagged dx-gap: "first-touch verdict line is the
   highest-leverage DX move for vertical pages".
 ```
@@ -263,8 +277,8 @@ view, or deferred to TODOs.
 ## API
 
 ```python
-from solvo.skills.devex_review.devex_review import (
-    PASSES, pick_mode, tier_for_tthw, record_devex_review,
+from solvo.skills.dx_audit.dx_audit import (
+    PASSES, pick_mode, tier_for_tthw, record_dx_audit,
 )
 
 mode = pick_mode(
@@ -274,7 +288,7 @@ mode = pick_mode(
 )
 # → "expansion"
 
-critique = record_devex_review(
+critique = record_dx_audit(
     target_path="code/src/pages/notion.astro",
     mode=mode,
     persona={
@@ -307,10 +321,10 @@ print(critique.thought_path)
 
 ## Soft chaining
 
-- If a prior `*-eng-review-critique.md` exists for the same Boundary,
-  read it — DX issues often share a root cause with engineering
-  issues (empty-result rendering is the classic case).
-- `dream` will cluster `*-devex-review-critique.md` files under a DX
-  theme; recurring `error_messages` ≤4 findings across two reviews is
-  exactly the signal that should distill into a `principle/dx-error-
-  surfacing.md`. Don't try to chain that yourself.
+- If a prior `*-architecture_audit-critique.md` exists for the same
+  Boundary, read it — DX issues often share a root cause with
+  engineering issues (empty-result rendering is the classic case).
+- `dream` will cluster `*-dx_audit-critique.md` files under a DX
+  theme; recurring `error_messages` ≤4 findings across two reviews
+  is exactly the signal that should distill into a `principle/dx-
+  error-surfacing.md`. Don't try to chain that yourself.

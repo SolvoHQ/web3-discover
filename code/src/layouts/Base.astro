@@ -6,12 +6,35 @@ export interface Props {
   description: string;
   canonical?: string;
   ogType?: string;
+  ogImage?: string;
+  extraJsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
-const { title, description, canonical, ogType = 'website' } = Astro.props;
+const { title, description, canonical, ogType = 'website', ogImage, extraJsonLd } = Astro.props;
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
 const pathTrim = Astro.url.pathname.replace(/\/$/, '');
 const canonicalUrl = canonical ?? (pathTrim ? `${siteUrl}${pathTrim}` : siteUrl);
+const ogImageUrl = ogImage ?? `${siteUrl}/og-default.png`;
+
+const orgJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'web3-discover',
+  url: siteUrl,
+  logo: `${siteUrl}/og-default.png`,
+  description: "The airdrop hunter's honest map. Hand-vetted, scam-filtered web3 airdrop directory.",
+  sameAs: [] as string[],
+};
+
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'web3-discover',
+  url: siteUrl,
+  description,
+};
+
+const extraJsonLdArray = Array.isArray(extraJsonLd) ? extraJsonLd : extraJsonLd ? [extraJsonLd] : [];
 ---
 <!doctype html>
 <html lang="en">
@@ -26,11 +49,22 @@ const canonicalUrl = canonical ?? (pathTrim ? `${siteUrl}${pathTrim}` : siteUrl)
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:site_name" content="web3-discover" />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="web3-discover — the airdrop hunter's honest map" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
     <meta name="robots" content="index,follow" />
+    <link rel="alternate" type="application/rss+xml" title="web3-discover — active airdrops" href={`${siteUrl}/rss.xml`} />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23f7f5ef'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='22' font-weight='700' text-anchor='middle' fill='%23c8531a'%3Ew%3C/text%3E%3C/svg%3E" />
+    <script type="application/ld+json" set:html={JSON.stringify(orgJsonLd)} />
+    <script type="application/ld+json" set:html={JSON.stringify(websiteJsonLd)} />
+    {extraJsonLdArray.map((blob) => (
+      <script type="application/ld+json" set:html={JSON.stringify(blob)} />
+    ))}
     <script
       data-goatcounter="https://web3discover.goatcounter.com/count"
       async

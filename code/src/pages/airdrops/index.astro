@@ -8,8 +8,24 @@ const title = 'Active airdrops — web3-discover';
 const description = `${entries.length} hand-vetted, scam-filtered web3 airdrops you can act on right now. Sorted by deadline, with effort, cost floor, and risk flag on every entry.`;
 const verifiedCount = entries.filter((e) => e.data.risk === 'verified').length;
 const unverifiedCount = entries.filter((e) => e.data.risk === 'unverified').length;
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const itemListJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Active web3 airdrops',
+  description,
+  numberOfItems: entries.length,
+  itemListOrder: 'https://schema.org/ItemListOrderAscending',
+  itemListElement: entries.map((entry, idx) => ({
+    '@type': 'ListItem',
+    position: idx + 1,
+    url: `${siteUrl}/airdrops/${entry.slug}`,
+    name: `${entry.data.project} — ${entry.data.chain}`,
+  })),
+};
 ---
-<Base title={title} description={description}>
+<Base title={title} description={description} extraJsonLd={itemListJsonLd}>
   <section class="hero">
     <div class="container">
       <div class="kicker">Index</div>

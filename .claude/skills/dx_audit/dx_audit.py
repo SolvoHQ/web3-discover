@@ -1,4 +1,4 @@
-"""devex_review — DX critique with persona + competitor framing.
+"""dx_audit — DX critique with persona + competitor framing.
 
 Adapted from gstack's `plan-devex-review`. Substance kept: developer
 persona framing, competitive benchmarking, magical-moment design, the
@@ -23,7 +23,7 @@ from typing import Optional
 
 
 THOUGHTS_REL_DIR = "product/thoughts"
-SLUG = "devex-review-critique"
+SLUG = "dx_audit-critique"
 
 # Three modes from the gstack skill, autonomous selection.
 MODES = ("expansion", "polish", "triage")
@@ -97,7 +97,7 @@ PASSES = (
 
 
 @dataclass
-class DevExReviewCritique:
+class DxAuditCritique:
     target_path: Optional[str]
     mode: str
     persona: dict                   # who / context / tolerance / expects
@@ -142,7 +142,7 @@ def tier_for_tthw(actual_minutes: int) -> str:
     return TTHW_TIERS[-1]["name"]
 
 
-def record_devex_review(
+def record_dx_audit(
     target_path: Optional[str],
     mode: str,
     persona: dict,
@@ -156,8 +156,8 @@ def record_devex_review(
     ship_readiness: str,
     next_actions: Optional[list[str]] = None,
     workspace_path: Optional[Path] = None,
-) -> DevExReviewCritique:
-    """Persist a populated DX critique.
+) -> DxAuditCritique:
+    """Persist a populated DX audit critique.
 
     `persona` shape:
         {"who": "...", "context": "...", "tolerance": "...", "expects": "..."}
@@ -201,7 +201,7 @@ def record_devex_review(
         next_actions=next_actions,
     )
     thought_path = _write_thought(md, workspace_path)
-    return DevExReviewCritique(
+    return DxAuditCritique(
         target_path=target_path,
         mode=mode,
         persona=persona,
@@ -253,7 +253,7 @@ def _render_markdown(
     by_key = {f["key"]: f for f in findings}
 
     lines = [
-        "# DevEx review critique",
+        "# DX audit critique",
         "",
         f"- tick: `{tick}`",
         f"- written: `{ts}`",

@@ -1,4 +1,4 @@
-"""eng_review — pre-ship architecture / data-flow / edge-case critique.
+"""architecture_audit — pre-ship architecture / data-flow / edge-case critique.
 
 Adapted from gstack's `plan-eng-review`. Substance kept: architecture
 review, error & rescue mapping, data-flow tracing (happy / nil / empty
@@ -25,7 +25,7 @@ from typing import Optional
 
 
 THOUGHTS_REL_DIR = "product/thoughts"
-SLUG = "eng-review-critique"
+SLUG = "architecture_audit-critique"
 
 SEVERITIES = ("P0", "P1", "P2", "P3")
 
@@ -82,7 +82,7 @@ AXES = (
 
 
 @dataclass
-class EngReviewFinding:
+class ArchitectureAuditFinding:
     axis_key: str
     severity: str           # P0..P3
     confidence: int         # 1..10 (gstack's calibration scale)
@@ -92,11 +92,11 @@ class EngReviewFinding:
 
 
 @dataclass
-class EngReviewCritique:
+class ArchitectureAuditCritique:
     target_path: Optional[str]
     boundary_id: Optional[str]
     findings: list[dict]            # rich list, one per axis (rated)
-    issues: list[dict]              # cross-axis flat list of EngReviewFinding-shape dicts
+    issues: list[dict]              # cross-axis flat list of ArchitectureAuditFinding-shape dicts
     overall_score: int              # 0..10
     ship_readiness: str             # "ship" | "fix-first" | "rework"
     next_actions: list[str]
@@ -104,7 +104,7 @@ class EngReviewCritique:
     markdown: str
 
 
-def record_eng_review(
+def record_architecture_audit(
     target_path: Optional[str],
     boundary_id: Optional[str],
     findings: list[dict],
@@ -113,8 +113,8 @@ def record_eng_review(
     ship_readiness: str,
     next_actions: Optional[list[str]] = None,
     workspace_path: Optional[Path] = None,
-) -> EngReviewCritique:
-    """Persist a populated eng review.
+) -> ArchitectureAuditCritique:
+    """Persist a populated architecture audit.
 
     `findings` is one dict per AXES key:
 
@@ -169,7 +169,7 @@ def record_eng_review(
         next_actions=next_actions,
     )
     thought_path = _write_thought(md, workspace_path)
-    return EngReviewCritique(
+    return ArchitectureAuditCritique(
         target_path=target_path,
         boundary_id=boundary_id,
         findings=findings,
@@ -211,7 +211,7 @@ def _render_markdown(
     by_key = {f["key"]: f for f in findings}
 
     lines = [
-        "# Engineering review critique",
+        "# Architecture audit critique",
         "",
         f"- tick: `{tick}`",
         f"- written: `{ts}`",

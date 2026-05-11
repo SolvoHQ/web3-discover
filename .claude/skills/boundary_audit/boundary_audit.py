@@ -1,4 +1,4 @@
-"""ceo_review — premise-challenging, mode-aware Boundary critique.
+"""boundary_audit — premise-challenging, mode-aware Boundary critique.
 
 Adapted from gstack's `plan-ceo-review`. Source skill operates in four
 modes (SCOPE EXPANSION / SELECTIVE EXPANSION / HOLD SCOPE / SCOPE
@@ -24,7 +24,7 @@ from typing import Optional
 
 
 THOUGHTS_REL_DIR = "product/thoughts"
-SLUG = "ceo-review-critique"
+SLUG = "boundary_audit-critique"
 
 MODES = ("expansion", "selective", "hold", "reduction")
 
@@ -82,7 +82,7 @@ AXES = (
 
 
 @dataclass
-class CEOReviewCritique:
+class BoundaryAuditCritique:
     target_path: Optional[str]
     mode: str                       # one of MODES
     mode_rationale: str             # one sentence — why this mode
@@ -128,7 +128,7 @@ def pick_mode(
     return "selective"
 
 
-def record_ceo_review(
+def record_boundary_audit(
     target_path: Optional[str],
     mode: str,
     mode_rationale: str,
@@ -139,8 +139,8 @@ def record_ceo_review(
     deferred_to_todos: Optional[list[str]] = None,
     next_actions: Optional[list[str]] = None,
     workspace_path: Optional[Path] = None,
-) -> CEOReviewCritique:
-    """Persist a populated CEO critique.
+) -> BoundaryAuditCritique:
+    """Persist a populated boundary audit critique.
 
     `findings` is a list of dicts, one per AXES key the agent answered:
 
@@ -180,7 +180,7 @@ def record_ceo_review(
         next_actions=next_actions,
     )
     thought_path = _write_thought(md, workspace_path)
-    return CEOReviewCritique(
+    return BoundaryAuditCritique(
         target_path=target_path,
         mode=mode,
         mode_rationale=mode_rationale,
@@ -226,7 +226,7 @@ def _render_markdown(
     by_key = {f["key"]: f for f in findings}
 
     lines = [
-        "# CEO review critique",
+        "# Boundary audit critique",
         "",
         f"- tick: `{tick}`",
         f"- written: `{ts}`",

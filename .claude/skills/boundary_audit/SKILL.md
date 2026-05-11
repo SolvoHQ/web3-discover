@@ -1,29 +1,39 @@
 ---
-name: ceo_review
-description: CEO/founder-mode critique of an authored Boundary — premise challenge, scope shape, trajectory fit, inversion, reversibility. Agent invokes AFTER authoring a Boundary, BEFORE checking it out, to make sure premises survive scrutiny and scope is the right size.
+name: boundary_audit
+description: Premise + scope + trajectory critique of a Boundary you just authored. Invoke when you have called `checkout.add_problem(...)` in this same tick and have NOT yet called `checkout.get_next()` on it — i.e. the Boundary exists in the queue but hasn't been picked up for execution. Picks one of four modes (expansion / selective / hold / reduction) from observable state, rates 6 axes 0-10, then either edits the Boundary or accepts each axis with a reason. Catches "scoping a Boundary >300 LoC of edits" and "Boundary on an unvalidated premise" before tick budget is committed.
 ---
 
-# CEO review
+# Boundary audit
 
 Rate each axis 0-10. For each axis below 10, explain what would make it
 a 10, then edit the Boundary toward that. The gstack version asks the
 human "which mode should I run in?" — here you pick the mode yourself
 from heuristics.
 
-## Invocation triggers
+## When to invoke (mechanical triggers)
 
-- **After authoring a Boundary, before checking it out.** This is the
-  most common case. Run before `checkout` so the critique can edit the
-  Boundary without contesting an in-flight checkout.
-- **When `record_thought` flagged a pivot** and you authored a new
-  direction's first Boundary on the same tick. `office_hours` first,
-  then `ceo_review`.
-- **When you find yourself scoping a Boundary >300 LoC of edits** —
-  that's a smell. CEO review will likely return mode=`reduction`.
+Each trigger is something you can verify yourself from the current tick:
 
-Do **not** invoke for: hotfix Boundaries (mode=hold is mechanical there
-and adds no value), pure-refactor Boundaries with zero behaviour
-change, Boundaries that are continuations of an already-reviewed plan.
+- **You called `checkout.add_problem(...)` earlier in this tick and the
+  resulting row has not yet been `get_next()`'d.** That's the canonical
+  window — the Boundary is queued, not yet in flight, so the audit can
+  still edit / reframe / kill it without contesting an active execution.
+- **You authored a Boundary on a new direction in this tick AND a
+  `*-wedge_audit-critique.md` was written in the current or previous
+  tick.** Run `wedge_audit` first (premise gate), then `boundary_audit`
+  (scope / trajectory gate). The two stack.
+- **You are about to call `add_problem` with a description longer than
+  ~300 words / that touches >5 files / that introduces a new external
+  integration.** Large Boundaries almost always survive `boundary_audit`
+  in `reduction` mode. Run the audit before you queue it.
+- **A `record_thought` you wrote this tick flagged a pivot AND you
+  authored the new direction's first Boundary on the same tick.** That
+  Boundary inherits the pivot's premise risk — audit it.
+
+Skip when: the Boundary is a hotfix where scope is mechanically dictated
+by the bug (mode would be `hold` trivially), it's a pure refactor with
+zero behaviour change, or it is a continuation of an already-audited
+plan (a previous `*-boundary_audit-critique.md` covers this scope).
 
 ## Mode selection (autonomous)
 
@@ -51,7 +61,7 @@ rationale either way (`mode_rationale` field).
 | `inversion` | Inversion | Top 3 ways this ships and is still a waste? |
 | `reversibility` | Reversibility | One-way door or two-way? Rollback cost? |
 
-Full prompts in `AXES` (Python tuple in `ceo_review.py`).
+Full prompts in `AXES` (Python tuple in `boundary_audit.py`).
 
 For each axis: rate 0..10, state the finding, state what a 10 would
 look like for **this Boundary** (not abstractly), and either propose a
@@ -73,11 +83,11 @@ After all axes are rated:
 
 ## Output schema
 
-`product/thoughts/<tick>-ceo-review-critique.md` is written by the
+`product/thoughts/<tick>-boundary_audit-critique.md` is written by the
 module with the following structure:
 
 ```
-# CEO review critique
+# Boundary audit critique
 - tick / written / target / mode (+rationale) / overall_score / decision
 ## Axes
 ### Premise challenge / Existing leverage / Scope shape / Trajectory / Inversion / Reversibility
@@ -94,7 +104,7 @@ heuristically as `selective` (has wedge derivation, no users, but is an
 iteration on a recorded direction, not a fresh pivot):
 
 ```
-# CEO review critique
+# Boundary audit critique
 - mode: **selective** — has wedge derivation in thoughts but zero traffic;
   treat existing v1 scope as baseline and only surface cherry-picks.
 - overall_score: **6/10**
@@ -166,8 +176,8 @@ migrations, no public commitments. Rate 4/5 reversible.
 ## API
 
 ```python
-from solvo.skills.ceo_review.ceo_review import (
-    AXES, pick_mode, record_ceo_review,
+from solvo.skills.boundary_audit.boundary_audit import (
+    AXES, pick_mode, record_boundary_audit,
 )
 
 mode = pick_mode(
@@ -178,7 +188,7 @@ mode = pick_mode(
 )
 # → "selective"
 
-critique = record_ceo_review(
+critique = record_boundary_audit(
     target_path="product/mvp.md",
     mode=mode,
     mode_rationale="...",
@@ -198,8 +208,9 @@ print(critique.thought_path)
 
 ## Soft chaining
 
-- If a prior `*-office-hours-critique.md` exists for the same direction,
+- If a prior `*-wedge_audit-critique.md` exists for the same direction,
   read it — its findings on `demand_reality` / `narrowest_wedge` are
   the strongest input to the `premise` axis here.
-- After CEO review, `checkout` proceeds normally. `eng_review` runs at
-  ship-time, not here.
+- After boundary_audit, `checkout.get_next()` proceeds normally.
+  `architecture_audit` runs DURING execution (after design, before
+  large diff), not here.

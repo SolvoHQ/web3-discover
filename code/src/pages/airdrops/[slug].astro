@@ -21,8 +21,31 @@ const { Content } = await entry.render();
 
 const title = `${data.project} airdrop guide — web3-discover`;
 const description = `${data.project} (${data.chain}) airdrop: ${data.action} Effort ${data.effort}, cost floor ${data.costFloor}, deadline ${data.deadline}. Risk: ${data.risk}.`;
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const articleUrl = `${siteUrl}/airdrops/${entry.slug}`;
+
+const articleJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: `${data.project} airdrop guide`,
+  description: data.blurb,
+  url: articleUrl,
+  mainEntityOfPage: articleUrl,
+  datePublished: data.addedOn,
+  dateModified: data.addedOn,
+  author: { '@type': 'Organization', name: 'web3-discover' },
+  publisher: {
+    '@type': 'Organization',
+    name: 'web3-discover',
+    logo: { '@type': 'ImageObject', url: `${siteUrl}/og-default.png` },
+  },
+  image: `${siteUrl}/og-default.png`,
+  about: data.project,
+  keywords: [data.project, data.chain, 'airdrop', 'web3', 'crypto'].join(', '),
+};
 ---
-<Base title={title} description={description} ogType="article">
+<Base title={title} description={description} ogType="article" extraJsonLd={articleJsonLd}>
   <section class="entry-head">
     <div class="container">
       <div class="crumbs"><a href="/airdrops">Airdrops</a> / {data.project}</div>

@@ -1,29 +1,39 @@
 ---
-name: eng_review
-description: Pre-ship engineering critique — architecture, data-flow, error rescue, edge cases, test coverage. Agent invokes during a Boundary execution tick, AFTER design but BEFORE the implementation diff gets large enough to be expensive to throw away.
+name: architecture_audit
+description: Pre-implementation architecture / data-flow / edge-case / test-coverage critique. Invoke during a checked-out Boundary tick when (a) you have a design or written plan in head, (b) the diff in `git status` is still small (≤5 changed files / ≤100 lines, or zero — only stub files), and (c) the Boundary adds at least one of: a new external API call, a new background job, a new state machine, a new public surface, or files-touched looks like it will exceed 5. Re-doing 20 LoC is free; re-doing 2000 is not — this is the cheap moment to catch the design issue.
 ---
 
-# Engineering review
+# Architecture audit
 
 Rate-then-fix across five axes. The gstack version interleaves
 AskUserQuestion per finding; here, you produce a flat list of issues
 with severity + confidence and the agent itself decides which to fix
 in this tick vs. defer.
 
-## Invocation triggers
+## When to invoke (mechanical triggers)
 
-- **You have a design / spec for the current Boundary in head**, plus
-  maybe a stub file or two, but no large diff yet. This is the
-  cheapest moment to catch architecture issues — re-doing 20 LoC is
-  free, re-doing 2000 is not.
-- **The Boundary introduces a new integration point** (a new external
-  API call, a new background job, a new state machine, a new error
-  surface, a new public API surface).
-- **You're considering adding a fifth file to the Boundary diff** —
-  scope-minimality axis exists for this case.
+Each trigger is something you can verify yourself from the current tick:
 
-Do **not** invoke for: pure content edits (markdown / data JSON only),
-typo/rename diffs, mechanical refactors where the diff *is* the design.
+- **A Boundary is checked-out, you have written a design / plan / spec
+  in head or in a thought file, and `git status` is small** (≤5 files
+  changed, ≤100 lines diff, or just stub files). This is the canonical
+  window — the design exists but the implementation diff is cheap to
+  throw away.
+- **The Boundary description introduces a new integration point.**
+  Concretely: a new external API call (fetch / HTTP client), a new
+  background job / cron / queue worker, a new state machine, a new
+  error surface, a new public API or DB schema.
+- **You are about to add the fifth file to the Boundary's diff.** Files-
+  touched > 4 is the `scope_minimality` trigger — audit before the 5th
+  file is opened.
+- **You have ever caught yourself writing `except Exception` or a
+  silent `return null` in this Boundary's diff.** That's the
+  `error_rescue` axis surfacing on its own — run the audit and decide
+  whether it's actually fine or needs a real rescue path.
+
+Skip when: the Boundary is pure content (markdown / data JSON only), a
+typo / rename diff, or a mechanical refactor where the diff *is* the
+design (e.g. `mv` + import rewrite).
 
 ## Axes
 
@@ -35,7 +45,7 @@ typo/rename diffs, mechanical refactors where the diff *is* the design.
 | `test_coverage` | Test coverage | Per-codepath test existence; hostile-QA test; 2am-Friday test |
 | `scope_minimality` | Scope minimality | Files touched > 8 or classes added > 2 is a smell — propose reduction |
 
-Full prompts in `AXES` (Python tuple in `eng_review.py`).
+Full prompts in `AXES` (Python tuple in `architecture_audit.py`).
 
 ## Severity + confidence calibration
 
@@ -75,10 +85,10 @@ After all issues are listed:
 
 ## Output schema
 
-`product/thoughts/<tick>-eng-review-critique.md`:
+`product/thoughts/<tick>-architecture_audit-critique.md`:
 
 ```
-# Engineering review critique
+# Architecture audit critique
 - tick / written / target / boundary / overall_score / ship_readiness
 ## Axes
   ### Architecture / Error rescue / Edge cases / Test coverage / Scope minimality
@@ -92,12 +102,12 @@ After all issues are listed:
 
 ## How harsh? — example output
 
-Run against a synthesized eng-review of the os-alt `code/` Boundary
+Run against a synthesized audit of the os-alt `code/` Boundary
 (extending the github.ts rate-limit handling and adding a daily build
 that fetches OSS-tool metadata for the 30-50 SaaS pages):
 
 ```
-# Engineering review critique
+# Architecture audit critique
 - target: code/src/lib/github.ts + .github/workflows/daily-fetch.yml
 - overall_score: **6/10**
 - ship_readiness: **fix-first**
@@ -179,9 +189,9 @@ with no doc note.
 ## API
 
 ```python
-from solvo.skills.eng_review.eng_review import AXES, record_eng_review
+from solvo.skills.architecture_audit.architecture_audit import AXES, record_architecture_audit
 
-critique = record_eng_review(
+critique = record_architecture_audit(
     target_path="code/src/lib/github.ts + .github/workflows/daily-fetch.yml",
     boundary_id="os-alt-daily-fetch-001",
     findings=[
@@ -202,9 +212,10 @@ print(critique.thought_path)
 
 ## Soft chaining
 
-- `eng_review` benefits from reading a prior `*-ceo-review-critique.md`
-  if one exists — the `scope_shape` finding from CEO review is the
-  upstream of the `scope_minimality` finding here.
-- After `eng_review` returns `fix-first` or `rework`, the agent fixes
-  before continuing. After `ship`, the implementation proceeds; if the
-  artifact is DX-facing, `devex_review` runs at ship-time.
+- `architecture_audit` benefits from reading a prior
+  `*-boundary_audit-critique.md` if one exists — the `scope_shape`
+  finding from boundary audit is the upstream of the `scope_minimality`
+  finding here.
+- After `architecture_audit` returns `fix-first` or `rework`, the
+  agent fixes before continuing. After `ship`, the implementation
+  proceeds; if the artifact is DX-facing, `dx_audit` runs at ship-time.
