@@ -1,0 +1,82 @@
+#!/bin/bash
+# Solvo workspace commit-msg hook.
+#
+# Rejects any commit that does NOT carry both:
+#   1. git config user.email == westonguo@outlook.com
+#   2. a `Co-authored-by: solvo-<workspace-slug> <agent@west0n.top>`
+#      trailer line (case-insensitive on the trailer key).
+#
+# Background: agents were drifting to raw `git commit -m` instead of
+# the `commit` skill, producing trailers like `<noreply@solvo.dev>`,
+# `<agent@solvo.ai>`, or Claude Code's default
+# `Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>`.
+# This hook is the last-mile guard. The skill at
+# .claude/skills/commit/SKILL.md is the correct path.
+#
+# Installed by `solvo init` and refreshed by `solvo run`, both via
+# `solvo.bootstrap.install_commit_msg_hook`. NEVER installed in the
+# Solvo source repo itself — solvo source has historical
+# `Co-Authored-By: Claude` trailers that would all be flagged.
+set -euo pipefail
+
+EXPECTED_EMAIL="westonguo@outlook.com"
+EXPECTED_AGENT_EMAIL="agent@west0n.top"
+
+msg_file="$1"
+
+# Workspace slug derived from the repo root's basename. Mirrors the
+# `.resolve().name` logic in solvo/skills/commit/commit.py.
+repo_root=$(git rev-parse --show-toplevel)
+slug=$(basename "$repo_root")
+
+if [[ -z "$slug" ]]; then
+  cat >&2 <<EOF
+[solvo commit-msg hook] could not derive a workspace slug from repo root
+'$repo_root'. This is a bug; the hook is bailing out without a verdict.
+EOF
+  exit 1
+fi
+
+author_email=$(git config user.email 2>/dev/null || true)
+
+reject() {
+  local reason="$1"
+  cat >&2 <<EOF
+[solvo commit-msg hook] commit rejected: $reason
+
+Workspace: $slug
+Repo root: $repo_root
+Author email: ${author_email:-<unset>}
+
+Every workspace commit must:
+  - have git user.email == $EXPECTED_EMAIL
+  - include a trailer line (case-insensitive on the key):
+      Co-authored-by: solvo-$slug <$EXPECTED_AGENT_EMAIL>
+
+Do not run \`git commit\` directly. Use the commit skill at
+.claude/skills/commit/SKILL.md (Python: solvo.skills.commit.commit).
+The skill sets the author identity and emits the correct trailer for
+this workspace's slug. Going through it is also how product-impact /
+note / tick-id get recorded for the post-hoc audit.
+
+If you are intentionally bypassing the skill (don't), edit the commit
+message to include the trailer above and run again.
+EOF
+  exit 1
+}
+
+if [[ "$author_email" != "$EXPECTED_EMAIL" ]]; then
+  reject "author email '$author_email' is not '$EXPECTED_EMAIL'"
+fi
+
+expected_trailer="Co-authored-by: solvo-$slug <$EXPECTED_AGENT_EMAIL>"
+
+# Case-insensitive on the trailer key, exact on slug + agent email.
+# Allow trailing whitespace. The pattern is anchored to a full line.
+pattern="^[Cc][Oo]-[Aa][Uu][Tt][Hh][Oo][Rr][Ee][Dd]-[Bb][Yy]: solvo-${slug} <${EXPECTED_AGENT_EMAIL}>[[:space:]]*\$"
+
+if ! grep -Eq "$pattern" "$msg_file"; then
+  reject "missing or malformed Co-authored-by trailer (expected '$expected_trailer')"
+fi
+
+exit 0
