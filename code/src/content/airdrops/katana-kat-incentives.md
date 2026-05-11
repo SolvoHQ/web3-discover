@@ -10,6 +10,7 @@ risk: verified
 officialUrl: https://katana.network
 twitter: katananetwork
 addedOn: 2026-05-11
+lastChecked: 2026-05-11
 ---
 
 Katana's incentives are publicly committed at $1B in KAT for ecosystem bootstrapping. POL stakers received part of an initial 15% airdrop — ongoing activity on Katana itself qualifies for continued emissions through vKAT-directed incentives.

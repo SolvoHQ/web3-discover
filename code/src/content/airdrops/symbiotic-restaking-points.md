@@ -10,6 +10,7 @@ risk: unverified
 officialUrl: https://symbiotic.fi
 twitter: symbioticfi
 addedOn: 2026-05-11
+lastChecked: 2026-05-11
 ---
 
 Symbiotic's vault-and-network model means each network you support runs its own incentive program in parallel — choose vaults attached to networks with credible token plans rather than just maximizing yield.

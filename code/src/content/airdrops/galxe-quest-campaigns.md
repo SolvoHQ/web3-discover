@@ -10,6 +10,7 @@ risk: verified
 officialUrl: https://galxe.com
 twitter: Galxe
 addedOn: 2026-05-11
+lastChecked: 2026-05-11
 ---
 
 Galxe is the closest thing to an "airdrop ETF" by usage surface — projects routinely launch their first allocation tasks here. Treat it as a screening layer for which projects to dig deeper on, not a guaranteed yield.

@@ -10,6 +10,7 @@ risk: unverified
 officialUrl: https://inkonchain.com
 twitter: inkonchain
 addedOn: 2026-05-11
+lastChecked: 2026-05-11
 ---
 
 Ink leans heavily on its ties to Kraken — a top CEX backing materially derisks the protocol. Allocation rules favor early Tydro and Nado users. Unverified rating reflects that final allocation criteria haven't been published.

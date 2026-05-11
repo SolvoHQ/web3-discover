@@ -10,6 +10,7 @@ risk: verified
 officialUrl: https://www.meteora.ag
 twitter: MeteoraAG
 addedOn: 2026-05-11
+lastChecked: 2026-05-11
 ---
 
 Meteora's Dynamic Liquidity Market Maker concentrates LP positions for higher fee capture. After the first MET distribution, the team confirmed multiple future seasons. Season 2 points aren't displayed in the UI yet — accrual is happening server-side.

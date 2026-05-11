@@ -14,6 +14,8 @@ const airdrops = defineCollection({
     officialUrl: z.string().url(),
     twitter: z.string().optional(),
     addedOn: z.coerce.string(),
+    lastChecked: z.coerce.string().optional(),
+    status: z.enum(['active', 'ended']).default('active'),
   }),
 });
 

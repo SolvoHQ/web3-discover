@@ -10,6 +10,7 @@ risk: unverified
 officialUrl: https://rainbow.me
 twitter: rainbowdotme
 addedOn: 2026-05-11
+lastChecked: 2026-05-11
 ---
 
 RNBW is not yet live. The points program plus weekly ETH drops is a strong signal of a forthcoming token, but distribution mechanics have not been formally published. Always download Rainbow from rainbow.me — phishing clones of mobile wallets are common.

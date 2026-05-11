@@ -10,6 +10,7 @@ risk: unverified
 officialUrl: https://extended.exchange
 twitter: extended_exchange
 addedOn: 2026-05-11
+lastChecked: 2026-05-11
 ---
 
 Extended has been farming-grade since mid-2025. The team has stated "all value accrues to the token" — earlier participants are typically weighted higher. Q2 2026 TGE timing is community-inferred, not confirmed.

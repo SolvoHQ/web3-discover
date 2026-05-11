@@ -10,6 +10,7 @@ risk: unverified
 officialUrl: https://fogo.io
 twitter: fogochain
 addedOn: 2026-05-11
+lastChecked: 2026-05-11
 ---
 
 Fogo is built specifically for high-frequency onchain trading. Flames Season 2 lives at flames.fogo.io/season-2. Multiple dApps in the ecosystem qualify — diversifying activity across them is the canonical strategy.

@@ -10,6 +10,7 @@ risk: unverified
 officialUrl: https://base.org
 twitter: base
 addedOn: 2026-05-11
+lastChecked: 2026-05-11
 ---
 
 Base does not have a confirmed token. The "exploring" language is consistent with what large L2s say before formal announcement. If a Base token launches, eligibility will likely lean on long-term consistent activity rather than late-stage volume.

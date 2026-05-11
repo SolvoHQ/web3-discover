@@ -10,6 +10,7 @@ risk: unverified
 officialUrl: https://metamask.io
 twitter: MetaMask
 addedOn: 2026-05-11
+lastChecked: 2026-05-11
 ---
 
 MASK is an announced-but-not-yet-launched token. Consensys is rolling out MetaMask Rewards as a seasonal points system tied to onchain activity. There is no confirmed snapshot date or formal allocation table yet — entry is rated unverified because rules can shift before TGE.

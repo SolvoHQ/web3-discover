@@ -10,6 +10,7 @@ risk: verified
 officialUrl: https://polymarket.com
 twitter: Polymarket
 addedOn: 2026-05-11
+lastChecked: 2026-05-11
 ---
 
 At a ~$9B valuation Polymarket's POLY could be one of the largest single airdrops in crypto history. Trademark filings indicate the launch window is approaching. Trade across politics, sports, crypto, and finance markets — concentrated activity reads as farming behavior to the team's anti-sybil filters.

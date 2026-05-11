@@ -10,6 +10,7 @@ risk: verified
 officialUrl: https://backpack.exchange
 twitter: Backpack
 addedOn: 2026-05-11
+lastChecked: 2026-05-11
 ---
 
 Backpack ships a self-custodial wallet, a regulated exchange (VARA license), and the Mad Lads NFT collection. The team published the TGE plan in February 2026 — 25% of the token goes to the community. Repeat SOL/USDC spot trades and 1–2× perps are the standard strategies.

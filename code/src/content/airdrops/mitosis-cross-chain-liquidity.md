@@ -10,6 +10,7 @@ risk: unverified
 officialUrl: https://mitosis.org
 twitter: MitosisOrg
 addedOn: 2026-05-11
+lastChecked: 2026-05-11
 ---
 
 Mitosis is positioning as a unified cross-chain settlement layer. Expedition vaults are the canonical participation surface — early depositors with longer lock periods are weighted higher in expected distribution.

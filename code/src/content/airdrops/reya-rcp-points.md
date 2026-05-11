@@ -10,6 +10,7 @@ risk: unverified
 officialUrl: https://reya.xyz
 twitter: Reya_xyz
 addedOn: 2026-05-11
+lastChecked: 2026-05-11
 ---
 
 Reya emphasizes ongoing-activity weighting over snapshot moments — the team has telegraphed this both for sybil resistance and because the rollup-evolution timeline means later activity may matter more than early bursts.

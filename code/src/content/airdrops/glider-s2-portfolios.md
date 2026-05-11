@@ -10,6 +10,7 @@ risk: verified
 officialUrl: https://www.glider.fi
 twitter: glider_fi
 addedOn: 2026-05-11
+lastChecked: 2026-05-11
 ---
 
 Glider's pitch is "set-and-forget" auto-rebalancing across chains. Season 2 points are explicitly stated to convert into airdrop allocation at TGE — formal commitment, not implication. Bridged liquidity earns points continuously.

@@ -10,6 +10,7 @@ risk: verified
 officialUrl: https://www.ether.fi
 twitter: ether_fi
 addedOn: 2026-05-11
+lastChecked: 2026-05-11
 ---
 
 Ether.fi already distributed an initial ETHFI airdrop; The Club layers consumer-grade rewards (debit card cashback, APY) on top of restaking. Loyalty tiers feed into future seasonal allocations and partner program multipliers.

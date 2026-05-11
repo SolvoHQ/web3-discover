@@ -10,6 +10,7 @@ risk: verified
 officialUrl: https://hyperfoundation.org
 twitter: HyperliquidX
 addedOn: 2026-05-11
+lastChecked: 2026-05-11
 ---
 
 Hyperliquid runs its own perp orderbook on a high-throughput L1 the team built themselves. The first airdrop (Nov 2024) was one of the largest in crypto history. ~39% of HYPE supply is allocated to "future emissions" — Season 2 farming behavior is anchored on consistent, time-weighted activity rather than wash volume.

@@ -15,6 +15,7 @@ export async function listPublishedAirdrops(): Promise<AirdropEntry[]> {
   const entries = await getCollection('airdrops');
   return entries
     .filter((entry) => entry.data.risk !== 'suspect')
+    .filter((entry) => entry.data.status !== 'ended')
     .sort((a, b) => {
       const da = normalizedDeadline(a.data.deadline);
       const db = normalizedDeadline(b.data.deadline);
