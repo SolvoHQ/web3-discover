@@ -3,6 +3,7 @@ import Base from '../../layouts/Base.astro';
 import { listPublishedAirdrops } from '../../lib/airdrops.ts';
 import AirdropTable from '../../components/AirdropTable.astro';
 import { LIST_META } from '../../lib/lists.ts';
+import { COMPETITORS } from '../../lib/competitors.ts';
 
 const entries = await listPublishedAirdrops();
 const curatedLists = LIST_META.map((l) => ({
@@ -97,6 +98,18 @@ const itemListJsonLd = {
 
       <AirdropTable entries={entries} />
       <p id="filter-empty" class="filter-empty" hidden>No entries match — clear filters.</p>
+
+      <nav class="compare-strip" aria-label="Compare to other airdrop directories">
+        <h3>Compare to other directories</h3>
+        <p class="compare-note">Honest, side-by-side. We name where the others win too.</p>
+        <ul>
+          {COMPETITORS.map((c) => (
+            <li>
+              <a href={`/vs/${c.slug}`}>{c.name}<span class="compare-vs"> vs us</span></a>
+            </li>
+          ))}
+        </ul>
+      </nav>
     </div>
   </section>
 
@@ -247,6 +260,50 @@ const itemListJsonLd = {
     .hero-tools-cta a { text-decoration: none; }
     .hero-tools-cta a:hover { text-decoration: underline; }
     .hero-tools-sep { color: var(--ink-soft); margin: 0 0.35rem; }
+    .compare-strip {
+      margin: 2rem 0 0;
+      padding: 1.1rem 1.1rem 1.2rem;
+      border: 1px solid var(--rule);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 4px 4px 0;
+      background: rgba(217, 212, 196, 0.18);
+    }
+    .compare-strip h3 {
+      font-family: var(--font-serif);
+      font-size: 1.05rem;
+      margin: 0 0 0.25rem;
+      color: var(--ink);
+    }
+    .compare-note {
+      margin: 0 0 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+    }
+    .compare-strip ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .compare-strip li a {
+      display: inline-block;
+      padding: 0.28em 0.7em;
+      border: 1px solid var(--rule);
+      border-radius: 2px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--ink);
+      text-decoration: none;
+      background: var(--bg);
+    }
+    .compare-strip li a:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .compare-vs { color: var(--ink-soft); }
   </style>
 
   <script>

@@ -1,0 +1,344 @@
+---
+import Base from '../../layouts/Base.astro';
+import { COMPETITORS, CAPABILITY_ORDER, type Competitor } from '../../lib/competitors.ts';
+import { listPublishedAirdrops } from '../../lib/airdrops.ts';
+
+export async function getStaticPaths() {
+  return COMPETITORS.map((competitor) => ({
+    params: { slug: competitor.slug },
+    props: { competitor },
+  }));
+}
+
+interface Props {
+  competitor: Competitor;
+}
+
+const { competitor } = Astro.props as Props;
+const entries = await listPublishedAirdrops();
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const canonical = `${siteUrl}/vs/${competitor.slug}`;
+const title = `${competitor.name} vs web3-discover — honest feature comparison`;
+
+const otherCompetitors = COMPETITORS.filter((c) => c.slug !== competitor.slug);
+
+const stateLabel: Record<string, string> = { yes: 'Yes', partial: 'Partial', no: 'No' };
+
+const comparisonJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: title,
+  description: competitor.metaDescription,
+  url: canonical,
+  isPartOf: { '@type': 'WebSite', name: 'web3-discover', url: siteUrl },
+  about: [
+    { '@type': 'Thing', name: competitor.name, url: `https://${competitor.domain.replace(/^https?:\/\//, '')}` },
+    { '@type': 'Thing', name: 'web3-discover', url: siteUrl },
+  ],
+};
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: competitor.faq.map((item) => ({
+    '@type': 'Question',
+    name: item.q,
+    acceptedAnswer: { '@type': 'Answer', text: item.a },
+  })),
+};
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'web3-discover', item: siteUrl },
+    { '@type': 'ListItem', position: 2, name: 'Compare', item: `${siteUrl}/airdrops` },
+    { '@type': 'ListItem', position: 3, name: `${competitor.name} vs web3-discover`, item: canonical },
+  ],
+};
+---
+<Base
+  title={title}
+  description={competitor.metaDescription}
+  canonical={canonical}
+  extraJsonLd={[comparisonJsonLd, faqJsonLd, breadcrumbJsonLd]}
+>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker"><a href="/airdrops">Airdrops</a> / Compare</div>
+      <h1>{competitor.name} <span class="vs-sep">vs</span> web3-discover</h1>
+      <p class="lede">{competitor.framing}</p>
+      <p class="hero-meta">
+        Compared honestly. Where {competitor.shortName} is the better choice, we say so — see <a href="#use-them-instead">"When to use {competitor.shortName} instead"</a>.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>Feature comparison</h2>
+        <span class="meta">7 axes · honest assessment</span>
+      </div>
+
+      <div class="cmp-wrap">
+        <table class="cmp">
+          <thead>
+            <tr>
+              <th scope="col" class="cmp-axis">Capability</th>
+              <th scope="col" class="cmp-them">{competitor.shortName}</th>
+              <th scope="col" class="cmp-us">web3-discover</th>
+            </tr>
+          </thead>
+          <tbody>
+            {CAPABILITY_ORDER.map(({ key, label, sub }) => {
+              const cell = competitor.capabilities[key];
+              return (
+                <tr>
+                  <th scope="row" class="cmp-axis">
+                    <span class="axis-label">{label}</span>
+                    <span class="axis-sub">{sub}</span>
+                  </th>
+                  <td class={`cmp-cell cmp-state-${cell.competitor.state}`}>
+                    <span class={`cmp-pill cmp-pill-${cell.competitor.state}`}>{stateLabel[cell.competitor.state]}</span>
+                    <p>{cell.competitor.text}</p>
+                  </td>
+                  <td class={`cmp-cell cmp-state-${cell.us.state}`}>
+                    <span class={`cmp-pill cmp-pill-${cell.us.state}`}>{stateLabel[cell.us.state]}</span>
+                    <p>{cell.us.text}</p>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="use-them-instead">
+    <div class="container">
+      <div class="section-head">
+        <h2>When to use {competitor.shortName} instead</h2>
+        <span class="meta">honest counter-take</span>
+      </div>
+      <ul class="counter-take">
+        {competitor.whenToUseThemInstead.map((line) => (
+          <li>{line}</li>
+        ))}
+      </ul>
+      <p class="counter-note">
+        We do one thing — a curated, scam-filtered airdrop index with wallet-aware tools.
+        If your job sits outside that, {competitor.shortName} or one of the other directories may be a better fit.
+        See the <a href="#other-comparisons">other comparison pages</a> for more honest takes.
+      </p>
+    </div>
+  </section>
+
+  <section class="section cta-strip">
+    <div class="container">
+      <h2>Try web3-discover in 60 seconds</h2>
+      <p class="cta-lede">No signup required to read; no wallet signature required for any tool.</p>
+      <ul class="cta-grid">
+        <li>
+          <a class="cta-card" href="/airdrops">
+            <strong>{entries.length} curated airdrops →</strong>
+            <span>Hand-vetted, sorted by deadline, every entry risk-flagged.</span>
+          </a>
+        </li>
+        <li>
+          <a class="cta-card" href="/tools/eligibility">
+            <strong>Personal eligibility verdict →</strong>
+            <span>Paste a wallet, 14 on-chain rules return your verdict in seconds.</span>
+          </a>
+        </li>
+        <li>
+          <a class="cta-card" href="/subscribe">
+            <strong>Weekly digest →</strong>
+            <span>One curated email every Wednesday. Free, one-click unsubscribe, no paid placements.</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section faq" >
+    <div class="container">
+      <h2>FAQ</h2>
+      <dl class="faq-list">
+        {competitor.faq.map((item) => (
+          <>
+            <dt>{item.q}</dt>
+            <dd>{item.a}</dd>
+          </>
+        ))}
+      </dl>
+    </div>
+  </section>
+
+  <section class="section other-cmp" id="other-comparisons">
+    <div class="container">
+      <h2>Other directories we compare with</h2>
+      <ul class="other-grid">
+        {otherCompetitors.map((c) => (
+          <li>
+            <a href={`/vs/${c.slug}`}>{c.name} vs web3-discover</a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <style>
+    .vs-sep {
+      font-family: var(--font-mono);
+      font-size: 0.7em;
+      color: var(--ink-soft);
+      text-transform: lowercase;
+      padding: 0 0.2em;
+    }
+    .hero-meta {
+      margin: 0.85rem 0 0;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--ink-soft);
+    }
+    .cmp-wrap { overflow-x: auto; }
+    .cmp {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.93rem;
+      min-width: 640px;
+    }
+    .cmp thead th {
+      text-align: left;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      padding: 0.6rem 0.75rem;
+      border-bottom: 2px solid var(--rule);
+      background: rgba(217, 212, 196, 0.18);
+    }
+    .cmp tbody th, .cmp tbody td {
+      vertical-align: top;
+      padding: 0.85rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+    }
+    .cmp tbody th.cmp-axis {
+      width: 26%;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      text-align: left;
+    }
+    .axis-label { display: block; }
+    .axis-sub {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--ink-soft);
+      margin-top: 0.2rem;
+      letter-spacing: 0.02em;
+    }
+    .cmp-cell p {
+      margin: 0.4rem 0 0;
+      color: var(--ink-soft);
+      font-size: 0.9rem;
+    }
+    .cmp-cell.cmp-state-no { background: rgba(217, 212, 196, 0.18); }
+    .cmp-us.cmp-state-yes { background: rgba(31, 107, 58, 0.06); }
+    .cmp-pill {
+      display: inline-block;
+      padding: 0.1em 0.55em;
+      border-radius: 2px;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border: 1px solid var(--rule);
+      background: var(--bg);
+      color: var(--ink-soft);
+    }
+    .cmp-pill-yes { background: rgba(31, 107, 58, 0.12); color: var(--ok); border-color: rgba(31, 107, 58, 0.3); }
+    .cmp-pill-partial { background: rgba(200, 83, 26, 0.1); color: var(--accent); border-color: rgba(200, 83, 26, 0.3); }
+    .cmp-pill-no { background: rgba(74, 71, 56, 0.08); color: var(--ink-soft); border-color: var(--rule); }
+    .counter-take {
+      list-style: none;
+      margin: 0 0 1rem;
+      padding: 0;
+      display: grid;
+      gap: 0.6rem;
+    }
+    .counter-take li {
+      padding: 0.7rem 0.95rem;
+      border-left: 3px solid var(--ink-soft);
+      background: rgba(217, 212, 196, 0.22);
+      border-radius: 0 3px 3px 0;
+      color: var(--ink);
+    }
+    .counter-note {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--ink-soft);
+      margin: 1rem 0 0;
+    }
+    .cta-strip { background: rgba(217, 212, 196, 0.22); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+    .cta-lede { color: var(--ink-soft); margin: 0 0 1rem; }
+    .cta-grid {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.75rem;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+    .cta-card {
+      display: block;
+      padding: 0.9rem 1rem;
+      border: 1px solid var(--rule);
+      border-left: 3px solid var(--accent);
+      background: var(--bg);
+      text-decoration: none;
+      color: var(--ink);
+      border-radius: 0 4px 4px 0;
+    }
+    .cta-card:hover { border-color: var(--accent); }
+    .cta-card strong { display: block; font-family: var(--font-serif); font-size: 1.05rem; margin-bottom: 0.25rem; }
+    .cta-card span { color: var(--ink-soft); font-size: 0.88rem; }
+    .faq-list { margin: 0; }
+    .faq-list dt {
+      font-weight: 600;
+      font-family: var(--font-serif);
+      font-size: 1.05rem;
+      margin-top: 1.1rem;
+    }
+    .faq-list dd { margin: 0.3rem 0 0; color: var(--ink-soft); }
+    .other-cmp { border-top: 1px solid var(--rule); }
+    .other-grid {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+    .other-grid a {
+      display: block;
+      padding: 0.6rem 0.85rem;
+      border: 1px solid var(--rule);
+      border-radius: 3px;
+      background: var(--bg);
+      text-decoration: none;
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+    }
+    .other-grid a:hover { border-color: var(--accent); color: var(--accent); }
+    @media (max-width: 640px) {
+      .cmp { font-size: 0.88rem; }
+      .cmp tbody th.cmp-axis { width: 32%; }
+    }
+  </style>
+</Base>
