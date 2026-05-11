@@ -1,10 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
-import { airdrops } from '../data/airdrops.ts';
+import { listPublishedAirdrops } from '../lib/airdrops.ts';
+
+const entries = await listPublishedAirdrops();
+const preview = entries.slice(0, 6);
 
 const title = 'web3-discover — the airdrop hunter\'s honest map';
-const description = 'A curated, scam-filtered directory of currently-claimable web3 airdrops. Hand-vetted entries with action, effort, cost, and deadline — no paid placements, no claim buttons, no noise.';
-const preview = airdrops.slice(0, 3);
+const description = `A curated, scam-filtered directory of ${entries.length} currently-active web3 airdrops. Hand-vetted entries with action, effort, cost, and deadline — no paid placements, no claim buttons, no noise.`;
 ---
 <Base title={title} description={description}>
   <section class="hero">
@@ -15,7 +17,7 @@ const preview = airdrops.slice(0, 3);
         No scams. No noise. No paid placements pretending to be listings.
         Just fresh, vetted opportunities you can act on.
       </p>
-      <p><a href="/airdrops"><strong>Browse current airdrops →</strong></a></p>
+      <p><a href="/airdrops"><strong>Browse {entries.length} active airdrops →</strong></a></p>
     </div>
   </section>
 
@@ -24,7 +26,7 @@ const preview = airdrops.slice(0, 3);
       <div class="promise">
         <div class="promise-item">
           <h3>Hand-vetted</h3>
-          <p>Every entry checked before publishing. Suspected scams get a flag, not silence.</p>
+          <p>Every entry checked before publishing. Suspected scams are excluded — not silently shown.</p>
         </div>
         <div class="promise-item">
           <h3>Action-first</h3>
@@ -45,8 +47,8 @@ const preview = airdrops.slice(0, 3);
   <section class="section">
     <div class="container">
       <div class="section-head">
-        <h2>Latest entries</h2>
-        <span class="meta">Placeholder · curated set lands next</span>
+        <h2>Recent picks</h2>
+        <span class="meta">Sorted by deadline ascending</span>
       </div>
       <table class="listing">
         <thead>
@@ -59,13 +61,13 @@ const preview = airdrops.slice(0, 3);
           </tr>
         </thead>
         <tbody>
-          {preview.map((a) => (
+          {preview.map((entry) => (
             <tr>
-              <td class="project"><a href={`/airdrops/${a.slug}`}>{a.project}</a></td>
-              <td class="col-chain mono">{a.chain}</td>
-              <td class="col-effort mono">{a.effort}</td>
-              <td class="mono">{a.deadline}</td>
-              <td><span class={`tag risk-${a.risk}`}>{a.risk}</span></td>
+              <td class="project"><a href={`/airdrops/${entry.slug}`}>{entry.data.project}</a></td>
+              <td class="col-chain mono">{entry.data.chain}</td>
+              <td class="col-effort mono">{entry.data.effort}</td>
+              <td class="mono">{entry.data.deadline}</td>
+              <td><span class={`tag risk-${entry.data.risk}`}>{entry.data.risk}</span></td>
             </tr>
           ))}
         </tbody>

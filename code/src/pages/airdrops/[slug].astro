@@ -1,29 +1,33 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { airdrops, type Airdrop } from '../../data/airdrops.ts';
+import { listPublishedAirdrops, type AirdropEntry } from '../../lib/airdrops.ts';
 
-export function getStaticPaths() {
-  return airdrops.map((a) => ({
-    params: { slug: a.slug },
-    props: { airdrop: a },
+export async function getStaticPaths() {
+  const entries = await listPublishedAirdrops();
+  return entries.map((entry) => ({
+    params: { slug: entry.slug },
+    props: { entry },
   }));
 }
 
 interface Props {
-  airdrop: Airdrop;
+  entry: AirdropEntry;
 }
 
-const { airdrop } = Astro.props as Props;
-const title = `${airdrop.project} airdrop guide — web3-discover`;
-const description = `${airdrop.project} (${airdrop.chain}) airdrop: ${airdrop.action} Effort ${airdrop.effort}, cost floor ${airdrop.costFloor}, deadline ${airdrop.deadline}. Risk: ${airdrop.risk}.`;
+const { entry } = Astro.props as Props;
+const { data } = entry;
+const { Content } = await entry.render();
+
+const title = `${data.project} airdrop guide — web3-discover`;
+const description = `${data.project} (${data.chain}) airdrop: ${data.action} Effort ${data.effort}, cost floor ${data.costFloor}, deadline ${data.deadline}. Risk: ${data.risk}.`;
 ---
 <Base title={title} description={description} ogType="article">
   <section class="entry-head">
     <div class="container">
-      <div class="crumbs"><a href="/airdrops">Airdrops</a> / {airdrop.project}</div>
-      <div class="kicker">{airdrop.chain}</div>
-      <h1>{airdrop.project}</h1>
-      <p class="lede">{airdrop.blurb}</p>
+      <div class="crumbs"><a href="/airdrops">Airdrops</a> / {data.project}</div>
+      <div class="kicker">{data.chain}</div>
+      <h1>{data.project}</h1>
+      <p class="lede">{data.blurb}</p>
     </div>
   </section>
 
@@ -32,39 +36,42 @@ const description = `${airdrop.project} (${airdrop.chain}) airdrop: ${airdrop.ac
       <dl class="entry-meta">
         <div>
           <dt>Action</dt>
-          <dd>{airdrop.action}</dd>
+          <dd>{data.action}</dd>
         </div>
         <div>
           <dt>Effort</dt>
-          <dd class="mono">{airdrop.effort}</dd>
+          <dd class="mono">{data.effort}</dd>
         </div>
         <div>
           <dt>Cost floor</dt>
-          <dd class="mono">{airdrop.costFloor}</dd>
+          <dd class="mono">{data.costFloor}</dd>
         </div>
         <div>
           <dt>Deadline</dt>
-          <dd class="mono">{airdrop.deadline}</dd>
+          <dd class="mono">{data.deadline}</dd>
         </div>
         <div>
           <dt>Risk</dt>
-          <dd><span class={`tag risk-${airdrop.risk}`}>{airdrop.risk}</span></dd>
+          <dd><span class={`tag risk-${data.risk}`}>{data.risk}</span></dd>
         </div>
         <div>
-          <dt>Official</dt>
-          <dd><a href={airdrop.officialUrl} rel="noopener nofollow" target="_blank">{airdrop.officialUrl}</a></dd>
+          <dt>Official link</dt>
+          <dd><a href={data.officialUrl} rel="noopener nofollow" target="_blank">{data.officialUrl}</a></dd>
         </div>
-        {airdrop.twitter && (
+        {data.twitter && (
           <div>
             <dt>Twitter</dt>
-            <dd><a href={`https://twitter.com/${airdrop.twitter}`} rel="noopener nofollow" target="_blank">@{airdrop.twitter}</a></dd>
+            <dd><a href={`https://twitter.com/${data.twitter}`} rel="noopener nofollow" target="_blank">@{data.twitter}</a></dd>
           </div>
         )}
       </dl>
 
+      <article class="entry-body">
+        <Content />
+      </article>
+
       <div class="note">
-        Placeholder entry. Before acting on any listing, verify the official link
-        directly — never click a "claim" button on a third-party site.
+        Before acting on any listing, verify the official link directly — never click a "claim" button on a third-party site.
       </div>
 
       <p style="margin-top:1.5rem;"><a href="/airdrops">← Back to all airdrops</a></p>

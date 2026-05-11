@@ -1,9 +1,13 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { airdrops } from '../../data/airdrops.ts';
+import { listPublishedAirdrops } from '../../lib/airdrops.ts';
+
+const entries = await listPublishedAirdrops();
 
 const title = 'Active airdrops — web3-discover';
-const description = 'The current index of hand-vetted, scam-filtered web3 airdrops. Sorted by deadline, with effort, cost floor, and risk flag on every entry.';
+const description = `${entries.length} hand-vetted, scam-filtered web3 airdrops you can act on right now. Sorted by deadline, with effort, cost floor, and risk flag on every entry.`;
+const verifiedCount = entries.filter((e) => e.data.risk === 'verified').length;
+const unverifiedCount = entries.filter((e) => e.data.risk === 'unverified').length;
 ---
 <Base title={title} description={description}>
   <section class="hero">
@@ -11,7 +15,7 @@ const description = 'The current index of hand-vetted, scam-filtered web3 airdro
       <div class="kicker">Index</div>
       <h1>Active airdrops</h1>
       <p class="lede">
-        Default sort: deadline ascending, then effort. Suspected scams are flagged, not hidden.
+        Default sort: deadline ascending. Risk flag shows whether the airdrop terms are publicly confirmed or still inferred — suspected scams are excluded entirely, not silently hidden.
       </p>
     </div>
   </section>
@@ -19,13 +23,9 @@ const description = 'The current index of hand-vetted, scam-filtered web3 airdro
   <section class="section">
     <div class="container">
       <div class="section-head">
-        <h2>{airdrops.length} entries</h2>
-        <span class="meta">Placeholder set · curated entries land next tick</span>
+        <h2>{entries.length} entries</h2>
+        <span class="meta">{verifiedCount} verified · {unverifiedCount} unverified</span>
       </div>
-      <p class="note">
-        Preview build — the entries below are placeholders to validate the index shape.
-        Real curated airdrops land in the next content drop.
-      </p>
       <table class="listing">
         <thead>
           <tr>
@@ -38,14 +38,14 @@ const description = 'The current index of hand-vetted, scam-filtered web3 airdro
           </tr>
         </thead>
         <tbody>
-          {airdrops.map((a) => (
+          {entries.map((entry) => (
             <tr>
-              <td class="project"><a href={`/airdrops/${a.slug}`}>{a.project}</a></td>
-              <td class="col-chain mono">{a.chain}</td>
-              <td class="col-effort mono">{a.effort}</td>
-              <td class="mono">{a.costFloor}</td>
-              <td class="mono">{a.deadline}</td>
-              <td><span class={`tag risk-${a.risk}`}>{a.risk}</span></td>
+              <td class="project"><a href={`/airdrops/${entry.slug}`}>{entry.data.project}</a></td>
+              <td class="col-chain mono">{entry.data.chain}</td>
+              <td class="col-effort mono">{entry.data.effort}</td>
+              <td class="mono">{entry.data.costFloor}</td>
+              <td class="mono">{entry.data.deadline}</td>
+              <td><span class={`tag risk-${entry.data.risk}`}>{entry.data.risk}</span></td>
             </tr>
           ))}
         </tbody>
