@@ -2,6 +2,8 @@
 import Base from '../../layouts/Base.astro';
 import { listPublishedAirdrops, type AirdropEntry } from '../../lib/airdrops.ts';
 import { SELL_EXCHANGES } from '../../lib/exchanges.ts';
+import { buildSellCtaHref } from '../../lib/tokens.ts';
+import { LIFI_INTEGRATOR_KEY } from '../../lib/integrator.ts';
 
 export async function getStaticPaths() {
   const entries = await listPublishedAirdrops();
@@ -25,6 +27,16 @@ const description = `${data.project} (${data.chain}) airdrop: ${data.action} Eff
 const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
 const articleUrl = `${siteUrl}/airdrops/${entry.slug}`;
 
+// YAML parses bare `2026-05-11` as a JS Date; z.coerce.string() then
+// toString()'s it ("Mon May 11 2026 00:00:00 GMT+0000"). Re-normalise to
+// ISO YYYY-MM-DD for both the JSON-LD dateModified and the visible badge.
+function toIsoDate(raw: string): string {
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? raw : d.toISOString().slice(0, 10);
+}
+const lastChecked = toIsoDate(data.lastChecked ?? data.addedOn);
+const datePublished = toIsoDate(data.addedOn);
+
 const articleJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Article',
@@ -32,8 +44,8 @@ const articleJsonLd = {
   description: data.blurb,
   url: articleUrl,
   mainEntityOfPage: articleUrl,
-  datePublished: data.addedOn,
-  dateModified: data.addedOn,
+  datePublished: datePublished,
+  dateModified: lastChecked,
   author: { '@type': 'Organization', name: 'web3-discover' },
   publisher: {
     '@type': 'Organization',
@@ -44,6 +56,8 @@ const articleJsonLd = {
   about: data.project,
   keywords: [data.project, data.chain, 'airdrop', 'web3', 'crypto'].join(', '),
 };
+
+const sellCta = buildSellCtaHref(entry.slug, data.project, data.chain, LIFI_INTEGRATOR_KEY);
 ---
 <Base title={title} description={description} ogType="article" extraJsonLd={articleJsonLd}>
   <section class="entry-head">
@@ -52,6 +66,10 @@ const articleJsonLd = {
       <div class="kicker">{data.chain}</div>
       <h1>{data.project}</h1>
       <p class="lede">{data.blurb}</p>
+      <p class="last-verified" aria-label="Listing freshness">
+        <span class="lv-dot" aria-hidden="true"></span>
+        Last verified: <time datetime={lastChecked}>{lastChecked}</time>
+      </p>
     </div>
   </section>
 
@@ -107,8 +125,12 @@ const articleJsonLd = {
             non-custodial, no KYC, no signup.
           </p>
           <p>
-            <a class="sell-cta" href={`/tools/swap?token=${encodeURIComponent(data.project)}&chain=${encodeURIComponent(data.chain)}`}>
-              Swap {data.project} on web3-discover →
+            <a
+              class="sell-cta"
+              href={sellCta.href}
+              {...(sellCta.external ? { target: '_blank', rel: 'sponsored noopener' } : {})}
+            >
+              {sellCta.label}
             </a>
           </p>
           <p class="sell-note-small">
@@ -144,4 +166,29 @@ const articleJsonLd = {
       <p style="margin-top:1.5rem;"><a href="/airdrops">← Back to all airdrops</a></p>
     </div>
   </section>
+
+  <style>
+    .last-verified {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      font-family: var(--font-mono, ui-monospace, monospace);
+      font-size: 0.78rem;
+      color: var(--ink-soft, #555);
+      background: rgba(217, 212, 196, 0.35);
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 999px;
+    }
+    .last-verified time { color: inherit; }
+    .lv-dot {
+      display: inline-block;
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 999px;
+      background: #2e8a3f;
+      box-shadow: 0 0 0 2px rgba(46, 138, 63, 0.18);
+    }
+  </style>
 </Base>

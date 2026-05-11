@@ -7,6 +7,7 @@ import {
   LIFI_FEE_BPS,
   JUPITER_FEE_BPS,
 } from '../../lib/integrator.ts';
+import { SOLANA_MINTS, SLUG_SWAP_TARGETS, JUMPER_CHAIN_KEYS } from '../../lib/tokens.ts';
 
 const title = 'Swap airdrop tokens — web3-discover';
 const description = 'Embedded DEX-aggregator swap. Solana via Jupiter, EVM via LiFi/Jumper. Honest 30–50 bps integrator fee disclosed upfront. No KYC, no signup, non-custodial.';
@@ -28,6 +29,7 @@ const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
         or <strong>{lifiFeePct}%</strong> (EVM) on swaps initiated here — disclosed openly,
         baked into the quote you see. See our <a href="/disclosure">affiliate disclosure</a>.
       </p>
+      <div id="preselect-banner" class="preselect-banner" hidden></div>
     </div>
   </section>
 
@@ -43,7 +45,7 @@ const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
       <div id="integrated-terminal" class="terminal-host"
         data-integrator-address={SOL_INTEGRATOR_ADDRESS}
         data-integrator-fee-bps={JUPITER_FEE_BPS}>
-        <div class="terminal-fallback">Loading Jupiter Terminal…</div>
+        <div class="terminal-fallback">Loading Jupiter Plugin…</div>
       </div>
 
       <p class="micro">
@@ -66,7 +68,7 @@ const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
       </p>
 
       <p>
-        <a class="cta" href={`https://jumper.exchange/?utm_source=${LIFI_INTEGRATOR_KEY}&utm_medium=integrator&utm_campaign=swap`} rel="noopener" target="_blank">
+        <a id="jumper-cta" class="cta" href={`https://jumper.exchange/?utm_source=${LIFI_INTEGRATOR_KEY}&utm_medium=integrator&utm_campaign=swap`} rel="noopener" target="_blank">
           Open Jumper swap →
         </a>
       </p>
@@ -122,11 +124,128 @@ const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
     data-preload
     defer
   ></script>
+  <script
+    is:inline
+    type="application/json"
+    id="swap-registry"
+    set:html={JSON.stringify({
+      solanaMints: SOLANA_MINTS,
+      slugTargets: SLUG_SWAP_TARGETS,
+      jumperChains: JUMPER_CHAIN_KEYS,
+      lifiKey: LIFI_INTEGRATOR_KEY,
+    })}
+  ></script>
   <script is:inline define:vars={{ solIntegrator: SOL_INTEGRATOR_ADDRESS, feeBps: JUPITER_FEE_BPS }}>
+    const REGISTRY = (() => {
+      try {
+        return JSON.parse(document.getElementById('swap-registry').textContent || '{}');
+      } catch (err) {
+        console.error('[web3-discover] swap registry parse failed:', err);
+        return {};
+      }
+    })();
+    const SOLANA_MINTS = REGISTRY.solanaMints || {};
+    const SLUG_TARGETS = REGISTRY.slugTargets || {};
+    const JUMPER_CHAINS = REGISTRY.jumperChains || {};
+    const LIFI_KEY = REGISTRY.lifiKey || '';
+
+    function detectJumperChain(chain) {
+      if (!chain) return null;
+      const lower = chain.toLowerCase();
+      const entries = Object.keys(JUMPER_CHAINS);
+      for (let i = 0; i < entries.length; i++) {
+        const needle = entries[i];
+        if (lower.indexOf(needle) !== -1) {
+          return {
+            key: JUMPER_CHAINS[needle],
+            label: needle.charAt(0).toUpperCase() + needle.slice(1),
+          };
+        }
+      }
+      return null;
+    }
+
+    function resolveTarget(slug, projectName, chain) {
+      if (slug && SLUG_TARGETS[slug]) return SLUG_TARGETS[slug];
+      if (projectName) {
+        const key = projectName.toUpperCase().trim();
+        if (SOLANA_MINTS[key]) {
+          return {
+            kind: 'solana',
+            inputMint: SOLANA_MINTS[key],
+            outputMint: SOLANA_MINTS.USDC,
+            symbol: key,
+          };
+        }
+      }
+      if (chain) {
+        if (/\bsolana\b/i.test(chain)) return { kind: 'fallback' };
+        const evm = detectJumperChain(chain);
+        if (evm) return { kind: 'evm', fromChain: evm.key, chainLabel: evm.label };
+      }
+      return { kind: 'fallback' };
+    }
+
+    function buildJumperUrl(target) {
+      const params = new URLSearchParams();
+      params.set('fromChain', target.fromChain);
+      if (target.fromToken) params.set('fromToken', target.fromToken);
+      if (target.toChain) params.set('toChain', target.toChain);
+      if (target.toToken) params.set('toToken', target.toToken);
+      params.set('utm_source', LIFI_KEY);
+      params.set('utm_medium', 'integrator');
+      params.set('utm_campaign', 'swap');
+      return 'https://jumper.exchange/?' + params.toString();
+    }
+
+    const URL_PARAMS = new URLSearchParams(window.location.search);
+    const slugParam = URL_PARAMS.get('slug');
+    const tokenParam = URL_PARAMS.get('token');
+    const chainParam = URL_PARAMS.get('chain');
+    const RESOLVED = resolveTarget(slugParam, tokenParam, chainParam);
+
+    // EVM preselect: rewrite the Jumper CTA + show a banner above the fold.
+    if (RESOLVED.kind === 'evm') {
+      const url = buildJumperUrl(RESOLVED);
+      const cta = document.getElementById('jumper-cta');
+      if (cta) {
+        cta.setAttribute('href', url);
+        cta.textContent =
+          (RESOLVED.tokenLabel
+            ? 'Swap ' + RESOLVED.tokenLabel
+            : 'Open Jumper') +
+          ' on ' + RESOLVED.chainLabel + ' →';
+      }
+      const banner = document.getElementById('preselect-banner');
+      if (banner) {
+        const projectLabel = tokenParam || RESOLVED.tokenLabel || RESOLVED.chainLabel;
+        banner.innerHTML =
+          '<strong>Detected:</strong> ' + escapeHtml(projectLabel) +
+          ' is an EVM token (' + escapeHtml(RESOLVED.chainLabel) + '). ' +
+          'Use Jumper for best execution → ' +
+          '<a class="banner-cta" href="' + url + '" target="_blank" rel="noopener">' +
+          'Open Jumper preset →</a>';
+        banner.hidden = false;
+      }
+    } else if (RESOLVED.kind === 'solana') {
+      const banner = document.getElementById('preselect-banner');
+      if (banner) {
+        banner.innerHTML =
+          '<strong>Detected:</strong> ' + escapeHtml(RESOLVED.symbol) +
+          ' (Solana SPL) — Jupiter is pre-selecting it as the input below.';
+        banner.hidden = false;
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+      });
+    }
+
     function initJupiter(attempts) {
       attempts = attempts || 0;
       if (attempts > 60) {
-        // 60 * 200ms = 12s; surrender
         const host = document.getElementById('integrated-terminal');
         if (host) {
           host.innerHTML =
@@ -141,29 +260,23 @@ const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
         return;
       }
       try {
-        const params = new URLSearchParams(window.location.search);
-        const tokenHint = params.get('token');
-        const KNOWN_MINTS = {
-          SOL: 'So11111111111111111111111111111111111111112',
-          USDC: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-          USDT: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
-        };
-        const outputMint =
-          (tokenHint && KNOWN_MINTS[tokenHint.toUpperCase()]) ||
-          KNOWN_MINTS.USDC;
+        // Default: SOL → USDC (the historical behaviour).
+        // ?slug=… / ?token=… : project token becomes the INPUT (selling the airdrop).
+        let initialInputMint = SOLANA_MINTS.SOL;
+        let initialOutputMint = SOLANA_MINTS.USDC;
+        if (RESOLVED.kind === 'solana') {
+          initialInputMint = RESOLVED.inputMint;
+          initialOutputMint = RESOLVED.outputMint || SOLANA_MINTS.USDC;
+        }
 
         window.Jupiter.init({
           displayMode: 'integrated',
           integratedTargetId: 'integrated-terminal',
-          // api.mainnet-beta.solana.com now returns 403 for browser origins.
-          // publicnode.com Solana RPC is free, CORS-open, no API key.
           endpoint: 'https://solana-rpc.publicnode.com',
           formProps: {
-            initialOutputMint: outputMint,
-            initialInputMint: KNOWN_MINTS.SOL,
+            initialInputMint: initialInputMint,
+            initialOutputMint: initialOutputMint,
           },
-          // platformFeeAndAccounts requires a Jupiter Referral PDA (gated on SOL gas).
-          // Will route fees to: ${solIntegrator} at ${feeBps} bps when activated.
           containerStyles: { maxHeight: '700px' },
         });
       } catch (err) {
@@ -212,5 +325,19 @@ const jupiterFeePct = (JUPITER_FEE_BPS / 100).toFixed(2);
     }
     .cta:hover { background: var(--warn); text-decoration: none; }
     .micro { font-size: 0.85rem; color: var(--ink-soft); margin-top: 0.75rem; }
+    .preselect-banner {
+      margin: 1rem 0 0;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--rule);
+      border-left: 4px solid var(--accent);
+      border-radius: 4px;
+      background: #fff;
+      font-size: 0.95rem;
+    }
+    .preselect-banner .banner-cta {
+      display: inline-block;
+      margin-left: 0.5rem;
+      font-weight: 600;
+    }
   </style>
 </Base>
