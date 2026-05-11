@@ -494,9 +494,17 @@ const softwareJsonLd = {
         inputLine.join(' + ') + '.';
       statusEl.hidden = false;
 
-      // ----- Shareable summary line -----
-      const shareText = 'I qualify for ' + eligible.length + '/' + ruleCount + ' airdrops via web3-discover.vercel.app/tools/eligibility';
-      const shareUrl = 'https://web3-discover.vercel.app/tools/eligibility';
+      // ----- Shareable personalised verdict URL -----
+      // /v/<hash> on the same origin renders this verdict server-side for anyone
+      // clicking the link, no wallet input needed. Hash format: <evm>~<sol> (one
+      // or both segments, with the EVM/Solana format auto-detected on parse).
+      const hashParts = [];
+      if (evmAddr) hashParts.push(evmAddr);
+      if (solAddr) hashParts.push(solAddr);
+      const verdictHash = hashParts.join('~');
+      const verdictUrl = window.location.origin + '/v/' + encodeURIComponent(verdictHash);
+      const shortInput = evmAddr ? shortAddr(evmAddr) : shortAddr(solAddr);
+      const shareText = shortInput + ' qualifies for ' + eligible.length + '/' + ruleCount + ' airdrops via web3-discover';
       summaryEl.innerHTML =
         '<div class="el-summary-grid">' +
           '<div class="el-summary-bucket el-summary-eligible">' +
@@ -516,11 +524,17 @@ const softwareJsonLd = {
             '<div class="el-summary-lbl">🔍 Manual check</div>' +
           '</div>' +
         '</div>' +
-        '<div class="el-share">' +
-          '<input class="el-share-input mono" id="el-share-text" readonly value="' + escHtml(shareText) + '" />' +
-          '<button type="button" class="el-share-btn" id="el-share-copy" data-text="' + escHtml(shareText) + '">Copy</button>' +
-          '<a class="el-share-btn el-share-x" href="https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText) + '" target="_blank" rel="noopener">Share on X</a>' +
-          '<a class="el-share-btn el-share-tg" href="https://t.me/share/url?url=' + encodeURIComponent(shareUrl) + '&text=' + encodeURIComponent(shareText) + '" target="_blank" rel="noopener">Share on Telegram</a>' +
+        '<div class="el-share-block">' +
+          '<div class="el-share-lead">' +
+            '<strong>Share this verdict.</strong> Anyone who opens the link below ' +
+            'sees the same cards without pasting their wallet.' +
+          '</div>' +
+          '<div class="el-share">' +
+            '<input class="el-share-input mono" id="el-share-url" readonly value="' + escHtml(verdictUrl) + '" />' +
+            '<button type="button" class="el-share-btn" id="el-share-copy" data-text="' + escHtml(verdictUrl) + '">Copy link</button>' +
+            '<a class="el-share-btn el-share-x" href="https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText) + '&url=' + encodeURIComponent(verdictUrl) + '" target="_blank" rel="noopener">Share on X</a>' +
+            '<a class="el-share-btn el-share-tg" href="https://t.me/share/url?url=' + encodeURIComponent(verdictUrl) + '&text=' + encodeURIComponent(shareText) + '" target="_blank" rel="noopener">Share on Telegram</a>' +
+          '</div>' +
         '</div>';
       summaryEl.hidden = false;
 
@@ -610,7 +624,7 @@ const softwareJsonLd = {
             copyBtn.textContent = 'Copied!';
             setTimeout(() => { copyBtn.textContent = orig; }, 1600);
           } catch {
-            const input = document.getElementById('el-share-text');
+            const input = document.getElementById('el-share-url');
             if (input) { input.select(); document.execCommand && document.execCommand('copy'); }
           }
         });
@@ -868,6 +882,18 @@ const softwareJsonLd = {
       font-size: 0.82rem;
       color: var(--ink-soft, #555);
       margin-top: 0.3rem;
+    }
+    .el-share-block {
+      padding: 0.95rem 1.05rem;
+      background: rgba(46, 133, 64, 0.06);
+      border: 1px solid rgba(46, 133, 64, 0.3);
+      border-left: 4px solid #2e8540;
+      border-radius: 4px;
+    }
+    .el-share-lead {
+      margin-bottom: 0.6rem;
+      font-size: 0.95rem;
+      color: var(--ink, #222);
     }
     .el-share {
       display: flex;

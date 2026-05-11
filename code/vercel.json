@@ -1,6 +1,8 @@
 {
   "rewrites": [
-    { "source": "/api/airdrops/:slug.json", "destination": "/api/airdrops/:slug" }
+    { "source": "/api/airdrops/:slug.json", "destination": "/api/airdrops/:slug" },
+    { "source": "/v/:hash/og.png", "destination": "/api/v-og?h=:hash" },
+    { "source": "/v/:hash", "destination": "/api/v?h=:hash" }
   ],
   "crons": [
     { "path": "/api/cron/digest", "schedule": "0 14 * * 3" }
