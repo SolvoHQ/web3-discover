@@ -2,8 +2,14 @@
 import Base from '../../layouts/Base.astro';
 import { listPublishedAirdrops } from '../../lib/airdrops.ts';
 import AirdropTable from '../../components/AirdropTable.astro';
+import { LIST_META } from '../../lib/lists.ts';
 
 const entries = await listPublishedAirdrops();
+const curatedLists = LIST_META.map((l) => ({
+  slug: l.slug,
+  label: l.shortLabel,
+  count: entries.filter(l.filter).length,
+}));
 
 const title = 'Active airdrops — web3-discover';
 const description = `${entries.length} hand-vetted, scam-filtered web3 airdrops you can act on right now. Sorted by deadline, with effort, cost floor, and risk flag on every entry.`;
@@ -44,6 +50,18 @@ const itemListJsonLd = {
         <span class="meta">{verifiedCount} verified · {unverifiedCount} unverified</span>
       </div>
 
+      <nav class="curated-strip" aria-label="Curated airdrop lists">
+        <span class="curated-label">Curated:</span>
+        <ul>
+          {curatedLists.map((l) => (
+            <li>
+              <a href={`/lists/${l.slug}`}>{l.label}</a>
+              <span class="curated-count">{l.count}</span>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
       <div class="filter-strip" data-total={entries.length}>
         <label class="filter-search">
           <span class="sr-only">Search</span>
@@ -77,6 +95,50 @@ const itemListJsonLd = {
   </section>
 
   <style>
+    .curated-strip {
+      margin: 0.75rem 0 0.6rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.4rem 0.6rem;
+    }
+    .curated-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+    }
+    .curated-strip ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .curated-strip li {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0.35rem;
+      padding: 0.18em 0.55em;
+      border: 1px solid var(--rule);
+      border-radius: 2px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1.4;
+      background: transparent;
+    }
+    .curated-strip a {
+      text-decoration: none;
+      color: var(--ink);
+    }
+    .curated-strip li:hover { border-color: var(--ink-soft); }
+    .curated-strip li:hover a { color: var(--accent); }
+    .curated-count {
+      color: var(--ink-soft);
+      font-size: 0.72rem;
+    }
     .filter-strip {
       display: flex;
       flex-wrap: wrap;

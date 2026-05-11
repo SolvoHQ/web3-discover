@@ -1,0 +1,124 @@
+---
+import Base from '../../layouts/Base.astro';
+import AirdropTable from '../../components/AirdropTable.astro';
+import { listPublishedAirdrops, type AirdropEntry } from '../../lib/airdrops.ts';
+import { LIST_META, type ListMeta } from '../../lib/lists.ts';
+
+export async function getStaticPaths() {
+  const all = await listPublishedAirdrops();
+  return LIST_META.map((meta) => {
+    const entries = all.filter(meta.filter);
+    return {
+      params: { slug: meta.slug },
+      props: { meta, entries },
+    };
+  });
+}
+
+interface Props {
+  meta: ListMeta;
+  entries: AirdropEntry[];
+}
+
+const { meta, entries } = Astro.props as Props;
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const canonical = `${siteUrl}/lists/${meta.slug}`;
+
+const collectionJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: meta.h1,
+  description: meta.metaDescription,
+  url: canonical,
+  isPartOf: { '@type': 'WebSite', name: 'web3-discover', url: siteUrl },
+  hasPart: entries.map((entry) => ({
+    '@type': 'Article',
+    name: `${entry.data.project} — ${entry.data.chain}`,
+    url: `${siteUrl}/airdrops/${entry.slug}`,
+  })),
+};
+
+const otherLists = LIST_META.filter((l) => l.slug !== meta.slug);
+---
+<Base
+  title={meta.title}
+  description={meta.metaDescription}
+  canonical={canonical}
+  extraJsonLd={collectionJsonLd}
+>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker"><a href="/airdrops">All airdrops</a> / list</div>
+      <h1>{meta.h1}</h1>
+      {meta.intro.map((p) => (
+        <p class="lede">{p}</p>
+      ))}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>{entries.length} entr{entries.length === 1 ? 'y' : 'ies'}</h2>
+        <span class="meta"><a href="/airdrops">← All airdrops</a></span>
+      </div>
+      {entries.length === 0 ? (
+        <p class="empty-note">
+          No matching entries right now — browse all
+          <a href="/airdrops"> active airdrops</a>.
+        </p>
+      ) : (
+        <AirdropTable entries={entries} />
+      )}
+
+      <nav class="related-lists" aria-label="More curated lists">
+        <h3>More lists</h3>
+        <ul>
+          {otherLists.map((l) => (
+            <li>
+              <a href={`/lists/${l.slug}`}>{l.h1}</a>
+              <span class="related-desc"> — {l.shortLabel}</span>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </div>
+  </section>
+
+  <style>
+    .empty-note {
+      margin: 1rem 0;
+      padding: 0.9rem 1.1rem;
+      border: 1px solid var(--rule, #d9d4c4);
+      background: rgba(217, 212, 196, 0.18);
+      border-radius: 4px;
+    }
+    .related-lists {
+      margin-top: 2.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--rule);
+    }
+    .related-lists h3 {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin: 0 0 0.7rem;
+    }
+    .related-lists ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 0.5rem;
+    }
+    .related-lists a { font-weight: 500; }
+    .related-desc {
+      color: var(--ink-soft);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+    }
+  </style>
+</Base>
