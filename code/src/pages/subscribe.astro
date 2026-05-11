@@ -76,8 +76,14 @@ const description =
             <li><em>No dated deadlines right now — all current entries are ongoing campaigns.</em></li>
           )}
         </ul>
+        <p class="sf-mastodon">
+          📡 <strong>Prefer real-time push?</strong>
+          <a href="https://mastodon.social/@web3discover" rel="me noopener">Follow <code>@web3discover</code> on Mastodon</a>
+          — same alerts, no email required.
+        </p>
+
         <p class="sf-other-channels">
-          Prefer a different format?
+          More formats?
           <a href="/rss.xml">RSS</a> ·
           <a href="/tools/calendar">Calendar (iCal)</a> ·
           <a href="/llms.txt">MCP for LLMs</a>
@@ -169,7 +175,17 @@ const description =
     .sf-preview-list { margin: 0; padding-left: 1.1rem; font-size: 0.92rem; }
     .sf-preview-list li { margin-bottom: 0.45rem; }
     .sf-deadline { color: var(--ink-soft); font-family: var(--font-mono); font-size: 0.85em; }
-    .sf-other-channels { margin: 0.9rem 0 0; font-size: 0.85rem; color: var(--ink-soft); }
+    .sf-other-channels { margin: 0.6rem 0 0; font-size: 0.85rem; color: var(--ink-soft); }
+    .sf-mastodon {
+      margin: 0.9rem 0 0;
+      padding: 0.7rem 0.85rem;
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-left: 3px solid var(--accent);
+      border-radius: 3px;
+      font-size: 0.9rem;
+    }
+    .sf-mastodon code { font-family: var(--font-mono); font-size: 0.9em; }
   </style>
 
   <script is:inline>

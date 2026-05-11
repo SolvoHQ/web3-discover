@@ -54,8 +54,9 @@ const description = `A curated, scam-filtered directory of ${entries.length} cur
       </p>
 
       <p class="hero-newsletter">
-        <span class="hero-newsletter-label">📬 Or get the next freshness sweep by email:</span>
-        <a class="hero-newsletter-cta" href="/subscribe">Subscribe to the newsletter →</a>
+        <span class="hero-newsletter-label">📬 Get alerts your way:</span>
+        <a class="hero-newsletter-cta" href="/subscribe">Newsletter →</a>
+        <a class="hero-newsletter-cta hero-newsletter-cta-alt" href="https://mastodon.social/@web3discover" rel="me noopener">Follow on Mastodon →</a>
       </p>
     </div>
   </section>
@@ -180,5 +181,11 @@ const description = `A curated, scam-filtered directory of ${entries.length} cur
       border-radius: 3px;
     }
     .hero-newsletter-cta:hover { background: var(--warn); }
+    .hero-newsletter-cta-alt {
+      background: #fff;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+    .hero-newsletter-cta-alt:hover { background: var(--accent); color: #fff; }
   </style>
 </Base>

@@ -47,6 +47,14 @@ const itemListJsonLd = {
         <span class="hero-tools-sep"> · </span>
         <a href="/tools/wallet-check">Match by chain activity</a>
       </p>
+
+      <p class="alerts-strip">
+        <span class="alerts-strip-label">📡 Real-time deadline alerts:</span>
+        <a class="alerts-strip-cta" href="https://mastodon.social/@web3discover" rel="me noopener">Follow on Mastodon →</a>
+        <span class="alerts-strip-sep">or</span>
+        <a class="alerts-strip-cta alerts-strip-cta-alt" href="/subscribe">Email newsletter →</a>
+        <span class="alerts-strip-note">No login. No tracking pixel.</span>
+      </p>
     </div>
   </section>
 
@@ -260,6 +268,36 @@ const itemListJsonLd = {
     .hero-tools-cta a { text-decoration: none; }
     .hero-tools-cta a:hover { text-decoration: underline; }
     .hero-tools-sep { color: var(--ink-soft); margin: 0 0.35rem; }
+    .alerts-strip {
+      margin: 0.6rem 0 0;
+      padding: 0.65rem 0.9rem;
+      background: rgba(217, 212, 196, 0.35);
+      border-left: 3px solid var(--accent);
+      border-radius: 3px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      align-items: baseline;
+      font-size: 0.95rem;
+    }
+    .alerts-strip-label { color: var(--ink-soft); }
+    .alerts-strip-cta {
+      font-weight: 600;
+      text-decoration: none;
+      padding: 0.28rem 0.7rem;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 3px;
+    }
+    .alerts-strip-cta:hover { background: var(--warn); }
+    .alerts-strip-cta-alt {
+      background: #fff;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+    .alerts-strip-cta-alt:hover { background: var(--accent); color: #fff; }
+    .alerts-strip-sep { color: var(--ink-soft); font-size: 0.85rem; }
+    .alerts-strip-note { color: var(--ink-soft); font-size: 0.82rem; }
     .compare-strip {
       margin: 2rem 0 0;
       padding: 1.1rem 1.1rem 1.2rem;
