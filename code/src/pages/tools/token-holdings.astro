@@ -1,0 +1,507 @@
+---
+import Base from '../../layouts/Base.astro';
+import { listPublishedAirdrops } from '../../lib/airdrops.ts';
+
+const entries = await listPublishedAirdrops();
+// Map of slug → project name. Used to render entry-page anchor labels at render
+// time (we don't want to ship the full entry payload — just slug + display name).
+const entryNames: Record<string, string> = {};
+for (const e of entries) entryNames[e.slug] = e.data.project;
+
+const title = "Token holdings — see which airdrop tokens are sitting in your wallet";
+const description = `Paste a wallet. We fan-out balanceOf calls across 11 airdrop-distributed tokens on Ethereum, Arbitrum, Polygon, BSC, and Solana — and tell you what you hold. Client-side, no signature, no signup.`;
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const softwareJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'web3-discover token holdings',
+  url: `${siteUrl}/tools/token-holdings`,
+  applicationCategory: 'UtilityApplication',
+  operatingSystem: 'Web',
+  description,
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  publisher: { '@type': 'Organization', name: 'web3-discover', url: siteUrl },
+};
+---
+<Base title={title} description={description} extraJsonLd={softwareJsonLd}>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker">Tools</div>
+      <h1>Do I have unclaimed airdrop tokens?</h1>
+      <p class="lede">
+        Paste an EVM (<code>0x…</code>) or Solana address. We call <code>balanceOf</code>
+        for 11 airdrop-distributed tokens — PYTH, JTO, JUP, W on Solana; ETHFI, PENDLE,
+        ENA, STRK, ARB on EVM — and tell you exactly what's sitting in this wallet.
+        Read-only, non-custodial, no signature, no signup.
+      </p>
+
+      <form id="th-form" class="th-form" autocomplete="off">
+        <label class="th-label" for="th-input">Wallet address</label>
+        <div class="th-row">
+          <input
+            id="th-input"
+            name="addr"
+            type="text"
+            placeholder="0x… or Solana base58 address"
+            spellcheck="false"
+            autocapitalize="off"
+            autocorrect="off"
+            required
+          />
+          <button type="submit" class="th-btn">Check →</button>
+        </div>
+        <p class="th-hint">
+          Try <a href="?addr=0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045">a known EVM wallet</a>
+          or <a href="?addr=9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM">a Solana wallet</a>.
+        </p>
+      </form>
+
+      <p class="th-companion">
+        Already checked wallet activity? Try <a href="/tools/wallet-check">/tools/wallet-check</a>
+        to match this address against {entries.length} active airdrops.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div id="th-status" class="th-status" hidden></div>
+      <div id="th-results" class="th-results" hidden></div>
+
+      <details class="th-howitworks">
+        <summary>How this works (and what it doesn't do)</summary>
+        <div class="prose">
+          <ul>
+            <li>
+              <strong>EVM check:</strong> we batch <code>eth_call</code> requests for the
+              ERC-20 <code>balanceOf(address)</code> function selector against the public
+              RPC for each chain. Non-zero return = you hold that token. Hard-coded mint
+              addresses only — we never trust an arbitrary token list at runtime.
+            </li>
+            <li>
+              <strong>Solana check:</strong> we call <code>getTokenAccountsByOwner</code>
+              with a <code>mint</code> filter, one request per token in the curated list.
+              Multiple SPL accounts for the same mint are summed.
+            </li>
+            <li>
+              <strong>"Airdrop-distributed" means already-paid drops</strong>: PYTH (Nov
+              2023), JTO (Dec 2023), W (Apr 2024), JUP (Jan 2024), ARB (Mar 2023), ETHFI
+              (Mar 2024), ENA (Apr 2024), STRK (Feb 2024), PENDLE (2022). If you have a
+              non-zero balance you either claimed yours or bought it on the open market.
+            </li>
+            <li>
+              <strong>Doesn't cover unclaimed pre-TGE points</strong> — points balances
+              live on project sites, not on-chain. For pre-TGE entries, see
+              <a href="/airdrops">the full directory</a> or use
+              <a href="/tools/wallet-check">/tools/wallet-check</a>.
+            </li>
+            <li>
+              <strong>Your address never reaches our servers.</strong> Requests go
+              browser → publicnode RPC directly. We don't log, store, or proxy.
+            </li>
+          </ul>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <script
+    is:inline
+    type="application/json"
+    id="th-entry-names"
+    set:html={JSON.stringify(entryNames)}
+  ></script>
+
+  <script is:inline>
+    const ENTRY_NAMES = JSON.parse(document.getElementById('th-entry-names').textContent || '{}');
+
+    // RPC endpoints — same set as /tools/wallet-check (publicnode, CORS-open).
+    // OUT of scope: chains not already supported by wallet-check (no OP, no zksync).
+    const EVM_RPCS = {
+      ethereum: 'https://ethereum-rpc.publicnode.com',
+      arbitrum: 'https://arbitrum-one-rpc.publicnode.com',
+      polygon:  'https://polygon-bor-rpc.publicnode.com',
+      bsc:      'https://bsc-rpc.publicnode.com',
+      base:     'https://base-rpc.publicnode.com',
+      linea:    'https://linea-rpc.publicnode.com',
+    };
+    const SOL_RPC = 'https://solana-rpc.publicnode.com';
+
+    // Token registry. Each entry: { symbol, chain, mint/address, decimals, project,
+    // distributedOn, entrySlug? }. `entrySlug` links into /airdrops/<slug> when we
+    // have a matching live entry; otherwise the row links to /airdrops.
+    const TOKENS = [
+      // Solana SPL
+      { symbol: 'PYTH', chain: 'solana',   kind: 'spl', mint: 'HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3', decimals: 6, project: 'Pyth Network', distributedOn: 'Nov 2023' },
+      { symbol: 'JTO',  chain: 'solana',   kind: 'spl', mint: 'jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL', decimals: 9, project: 'Jito',         distributedOn: 'Dec 2023' },
+      { symbol: 'JUP',  chain: 'solana',   kind: 'spl', mint: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN', decimals: 6, project: 'Jupiter',      distributedOn: 'Jan 2024' },
+      { symbol: 'W',    chain: 'solana',   kind: 'spl', mint: '85VBFQZC9TZkfaptBWjvUw7YbZjy52A6mjtPGjstQAmQ', decimals: 6, project: 'Wormhole',     distributedOn: 'Apr 2024' },
+      { symbol: 'BONK', chain: 'solana',   kind: 'spl', mint: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', decimals: 5, project: 'Bonk',         distributedOn: 'Dec 2022' },
+
+      // EVM
+      { symbol: 'ETHFI',  chain: 'ethereum', kind: 'erc20', address: '0xFe0c30065B384F05761f15d0CC899D4F9F9Cc0eB', decimals: 18, project: 'ether.fi',  distributedOn: 'Mar 2024', entrySlug: 'etherfi-the-club' },
+      { symbol: 'PENDLE', chain: 'ethereum', kind: 'erc20', address: '0x808507121B80c02388fAd14726482e061B8da827', decimals: 18, project: 'Pendle',    distributedOn: '2022',     entrySlug: 'pendle-boros-points' },
+      { symbol: 'ENA',    chain: 'ethereum', kind: 'erc20', address: '0x57e114B691Db790C35207b2e685D4A43181e6061', decimals: 18, project: 'Ethena',    distributedOn: 'Apr 2024' },
+      { symbol: 'STRK',   chain: 'ethereum', kind: 'erc20', address: '0xCa14007Eff0dB1f8135f4C25B34De49AB0d42766', decimals: 18, project: 'Starknet',  distributedOn: 'Feb 2024' },
+      { symbol: 'ARB',    chain: 'arbitrum', kind: 'erc20', address: '0x912CE59144191C1204E64559FE8253a0e49E6548', decimals: 18, project: 'Arbitrum',  distributedOn: 'Mar 2023' },
+      { symbol: 'POL',    chain: 'polygon',  kind: 'erc20', address: '0x455e53CBB86018Ac2B8092FdCd39d8444aFFC3F6', decimals: 18, project: 'Polygon',   distributedOn: 'Sep 2024' },
+    ];
+
+    const CHAIN_LABELS = {
+      ethereum: 'Ethereum',
+      arbitrum: 'Arbitrum',
+      polygon:  'Polygon',
+      bsc:      'BSC',
+      base:     'Base',
+      linea:    'Linea',
+      solana:   'Solana',
+    };
+
+    const EVM_RX = /^0x[a-fA-F0-9]{40}$/;
+    const SOL_RX = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+    function detectFormat(addr) {
+      const v = addr.trim();
+      if (EVM_RX.test(v)) return { kind: 'evm', addr: v };
+      if (SOL_RX.test(v)) return { kind: 'solana', addr: v };
+      return { kind: 'unknown', addr: v };
+    }
+
+    // ERC-20 balanceOf selector + 32-byte left-padded address.
+    function encodeBalanceOf(holder) {
+      const stripped = holder.toLowerCase().replace(/^0x/, '');
+      return '0x70a08231' + '0'.repeat(24) + stripped;
+    }
+
+    function hexToBigInt(h) {
+      if (!h || h === '0x') return 0n;
+      return BigInt(h);
+    }
+
+    // Render a BigInt amount with N decimals as a human string. Trims trailing zeros
+    // but keeps at least 4 fractional digits if non-zero, drops fractional part if
+    // integral. No locale formatting — the value is exact, not approximate.
+    function formatAmount(raw, decimals) {
+      if (raw === 0n) return '0';
+      const neg = raw < 0n;
+      const abs = neg ? -raw : raw;
+      const s = abs.toString().padStart(decimals + 1, '0');
+      const intPart = s.slice(0, s.length - decimals);
+      let frac = s.slice(s.length - decimals);
+      // trim trailing zeros, but show at least 4 places to avoid "0.0" deception
+      frac = frac.replace(/0+$/, '');
+      if (frac.length === 0) return (neg ? '-' : '') + intPart;
+      if (frac.length > 6) frac = frac.slice(0, 6); // cap at 6 visible decimals
+      return (neg ? '-' : '') + intPart + '.' + frac;
+    }
+
+    async function rpcCall(url, body) {
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }
+
+    // Fan out balanceOf for every EVM token in a single batched JSON-RPC POST per chain.
+    // publicnode accepts JSON-RPC 2.0 batches (array of request objects) and returns
+    // an array of responses keyed by id.
+    async function checkEvmChain(chainKey, holder) {
+      const tokens = TOKENS.filter((t) => t.chain === chainKey && t.kind === 'erc20');
+      if (tokens.length === 0) return [];
+
+      const data = encodeBalanceOf(holder);
+      const batch = tokens.map((t, i) => ({
+        jsonrpc: '2.0',
+        id: i,
+        method: 'eth_call',
+        params: [{ to: t.address, data }, 'latest'],
+      }));
+
+      let resp;
+      try {
+        resp = await rpcCall(EVM_RPCS[chainKey], batch);
+      } catch (err) {
+        return tokens.map((t) => ({ token: t, error: err.message }));
+      }
+
+      // Reorder by id, since RPC servers don't guarantee order.
+      const byId = new Map();
+      for (const r of resp) byId.set(r.id, r);
+
+      return tokens.map((t, i) => {
+        const r = byId.get(i);
+        if (!r) return { token: t, error: 'no response' };
+        if (r.error) return { token: t, error: r.error.message || 'rpc error' };
+        const raw = hexToBigInt(r.result);
+        return { token: t, raw };
+      });
+    }
+
+    // publicnode blocks getTokenAccountsByOwner with a `programId` filter, so we
+    // can't do "fetch every SPL account in one shot". Instead we fan out one
+    // mint-filtered call per token in the registry (5 parallel POSTs). A wallet
+    // can have multiple SPL accounts for the same mint, so we sum the value array.
+    async function fetchSplBalance(holder, mint) {
+      const j = await rpcCall(SOL_RPC, {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getTokenAccountsByOwner',
+        params: [holder, { mint }, { encoding: 'jsonParsed' }],
+      });
+      if (j.error) throw new Error(j.error.message || 'rpc error');
+      let total = 0n;
+      for (const a of (j.result?.value || [])) {
+        const amt = a.account?.data?.parsed?.info?.tokenAmount?.amount;
+        if (amt) total += BigInt(amt);
+      }
+      return total;
+    }
+
+    // One retry on failure with a longer wait. publicnode 403 / 429 responses
+    // clear after a brief delay; a single retry catches the common case without
+    // ballooning total wait time.
+    async function checkSolanaToken(holder, token) {
+      try {
+        return { token, raw: await fetchSplBalance(holder, token.mint) };
+      } catch (err1) {
+        await new Promise((r) => setTimeout(r, 800));
+        try {
+          return { token, raw: await fetchSplBalance(holder, token.mint) };
+        } catch (err2) {
+          return { token, error: err2.message };
+        }
+      }
+    }
+
+    // publicnode rate-limits anonymous calls — even sequential RPC requests can
+    // hit 403 if they land too close together. Space them out by ~250ms between
+    // mint queries. With 5 tokens this puts total wall time at ~1.5s, which we
+    // surface to the user as a "Checking…" status while it runs.
+    async function checkSolana(holder) {
+      const tokens = TOKENS.filter((t) => t.chain === 'solana' && t.kind === 'spl');
+      const results = [];
+      for (let i = 0; i < tokens.length; i++) {
+        if (i > 0) await new Promise((r) => setTimeout(r, 250));
+        results.push(await checkSolanaToken(holder, tokens[i]));
+      }
+      return results;
+    }
+
+    function escHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+
+    function renderResults(format, allResults) {
+      const statusEl = document.getElementById('th-status');
+      const resultsEl = document.getElementById('th-results');
+
+      const holders = allResults.filter((r) => !r.error && r.raw > 0n);
+      const errored = allResults.filter((r) => r.error);
+
+      const shortAddr = format.addr.length > 14
+        ? format.addr.slice(0, 6) + '…' + format.addr.slice(-6)
+        : format.addr;
+
+      if (holders.length === 0) {
+        statusEl.innerHTML =
+          '<strong>No airdrop tokens detected</strong> for <code>' + escHtml(shortAddr) + '</code> ' +
+          'across the ' + TOKENS.length + ' tokens we check. ' +
+          'You may have unclaimed pre-TGE points — check <a href="/tools/wallet-check">/tools/wallet-check</a> ' +
+          'or <a href="/airdrops">browse active airdrops →</a>';
+        statusEl.hidden = false;
+        resultsEl.hidden = true;
+        if (errored.length) {
+          resultsEl.innerHTML = '<p class="th-errored">Couldn\'t reach RPC for: ' +
+            errored.map((r) => escHtml(r.token.symbol)).join(', ') + '. Try again in a moment.</p>';
+          resultsEl.hidden = false;
+        }
+        return;
+      }
+
+      // Group by chain.
+      const byChain = new Map();
+      for (const r of holders) {
+        const k = r.token.chain;
+        if (!byChain.has(k)) byChain.set(k, []);
+        byChain.get(k).push(r);
+      }
+
+      statusEl.innerHTML =
+        '<strong>' + escHtml(shortAddr) + '</strong> holds <strong>' + holders.length +
+        '</strong> airdrop token' + (holders.length === 1 ? '' : 's') +
+        ' across ' + byChain.size + ' chain' + (byChain.size === 1 ? '' : 's') + '.';
+      statusEl.hidden = false;
+
+      let html = '';
+      for (const [chainKey, rows] of byChain.entries()) {
+        const chainLabel = CHAIN_LABELS[chainKey] || chainKey;
+        html += '<section class="th-chain-block">';
+        html += '<h3>' + escHtml(chainLabel) +
+          ' <span class="th-chain-count">' + rows.length + ' token' + (rows.length === 1 ? '' : 's') + '</span></h3>';
+        html += '<ul class="th-list">';
+        for (const r of rows) {
+          const amount = formatAmount(r.raw, r.token.decimals);
+          const slug = r.token.entrySlug;
+          const linkHref = slug ? '/airdrops/' + slug : '/airdrops';
+          const linkLabel = slug
+            ? 'See entry: ' + (ENTRY_NAMES[slug] || slug) + ' →'
+            : 'Already distributed · browse active airdrops →';
+          html += '<li class="th-item">';
+          html += '<div class="th-item-head">';
+          html += '<span class="th-sym">' + escHtml(r.token.symbol) + '</span>';
+          html += '<span class="th-amount mono">' + escHtml(amount) + '</span>';
+          html += '</div>';
+          html += '<p class="th-item-meta">';
+          html += escHtml(r.token.project) + ' · airdropped ' + escHtml(r.token.distributedOn);
+          html += '</p>';
+          html += '<a class="th-item-link" href="' + linkHref + '">' + escHtml(linkLabel) + '</a>';
+          html += '</li>';
+        }
+        html += '</ul>';
+        html += '</section>';
+      }
+      if (errored.length > 0) {
+        html += '<p class="th-errored">Couldn\'t reach RPC for: ' +
+          errored.map((r) => escHtml(r.token.symbol)).join(', ') +
+          '. These were skipped — try again in a moment.</p>';
+      }
+      resultsEl.innerHTML = html;
+      resultsEl.hidden = false;
+    }
+
+    async function runCheck(rawAddr) {
+      const statusEl = document.getElementById('th-status');
+      const resultsEl = document.getElementById('th-results');
+      const format = detectFormat(rawAddr);
+
+      if (format.kind === 'unknown') {
+        statusEl.innerHTML = '<strong>Unrecognised address format.</strong> Expecting an EVM <code>0x</code>-prefixed address (40 hex chars) or a Solana base58 address (32–44 chars).';
+        statusEl.hidden = false;
+        resultsEl.hidden = true;
+        return;
+      }
+
+      statusEl.innerHTML = 'Checking ' + (format.kind === 'evm' ? 'EVM token balances' : 'Solana SPL accounts') + '…';
+      statusEl.hidden = false;
+      resultsEl.hidden = true;
+
+      let results;
+      if (format.kind === 'evm') {
+        const chains = [...new Set(TOKENS.filter((t) => t.kind === 'erc20').map((t) => t.chain))];
+        const arrays = await Promise.all(chains.map((c) => checkEvmChain(c, format.addr)));
+        results = arrays.flat();
+      } else {
+        results = await checkSolana(format.addr);
+      }
+      renderResults(format, results);
+    }
+
+    document.getElementById('th-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const v = document.getElementById('th-input').value.trim();
+      if (!v) return;
+      const url = new URL(window.location.href);
+      url.searchParams.set('addr', v);
+      window.history.replaceState({}, '', url.toString());
+      runCheck(v);
+    });
+
+    const initial = new URLSearchParams(window.location.search).get('addr');
+    if (initial) {
+      document.getElementById('th-input').value = initial;
+      runCheck(initial);
+    }
+  </script>
+
+  <style>
+    .th-form { margin: 1.25rem 0 0; }
+    .th-label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--ink-soft);
+      font-family: var(--font-mono);
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .th-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .th-row input[type="text"] {
+      flex: 1 1 320px;
+      min-width: 0;
+      padding: 0.7rem 0.85rem;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      background: #fff;
+      color: var(--ink);
+    }
+    .th-row input[type="text"]:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: -1px;
+    }
+    .th-btn {
+      padding: 0.7rem 1.2rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    .th-btn:hover { background: var(--warn); }
+    .th-hint { font-size: 0.85rem; color: var(--ink-soft); margin-top: 0.6rem; }
+    .th-companion { font-size: 0.9rem; color: var(--ink-soft); margin-top: 1rem; }
+    .th-status {
+      padding: 0.85rem 1rem;
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-left: 4px solid var(--accent);
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+    .th-chain-block { margin: 1.25rem 0 0; }
+    .th-chain-block h3 {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      font-family: var(--font-serif);
+    }
+    .th-chain-count { font-size: 0.8rem; color: var(--ink-soft); font-family: var(--font-mono); font-weight: 400; }
+    .th-list { list-style: none; padding: 0; margin: 0.4rem 0 0; }
+    .th-item {
+      padding: 0.85rem 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .th-item:last-child { border-bottom: none; }
+    .th-item-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; }
+    .th-sym {
+      font-weight: 700;
+      font-family: var(--font-mono);
+      font-size: 1.05rem;
+    }
+    .th-amount {
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      color: var(--ink);
+    }
+    .th-item-meta { margin: 0.25rem 0 0.45rem; color: var(--ink-soft); font-size: 0.85rem; }
+    .th-item-link { font-size: 0.9rem; }
+    .th-errored { margin-top: 1rem; font-size: 0.85rem; color: var(--warn); }
+    .th-howitworks {
+      margin-top: 2rem;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--rule);
+      background: rgba(217, 212, 196, 0.18);
+      border-radius: 4px;
+    }
+    .th-howitworks summary { cursor: pointer; font-weight: 600; }
+    .th-howitworks .prose { margin-top: 0.6rem; }
+  </style>
+</Base>

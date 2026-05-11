@@ -1,0 +1,107 @@
+---
+import Base from '../../layouts/Base.astro';
+import { listPublishedAirdrops } from '../../lib/airdrops.ts';
+
+const entries = await listPublishedAirdrops();
+const title = 'Tools — wallet-aware airdrop utilities';
+const description = `Three client-side, non-custodial tools paired with our ${entries.length} curated airdrop entries: wallet activity matching, token-holdings checking, and integrator-fee DEX swap.`;
+---
+<Base title={title} description={description}>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker">Tools</div>
+      <h1>Wallet-aware tools.</h1>
+      <p class="lede">
+        All three tools run entirely in your browser. We never see your address,
+        we never custody, we never ask you to sign. Paste, get an answer, leave.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="tools-grid">
+        <a class="tool-card" href="/tools/wallet-check">
+          <div class="tool-kicker">Activity match</div>
+          <h2>Wallet check</h2>
+          <p>
+            Paste an address, see which of our {entries.length} curated airdrops the
+            wallet might qualify for. Fans out across 7 chains (Ethereum, Base, Linea,
+            Arbitrum, Polygon, BSC, Solana) and surfaces every listing that touches a
+            chain you've used.
+          </p>
+          <span class="tool-cta">Try wallet-check →</span>
+        </a>
+
+        <a class="tool-card" href="/tools/token-holdings">
+          <div class="tool-kicker">Token balances</div>
+          <h2>Token holdings</h2>
+          <p>
+            Paste an address, see which airdrop-distributed tokens are already in
+            this wallet. Covers PYTH, JTO, JUP, W on Solana; ETHFI, PENDLE, ENA, STRK,
+            ARB, POL on EVM. Find out if you ever claimed last year's drops.
+          </p>
+          <span class="tool-cta">Try token-holdings →</span>
+        </a>
+
+        <a class="tool-card" href="/tools/swap">
+          <div class="tool-kicker">Exit liquidity</div>
+          <h2>Swap</h2>
+          <p>
+            Non-custodial, no signup, no KYC. Solana swaps via Jupiter, EVM via
+            Jumper/LiFi. Honest integrator fee (30–50 bps) disclosed upfront.
+            Pre-selects the right token when you land here from a listing.
+          </p>
+          <span class="tool-cta">Open swap →</span>
+        </a>
+      </div>
+
+      <p class="tools-foot">
+        Or just browse the directory: <a href="/airdrops"><strong>{entries.length} curated airdrops →</strong></a>
+      </p>
+    </div>
+  </section>
+
+  <style>
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin: 0.5rem 0 1.5rem;
+    }
+    .tool-card {
+      display: block;
+      padding: 1.25rem 1.25rem 1.1rem;
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      color: inherit;
+      text-decoration: none;
+      transition: border-color 120ms ease, transform 120ms ease;
+    }
+    .tool-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .tool-kicker {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink-soft);
+      margin-bottom: 0.4rem;
+    }
+    .tool-card h2 {
+      margin: 0.1rem 0 0.5rem;
+      font-family: var(--font-serif);
+      font-size: 1.45rem;
+    }
+    .tool-card p { margin: 0 0 0.85rem; font-size: 0.95rem; }
+    .tool-cta {
+      font-weight: 600;
+      color: var(--accent);
+      font-size: 0.95rem;
+    }
+    .tools-foot { margin-top: 1rem; font-size: 0.95rem; }
+  </style>
+</Base>
