@@ -1,0 +1,243 @@
+---
+import Base from '../../layouts/Base.astro';
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? 'https://web3-discover.vercel.app';
+const embedSrc = `${siteUrl}/embed.js`;
+
+const title = 'Embed widget — install in 30 seconds';
+const description = 'Copy-paste one <script> tag to render a fresh, branded list of currently-active web3 airdrops on any blog, newsletter, or marketing page. Free, no signup, CC0 data, MIT script.';
+---
+<Base title={title} description={description}>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker">Embed widget · docs</div>
+      <h1>One <code>&lt;script&gt;</code> tag. Fresh airdrops on your site.</h1>
+      <p class="lede">
+        Paste a single line into your blog template, newsletter HTML, or product sidebar.
+        We render a live, vetted list of currently-active web3 airdrops where the tag sits.
+        No signup, no API key, no build step.
+      </p>
+      <p class="hero-links">
+        <a href="/embed/demo"><strong>See it live (3 size variants) →</strong></a>
+        <span class="hero-sep"> · </span>
+        <a href="/airdrops"><strong>Or browse the directory →</strong></a>
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2 class="h">1. Default snippet</h2>
+      <p class="muted">Renders 5 airdrops in the host page's color scheme.</p>
+      <pre class="code"><code>{`<script src="${embedSrc}" data-limit="5" async></script>`}</code></pre>
+      <p class="muted">That's it. Drop it where you want the widget to appear. No <code>&lt;link&gt;</code>, no setup, no CORS to configure.</p>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="container">
+      <h2 class="h">2. Options</h2>
+      <p class="muted">All options live on <code>data-*</code> attributes of the same <code>&lt;script&gt;</code> tag.</p>
+      <div class="opt-table-wrap">
+        <table class="opt-table">
+          <thead>
+            <tr><th>Attribute</th><th>Default</th><th>What it does</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>data-limit</code></td>
+              <td><code>5</code></td>
+              <td>Number of entries to show (1–15).</td>
+            </tr>
+            <tr>
+              <td><code>data-chain</code></td>
+              <td><em>(none)</em></td>
+              <td>Case-insensitive substring match against entry chain. e.g. <code>"Solana"</code>, <code>"Base"</code>, <code>"Ethereum"</code>.</td>
+            </tr>
+            <tr>
+              <td><code>data-effort</code></td>
+              <td><em>(none)</em></td>
+              <td>Substring match against the effort string. e.g. <code>"low"</code>, <code>"15 min"</code>.</td>
+            </tr>
+            <tr>
+              <td><code>data-risk</code></td>
+              <td><em>(none)</em></td>
+              <td>Exact match: <code>"verified"</code>, <code>"low"</code>, <code>"medium"</code>, or <code>"high"</code>.</td>
+            </tr>
+            <tr>
+              <td><code>data-theme</code></td>
+              <td><code>"auto"</code></td>
+              <td><code>"auto"</code> (follows <code>prefers-color-scheme</code>), <code>"light"</code>, or <code>"dark"</code>.</td>
+            </tr>
+            <tr>
+              <td><code>data-title</code></td>
+              <td><code>"Fresh airdrops"</code></td>
+              <td>Heading text inside the widget.</td>
+            </tr>
+            <tr>
+              <td><code>data-width</code></td>
+              <td><em>(inherits container)</em></td>
+              <td>Max width override, e.g. <code>"320px"</code> or <code>"100%"</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2 class="h">3. Common variants</h2>
+
+      <h3 class="h3">Sidebar of a crypto blog (top-5, auto theme)</h3>
+      <pre class="code"><code>{`<script src="${embedSrc}" data-limit="5" async></script>`}</code></pre>
+
+      <h3 class="h3">Newsletter HTML — Ethereum only, dark theme</h3>
+      <pre class="code"><code>{`<script src="${embedSrc}" data-limit="4" data-chain="Ethereum" data-theme="dark" async></script>`}</code></pre>
+
+      <h3 class="h3">Verified-only block (high signal, low risk)</h3>
+      <pre class="code"><code>{`<script src="${embedSrc}" data-limit="6" data-risk="verified" data-title="Verified airdrops" async></script>`}</code></pre>
+
+      <h3 class="h3">Solana-native site, fixed 300px</h3>
+      <pre class="code"><code>{`<script src="${embedSrc}" data-limit="5" data-chain="Solana" data-width="300px" async></script>`}</code></pre>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="container">
+      <h2 class="h">4. How it works (technical)</h2>
+      <ul class="why">
+        <li><strong>Renders in-place.</strong> The script tag finds itself with <code>document.currentScript</code> and inserts a <code>&lt;div&gt;</code> right after.</li>
+        <li><strong>Shadow DOM isolation.</strong> All widget CSS lives inside an open shadow root. Host stylesheets cannot bleed in; widget CSS cannot bleed out.</li>
+        <li><strong>One JSON fetch.</strong> Hits <code><a href={`${siteUrl}/api/airdrops.json`}>{siteUrl}/api/airdrops.json</a></code>, filters client-side, picks top N.</li>
+        <li><strong>5-minute edge cache.</strong> Served from Vercel's edge with <code>Cache-Control: s-maxage=300</code>. Updates within 5 minutes of a directory change.</li>
+        <li><strong>CORS open.</strong> <code>Access-Control-Allow-Origin: *</code> — works from any origin.</li>
+        <li><strong>No cookies, no tracking.</strong> <code>credentials: 'omit'</code>. No analytics beacon. No fingerprint.</li>
+        <li><strong>Defensive DOM.</strong> Built with <code>createElement</code>/<code>textContent</code>, never <code>innerHTML</code>. JSON content cannot inject markup.</li>
+        <li><strong>Graceful degrade.</strong> If the fetch fails, renders a small error line, never breaks the host page.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2 class="h">5. Licensing &amp; attribution</h2>
+      <p class="muted">
+        The widget script and the underlying directory data are both free to use commercially.
+        Data is <a href="/data">CC0 — public domain</a>. The embed script is MIT.
+      </p>
+      <p class="muted">
+        The widget shows a small <em>powered by web3-discover</em> link in its footer.
+        It's hardcoded — please don't strip it. It costs your readers nothing and
+        keeps the directory funded enough to stay fresh.
+      </p>
+      <p class="muted">
+        Outbound links from the widget carry <code>?utm_source=embed&amp;utm_medium=widget</code>
+        so we can see which partner sites send traffic. That's the only signal we collect about your readers — it's anonymous and aggregate.
+      </p>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="container">
+      <h2 class="h">6. Common questions</h2>
+      <details class="faq">
+        <summary>Will it slow my page?</summary>
+        <p>Script is ~4 KB unminified, no dependencies. Marked <code>async</code> in every snippet so it never blocks rendering. Total payload after one JSON fetch is ~50 KB cached at the edge.</p>
+      </details>
+      <details class="faq">
+        <summary>Can I customize the look?</summary>
+        <p>The visible knobs are <code>data-theme</code>, <code>data-title</code>, and <code>data-width</code>. Deeper customization requires forking the script (it's plain JS, MIT-licensed — go ahead). The current Shadow DOM design is deliberately strict to prevent host-site collisions.</p>
+      </details>
+      <details class="faq">
+        <summary>What if your directory goes down?</summary>
+        <p>The widget shows a small "Could not load airdrops" line inside its own box and otherwise stays out of the way. Host page rendering is never affected — Shadow DOM + try/catch make sure of it.</p>
+      </details>
+      <details class="faq">
+        <summary>Can I run it from my own CDN?</summary>
+        <p>Yes — the script reads its origin from its own <code>src</code> URL, so a fork hosted on your CDN can point at your own data mirror. Source is single-file, MIT-licensed.</p>
+      </details>
+      <details class="faq">
+        <summary>Does it work in email?</summary>
+        <p>Most email clients (Gmail, Outlook) strip <code>&lt;script&gt;</code>. For email newsletters, copy the directory list manually or subscribe to <a href="/airdrops.ics">the calendar feed</a> / <a href="/rss.xml">RSS</a>. The widget is for blog and web newsletter <em>landing pages</em>, not the email body.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container cta-block">
+      <h2 class="h">Ready to embed?</h2>
+      <p class="muted">Copy this line into the HTML where you want the widget to appear:</p>
+      <pre class="code"><code>{`<script src="${embedSrc}" data-limit="5" async></script>`}</code></pre>
+      <p class="cta-line">
+        <a class="btn" href="/embed/demo">See the live demo →</a>
+      </p>
+    </div>
+  </section>
+</Base>
+<style>
+  .section { padding: 32px 0; }
+  .section-alt { background: #fafafa; }
+  .h { font-size: 22px; letter-spacing: -0.01em; margin: 0 0 8px 0; }
+  .h3 { font-size: 15px; margin: 18px 0 6px 0; color: #333; }
+  .muted { color: #555; font-size: 14px; line-height: 1.55; margin: 0 0 12px 0; }
+  .muted code, .why code, .opt-table code, .faq code {
+    background: #f1f1f1; padding: 1px 5px; border-radius: 3px; font-size: 0.9em;
+  }
+  pre.code {
+    margin: 0 0 14px 0;
+    background: #0e1116;
+    color: #e6e6e6;
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.55;
+    overflow-x: auto;
+  }
+  pre.code code {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    background: transparent;
+    padding: 0;
+    color: inherit;
+    font-size: inherit;
+  }
+  .opt-table-wrap { overflow-x: auto; }
+  table.opt-table {
+    width: 100%; border-collapse: collapse; font-size: 14px;
+    background: #fff; border: 1px solid #e3e3e3; border-radius: 6px; overflow: hidden;
+  }
+  table.opt-table th, table.opt-table td {
+    text-align: left; padding: 10px 12px;
+    border-bottom: 1px solid #f0f0f0; vertical-align: top;
+  }
+  table.opt-table tr:last-child td { border-bottom: 0; }
+  table.opt-table th { background: #f7f7f7; font-weight: 600; }
+  table.opt-table code { white-space: nowrap; }
+
+  ul.why { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+  ul.why li { padding-left: 18px; position: relative; line-height: 1.55; }
+  ul.why li::before { content: "→"; position: absolute; left: 0; color: #888; }
+
+  details.faq {
+    border-top: 1px solid #e3e3e3;
+    padding: 12px 0;
+  }
+  details.faq:last-child { border-bottom: 1px solid #e3e3e3; }
+  details.faq summary {
+    cursor: pointer; font-weight: 600; font-size: 14.5px;
+    list-style: none;
+  }
+  details.faq summary::-webkit-details-marker { display: none; }
+  details.faq summary::before { content: "+ "; color: #888; font-weight: 400; }
+  details.faq[open] summary::before { content: "− "; }
+  details.faq p { margin: 8px 0 0 0; color: #555; line-height: 1.55; font-size: 14px; }
+
+  .cta-block { text-align: left; }
+  .cta-line { margin: 18px 0 0 0; }
+  .btn {
+    display: inline-block; background: #0a0a0a; color: #fff;
+    padding: 10px 16px; border-radius: 6px; text-decoration: none;
+    font-weight: 600; font-size: 14px;
+  }
+  .btn:hover { background: #1a1a1a; }
+</style>

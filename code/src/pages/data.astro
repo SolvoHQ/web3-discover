@@ -139,6 +139,18 @@ const verified = entries.filter(e => e.risk === 'verified');`}</code></pre>
         See <a href="/tools"><strong>Tools</strong></a> for the MCP install snippet.
       </p>
 
+      <h2 class="h-rule">Embed it in one &lt;script&gt; tag</h2>
+      <p>
+        Don't want to build a UI? Drop our pre-built widget on any page —
+        renders a fresh, branded list of currently-active airdrops where the tag sits.
+        Shadow-DOM isolated, themeable, filterable by chain / risk / effort.
+      </p>
+      <pre class="block"><code>{'<script src="https://web3-discover.vercel.app/embed.js" data-limit="5" async></script>'}</code></pre>
+      <p>
+        See it live with 3 size variants at <a href="/embed/demo"><strong>/embed/demo</strong></a>,
+        full options table at <a href="/embed/docs"><strong>/embed/docs</strong></a>.
+      </p>
+
       <p class="data-foot">
         Found a wrong entry, missing field, or want a new endpoint shape?
         Open an issue at <a href="https://github.com/SolvoHQ/web3-discover-data/issues"><strong>SolvoHQ/web3-discover-data/issues</strong></a>.

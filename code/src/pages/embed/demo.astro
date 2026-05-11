@@ -1,0 +1,170 @@
+---
+import Base from '../../layouts/Base.astro';
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? 'https://web3-discover.vercel.app';
+const embedSrc = `${siteUrl}/embed.js`;
+
+const title = 'Embed widget — live demo (3 size variants)';
+const description = 'Drop one <script> tag into any blog or newsletter sidebar to render a fresh, branded list of currently-active web3 airdrops. Live preview here at 3 sizes — sidebar, card, full-width.';
+---
+<Base title={title} description={description}>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker">Embed widget · live demo</div>
+      <h1>Drop a fresh airdrop list into any sidebar.</h1>
+      <p class="lede">
+        One <code>&lt;script&gt;</code> tag. Renders inline. Auto-updates as the directory does.
+        Below: the exact same widget at three sizes, on this page right now.
+      </p>
+      <p class="hero-links">
+        <a href="/embed/docs"><strong>Copy-paste snippet + options →</strong></a>
+        <span class="hero-sep"> · </span>
+        <a href="/airdrops"><strong>Or browse the directory →</strong></a>
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2 class="section-h">Variant 1 — Sidebar (280px)</h2>
+      <p class="muted">For blog sidebars and newsletter sticky columns. <code>data-limit="5"</code> is the safe default.</p>
+      <div class="demo-row">
+        <div class="demo-frame demo-sidebar">
+          <script
+            src={embedSrc}
+            data-limit="5"
+            data-title="Fresh airdrops"
+            async
+          ></script>
+        </div>
+        <div class="demo-snippet">
+<pre><code>{`<script
+  src="${embedSrc}"
+  data-limit="5"
+  data-title="Fresh airdrops"
+  async
+></script>`}</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="container">
+      <h2 class="section-h">Variant 2 — Card (400px, filtered to Solana)</h2>
+      <p class="muted">For inline newsletter callouts. Filter by <code>data-chain</code>, <code>data-effort</code>, or <code>data-risk</code> to match audience.</p>
+      <div class="demo-row">
+        <div class="demo-frame demo-card">
+          <script
+            src={embedSrc}
+            data-limit="4"
+            data-chain="Solana"
+            data-title="Solana airdrops"
+            async
+          ></script>
+        </div>
+        <div class="demo-snippet">
+<pre><code>{`<script
+  src="${embedSrc}"
+  data-limit="4"
+  data-chain="Solana"
+  data-title="Solana airdrops"
+  async
+></script>`}</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2 class="section-h">Variant 3 — Full-width (dark theme)</h2>
+      <p class="muted">For dark-themed sites or footers. <code>data-theme="dark"</code> forces the dark palette; default <code>auto</code> follows the host's <code>prefers-color-scheme</code>.</p>
+      <div class="demo-frame demo-wide">
+        <script
+          src={embedSrc}
+          data-limit="6"
+          data-theme="dark"
+          data-title="Currently active web3 airdrops"
+          async
+        ></script>
+      </div>
+      <div class="demo-snippet">
+<pre><code>{`<script
+  src="${embedSrc}"
+  data-limit="6"
+  data-theme="dark"
+  data-title="Currently active web3 airdrops"
+  async
+></script>`}</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="container">
+      <h2 class="section-h">Why this widget</h2>
+      <ul class="why">
+        <li><strong>One line of HTML.</strong> No build step, no React, no package install.</li>
+        <li><strong>Shadow DOM isolation.</strong> Host stylesheets cannot leak in. Your site's CSS stays untouched.</li>
+        <li><strong>Auto-fresh.</strong> Pulls live from <code>/api/airdrops.json</code> on every load (5-min edge cache).</li>
+        <li><strong>Filterable.</strong> Narrow by chain, effort, or risk to match your readers.</li>
+        <li><strong>Attribution by convention.</strong> Footer link credits web3-discover. Traffic carries <code>utm_source=embed</code> for analytics.</li>
+        <li><strong>Zero tracking on your visitors.</strong> No cookies, no fingerprint, no analytics beacon — just a JSON fetch.</li>
+      </ul>
+      <p class="cta-line">
+        <a class="btn" href="/embed/docs">Read the full docs →</a>
+      </p>
+    </div>
+  </section>
+</Base>
+<style>
+  .section { padding: 32px 0; }
+  .section-alt { background: #fafafa; }
+  .section-h { font-size: 22px; letter-spacing: -0.01em; margin: 0 0 6px 0; }
+  .muted { color: #666; font-size: 14px; margin: 0 0 18px 0; }
+  .muted code, .why code { background: #f1f1f1; padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+
+  .demo-row {
+    display: grid;
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 720px) { .demo-row { grid-template-columns: 1fr; } }
+
+  .demo-frame {
+    background: repeating-linear-gradient(45deg, #fbfbfb 0 8px, #f3f3f3 8px 16px);
+    border: 1px dashed #d0d0d0;
+    border-radius: 10px;
+    padding: 16px;
+    min-height: 80px;
+  }
+  .demo-sidebar { width: 280px; }
+  .demo-card { width: 400px; max-width: 100%; }
+  .demo-wide { width: 100%; margin-bottom: 18px; }
+
+  .demo-snippet pre {
+    margin: 0;
+    background: #0e1116;
+    color: #e6e6e6;
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    line-height: 1.55;
+    overflow-x: auto;
+  }
+  .demo-snippet code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+
+  ul.why { list-style: none; padding: 0; margin: 0 0 18px 0; display: grid; gap: 8px; }
+  ul.why li { padding-left: 18px; position: relative; line-height: 1.55; }
+  ul.why li::before { content: "→"; position: absolute; left: 0; color: #888; }
+
+  .cta-line { margin: 18px 0 0 0; }
+  .btn {
+    display: inline-block; background: #0a0a0a; color: #fff;
+    padding: 10px 16px; border-radius: 6px; text-decoration: none;
+    font-weight: 600; font-size: 14px;
+  }
+  .btn:hover { background: #1a1a1a; }
+</style>
