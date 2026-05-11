@@ -1,0 +1,1454 @@
+---
+import Base from '../layouts/Base.astro';
+import InlineSignup from '../components/InlineSignup.astro';
+import { listPublishedAirdrops } from '../lib/airdrops.ts';
+import { RULES, NO_RULE_REASON } from '../data/eligibility-rules.ts';
+import { HISTORICAL_AIRDROPS } from '../data/historical-airdrops.ts';
+
+const entries = await listPublishedAirdrops();
+
+// Stripped-down entry payload — every section needs only project/chain/slug/risk
+// for rendering its own summary. /airdrops/<slug> is the deep link for detail.
+const entriesPayload = entries.map((e) => ({
+  slug: e.slug,
+  project: e.data.project,
+  chain: e.data.chain,
+  risk: e.data.risk,
+  deadline: e.data.deadline,
+  effort: e.data.effort,
+  costFloor: e.data.costFloor,
+  officialUrl: e.data.officialUrl,
+}));
+
+const ruleCount = Object.keys(RULES).length;
+
+const title = `Airdrop wallet dashboard — paste once, see your full posture across ${entries.length} airdrops`;
+const description = `Paste a wallet once. We pull eligibility verdict, matched airdrops, token holdings, wallet age, and historical-airdrop value into one consolidated dashboard. Client-side only, no signature, no signup. Reuses the same on-chain checks as our 5 standalone tools.`;
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? '';
+const softwareJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'web3-discover wallet dashboard',
+  url: `${siteUrl}/dashboard`,
+  applicationCategory: 'UtilityApplication',
+  operatingSystem: 'Web',
+  description,
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  publisher: { '@type': 'Organization', name: 'web3-discover', url: siteUrl },
+};
+---
+<Base title={title} description={description} extraJsonLd={softwareJsonLd}>
+  <section class="hero">
+    <div class="container">
+      <div class="kicker">Dashboard</div>
+      <h1>Paste your wallet once. See everything.</h1>
+      <p class="lede">
+        One paste → five consolidated views for the same wallet: eligibility
+        verdict, matched live airdrops, airdrop-token holdings, wallet age,
+        and what 10 past airdrops would have been worth. Read-only,
+        non-custodial, no signature, no signup.
+      </p>
+
+      <form id="db-form" class="db-form" autocomplete="off">
+        <label class="db-label" for="db-input">Wallet address</label>
+        <div class="db-row">
+          <input
+            id="db-input"
+            name="addr"
+            type="text"
+            placeholder="0x… (EVM) or base58 (Solana)"
+            spellcheck="false"
+            autocapitalize="off"
+            autocorrect="off"
+            required
+          />
+          <button type="submit" class="db-btn">Load dashboard →</button>
+        </div>
+        <p class="db-hint">
+          Try <a href="?addr=0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045">vitalik.eth</a>
+          or <a href="?addr=9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM">a public Solana wallet</a>.
+          Fast sections appear in 2–5s; archive lookups (wallet age, historical value) take 6–15s.
+        </p>
+        <div id="db-recent" class="db-recent" hidden>
+          <span class="db-recent-label">Recent:</span>
+          <div id="db-recent-pills" class="db-recent-pills"></div>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div id="db-status" class="db-status" hidden></div>
+      <div id="db-share" class="db-share" hidden></div>
+
+      <!-- The 5 sections — each renders its own state independently. -->
+      <div class="db-sections">
+        <article class="db-section" id="db-sec-eligibility">
+          <header class="db-sec-head">
+            <div class="db-sec-kicker">1 · Personal verdict</div>
+            <h2>Eligibility</h2>
+            <a class="db-sec-deep" href="/tools/eligibility">Open full tool →</a>
+          </header>
+          <div class="db-sec-body" id="db-body-eligibility">
+            <p class="db-empty">Paste a wallet above to load.</p>
+          </div>
+        </article>
+
+        <article class="db-section" id="db-sec-matched">
+          <header class="db-sec-head">
+            <div class="db-sec-kicker">2 · Activity match</div>
+            <h2>Matched live airdrops</h2>
+            <a class="db-sec-deep" href="/tools/wallet-check">Open full tool →</a>
+          </header>
+          <div class="db-sec-body" id="db-body-matched">
+            <p class="db-empty">—</p>
+          </div>
+        </article>
+
+        <article class="db-section" id="db-sec-holdings">
+          <header class="db-sec-head">
+            <div class="db-sec-kicker">3 · Token balances</div>
+            <h2>Airdrop-token holdings</h2>
+            <a class="db-sec-deep" href="/tools/token-holdings">Open full tool →</a>
+          </header>
+          <div class="db-sec-body" id="db-body-holdings">
+            <p class="db-empty">—</p>
+          </div>
+        </article>
+
+        <article class="db-section" id="db-sec-age">
+          <header class="db-sec-head">
+            <div class="db-sec-kicker">4 · First-tx date</div>
+            <h2>Wallet age</h2>
+            <a class="db-sec-deep" href="/tools/wallet-age">Open full tool →</a>
+          </header>
+          <div class="db-sec-body" id="db-body-age">
+            <p class="db-empty">—</p>
+          </div>
+        </article>
+
+        <article class="db-section" id="db-sec-historical">
+          <header class="db-sec-head">
+            <div class="db-sec-kicker">5 · Nostalgia</div>
+            <h2>Historical airdrop value</h2>
+            <a class="db-sec-deep" href="/tools/historical-value">Open full tool →</a>
+          </header>
+          <div class="db-sec-body" id="db-body-historical">
+            <p class="db-empty">—</p>
+          </div>
+        </article>
+      </div>
+
+      <div id="db-signup" hidden>
+        <InlineSignup
+          source="tool-dashboard"
+          copy="Get a weekly digest of new airdrops your wallet would qualify for — straight to your inbox."
+        />
+      </div>
+
+      <details class="db-howitworks">
+        <summary>How this works (and what it doesn't do)</summary>
+        <div class="prose">
+          <ul>
+            <li>
+              <strong>Five sections, five independent on-chain reads.</strong>
+              Each section reuses the exact same RPC logic as its
+              <code>/tools/&hellip;</code> sibling page — we just render a
+              summary here and link out for detail. No new RPC providers,
+              no server-side storage.
+            </li>
+            <li>
+              <strong>EVM vs Solana.</strong> Eligibility, matched-airdrops,
+              and token-holdings work for both. Wallet age and historical
+              value are EVM-only (Solana has no cheap way to find earliest
+              signature). Paste either format — sections that can't be
+              evaluated for your address kind fall back gracefully.
+            </li>
+            <li>
+              <strong>Recent wallets.</strong> The last 3 wallets you've
+              pasted are saved in <code>localStorage</code> — the address
+              stays on your device. No cookie, no sync, no telemetry.
+              Clearable from your browser at any time.
+            </li>
+            <li>
+              <strong>Shareable URL.</strong>
+              <code>/dashboard?addr=0x&hellip;</code> auto-loads. Paste it
+              into a tweet or Discord and anyone clicking sees the same
+              consolidated view for that wallet.
+            </li>
+            <li>
+              <strong>Your address never reaches our servers.</strong>
+              Requests go browser → publicnode &amp; drpc.org directly. We
+              don't log, store, or proxy.
+            </li>
+          </ul>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <script
+    is:inline
+    type="application/json"
+    id="db-entries"
+    set:html={JSON.stringify(entriesPayload)}
+  ></script>
+  <script
+    is:inline
+    type="application/json"
+    id="db-rules"
+    set:html={JSON.stringify(RULES)}
+  ></script>
+  <script
+    is:inline
+    type="application/json"
+    id="db-no-rule"
+    set:html={JSON.stringify(NO_RULE_REASON)}
+  ></script>
+  <script
+    is:inline
+    type="application/json"
+    id="db-historical"
+    set:html={JSON.stringify(HISTORICAL_AIRDROPS)}
+  ></script>
+
+  <script is:inline>
+    const ENTRIES    = JSON.parse(document.getElementById('db-entries').textContent || '[]');
+    const RULES      = JSON.parse(document.getElementById('db-rules').textContent || '{}');
+    const NO_RULE    = JSON.parse(document.getElementById('db-no-rule').textContent || '{}');
+    const HISTORICAL = JSON.parse(document.getElementById('db-historical').textContent || '[]');
+
+    // ----- Shared RPC config (same endpoints as /tools/{eligibility,wallet-check,
+    // token-holdings,wallet-age,historical-value}.astro — no new providers). -----
+    const EVM_RPCS = {
+      ethereum: 'https://ethereum-rpc.publicnode.com',
+      base:     'https://base-rpc.publicnode.com',
+      linea:    'https://linea-rpc.publicnode.com',
+      arbitrum: 'https://arbitrum-one-rpc.publicnode.com',
+      polygon:  'https://polygon-bor-rpc.publicnode.com',
+      bsc:      'https://bsc-rpc.publicnode.com',
+    };
+    const SOL_RPC = 'https://solana-rpc.publicnode.com';
+
+    const ARCHIVE_RPCS = {
+      ethereum: 'https://eth.drpc.org',
+      optimism: 'https://optimism.drpc.org',
+      arbitrum: 'https://arbitrum.drpc.org',
+      base:     'https://base.drpc.org',
+      polygon:  'https://1rpc.io/matic',
+      bsc:      'https://bsc.drpc.org',
+    };
+    const ARCHIVE_BUCKETS = {
+      ethereum: 'drpc', arbitrum: 'drpc', base: 'base',
+      polygon: '1rpc', bsc: 'drpc', optimism: 'drpc',
+    };
+    const AGE_EXPLORERS = {
+      ethereum: 'https://etherscan.io/block/',
+      polygon:  'https://polygonscan.com/block/',
+      arbitrum: 'https://arbiscan.io/block/',
+      base:     'https://basescan.org/block/',
+      bsc:      'https://bscscan.com/block/',
+    };
+
+    const CHAIN_LABELS = {
+      ethereum: 'Ethereum', base: 'Base', linea: 'Linea', arbitrum: 'Arbitrum',
+      polygon: 'Polygon',   bsc:  'BSC',  solana: 'Solana', optimism: 'Optimism',
+    };
+
+    // ERC-20 tokens checked in section 3 (same registry as /tools/token-holdings).
+    const TOKENS = [
+      { symbol: 'PYTH', chain: 'solana',   kind: 'spl', mint: 'HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3', decimals: 6, project: 'Pyth Network', distributedOn: 'Nov 2023' },
+      { symbol: 'JTO',  chain: 'solana',   kind: 'spl', mint: 'jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL', decimals: 9, project: 'Jito',         distributedOn: 'Dec 2023' },
+      { symbol: 'JUP',  chain: 'solana',   kind: 'spl', mint: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN', decimals: 6, project: 'Jupiter',      distributedOn: 'Jan 2024' },
+      { symbol: 'W',    chain: 'solana',   kind: 'spl', mint: '85VBFQZC9TZkfaptBWjvUw7YbZjy52A6mjtPGjstQAmQ', decimals: 6, project: 'Wormhole',     distributedOn: 'Apr 2024' },
+      { symbol: 'BONK', chain: 'solana',   kind: 'spl', mint: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', decimals: 5, project: 'Bonk',         distributedOn: 'Dec 2022' },
+      { symbol: 'ETHFI',  chain: 'ethereum', kind: 'erc20', address: '0xFe0c30065B384F05761f15d0CC899D4F9F9Cc0eB', decimals: 18, project: 'ether.fi',  distributedOn: 'Mar 2024' },
+      { symbol: 'PENDLE', chain: 'ethereum', kind: 'erc20', address: '0x808507121B80c02388fAd14726482e061B8da827', decimals: 18, project: 'Pendle',    distributedOn: '2022' },
+      { symbol: 'ENA',    chain: 'ethereum', kind: 'erc20', address: '0x57e114B691Db790C35207b2e685D4A43181e6061', decimals: 18, project: 'Ethena',    distributedOn: 'Apr 2024' },
+      { symbol: 'STRK',   chain: 'ethereum', kind: 'erc20', address: '0xCa14007Eff0dB1f8135f4C25B34De49AB0d42766', decimals: 18, project: 'Starknet',  distributedOn: 'Feb 2024' },
+      { symbol: 'ARB',    chain: 'arbitrum', kind: 'erc20', address: '0x912CE59144191C1204E64559FE8253a0e49E6548', decimals: 18, project: 'Arbitrum',  distributedOn: 'Mar 2023' },
+      { symbol: 'POL',    chain: 'polygon',  kind: 'erc20', address: '0x455e53CBB86018Ac2B8092FdCd39d8444aFFC3F6', decimals: 18, project: 'Polygon',   distributedOn: 'Sep 2024' },
+    ];
+
+    const EVM_RX = /^0x[a-fA-F0-9]{40}$/;
+    const SOL_RX = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+    function detectFormat(raw) {
+      const v = (raw || '').trim();
+      if (EVM_RX.test(v)) return { kind: 'evm', addr: v };
+      if (SOL_RX.test(v)) return { kind: 'solana', addr: v };
+      return { kind: 'unknown', addr: v };
+    }
+
+    function escHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+    function shortAddr(a) {
+      return a && a.length > 14 ? a.slice(0, 6) + '…' + a.slice(-6) : a || '';
+    }
+    function encodeBalanceOf(holder) {
+      const stripped = holder.toLowerCase().replace(/^0x/, '');
+      return '0x70a08231' + '0'.repeat(24) + stripped;
+    }
+    function hexToBigInt(h) {
+      if (!h || h === '0x') return 0n;
+      try { return BigInt(h); } catch { return 0n; }
+    }
+    function minBigInt(decimals, min) {
+      const [whole, fracRaw = ''] = (min + '').split('.');
+      const frac = (fracRaw + '0'.repeat(decimals)).slice(0, decimals);
+      return BigInt(whole || '0') * (10n ** BigInt(decimals)) + BigInt(frac || '0');
+    }
+    function fmtAmount(raw, decimals) {
+      if (raw === 0n) return '0';
+      const s = raw.toString().padStart(decimals + 1, '0');
+      const intPart = s.slice(0, s.length - decimals);
+      let frac = s.slice(s.length - decimals).replace(/0+$/, '');
+      if (frac.length === 0) return intPart;
+      if (frac.length > 4) frac = frac.slice(0, 4);
+      return intPart + '.' + frac;
+    }
+    function fmtUSD(n) {
+      if (n >= 1000) return '$' + Math.round(n).toLocaleString('en-US');
+      if (n >= 10)   return '$' + n.toFixed(0);
+      return '$' + n.toFixed(2);
+    }
+    function fmtDate(unixSec) {
+      const d = new Date(unixSec * 1000);
+      return d.getUTCFullYear() + '-' +
+        String(d.getUTCMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getUTCDate()).padStart(2, '0');
+    }
+    function daysSince(unixSec) {
+      return Math.max(0, Math.floor((Math.floor(Date.now() / 1000) - unixSec) / 86400));
+    }
+    function toHex(n) { return '0x' + n.toString(16); }
+
+    async function rpcCall(url, body) {
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }
+
+    // Per-bucket serial queue: throttle archive RPC fanout so drpc's per-IP
+    // burst limit (shared across subdomains) doesn't 429 all 5 wallet-age chains.
+    const bucketQueues = new Map();
+    function runInBucket(bucket, fn) {
+      const prev = bucketQueues.get(bucket) || Promise.resolve();
+      const next = prev.catch(() => {}).then(fn);
+      bucketQueues.set(bucket, next);
+      return next;
+    }
+
+    // Retrying rpcCall used by the archive (wallet-age) section — drpc routinely
+    // 429s under bursty load. publicnode rarely does, so the simpler rpcCall is
+    // fine for sections 1-3.
+    const RETRY_STATUSES = new Set([408, 425, 429, 500, 502, 503, 504]);
+    async function archiveRpcCall(url, body) {
+      let lastErr;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        if (attempt > 0) {
+          const base = 400 * Math.pow(2.2, attempt - 1);
+          await new Promise((r) => setTimeout(r, base + Math.floor(Math.random() * 200)));
+        }
+        try {
+          const r = await fetch(url, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+          if (RETRY_STATUSES.has(r.status)) { lastErr = new Error('HTTP ' + r.status); continue; }
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const j = await r.json();
+          if (j.error) {
+            const msg = j.error.message || 'rpc error';
+            if (/upstream|overloaded|busy|timeout|throttl/i.test(msg)) { lastErr = new Error(msg); continue; }
+            throw new Error(msg);
+          }
+          return j.result;
+        } catch (err) {
+          lastErr = err;
+          if (err && err.message && err.message.startsWith('HTTP ')) continue;
+          if (err instanceof TypeError) continue;
+          throw err;
+        }
+      }
+      throw lastErr || new Error('rpc call failed');
+    }
+
+    // =========================================================================
+    // Section 1 — Eligibility (publicnode multi-chain fanout, count summary)
+    // =========================================================================
+
+    function collectEligibilityNeeds(rule, needs) {
+      if (rule.kind === 'chainTx') needs.evmTxCount.add(rule.chain);
+      else if (rule.kind === 'tokenBalance') needs.evmTokenBalance.push({ chain: rule.chain, contract: rule.contract });
+      else if (rule.kind === 'solanaTx') needs.solanaTx = true;
+      else if (rule.kind === 'holdsSolMint') needs.solMints.add(rule.mint);
+      else if (rule.kind === 'any' || rule.kind === 'all') {
+        for (const r of rule.rules) collectEligibilityNeeds(r, needs);
+      }
+    }
+
+    async function fetchEvmChainForRules(chainKey, evmAddr, needs) {
+      const wantTxCount = needs.evmTxCount.has(chainKey);
+      const tokens = needs.evmTokenBalance.filter((t) => t.chain === chainKey);
+      if (!wantTxCount && tokens.length === 0) return { chain: chainKey, ok: true, balances: new Map() };
+
+      const reqs = [];
+      let nextId = 0;
+      const ids = { tokens: [] };
+      if (wantTxCount) {
+        ids.txCount = nextId++;
+        reqs.push({ jsonrpc: '2.0', id: ids.txCount, method: 'eth_getTransactionCount', params: [evmAddr, 'latest'] });
+      }
+      for (const t of tokens) {
+        const id = nextId++;
+        ids.tokens.push({ id, contract: t.contract });
+        reqs.push({ jsonrpc: '2.0', id, method: 'eth_call', params: [{ to: t.contract, data: encodeBalanceOf(evmAddr) }, 'latest'] });
+      }
+
+      let body;
+      try { body = await rpcCall(EVM_RPCS[chainKey], reqs); }
+      catch (err) { return { chain: chainKey, ok: false, error: err.message }; }
+      const byId = new Map();
+      for (const r of body) byId.set(r.id, r);
+      const out = { chain: chainKey, ok: true, balances: new Map() };
+      if (wantTxCount) {
+        const r = byId.get(ids.txCount);
+        if (r && !r.error) out.txCount = parseInt(r.result, 16) || 0;
+        else out.txCountError = (r && r.error && r.error.message) || 'no response';
+      }
+      for (const t of ids.tokens) {
+        const r = byId.get(t.id);
+        if (r && !r.error) out.balances.set(t.contract, hexToBigInt(r.result));
+        else out.balances.set(t.contract, { error: (r && r.error && r.error.message) || 'no response' });
+      }
+      return out;
+    }
+
+    async function fetchSolanaSigPresent(solAddr) {
+      try {
+        const j = await rpcCall(SOL_RPC, {
+          jsonrpc: '2.0', id: 1, method: 'getSignaturesForAddress',
+          params: [solAddr, { limit: 1 }],
+        });
+        if (j.error) return { ok: false, error: j.error.message };
+        return { ok: true, present: Array.isArray(j.result) && j.result.length > 0 };
+      } catch (err) { return { ok: false, error: err.message }; }
+    }
+
+    async function fetchSplBalance(solAddr, mint) {
+      try {
+        const j = await rpcCall(SOL_RPC, {
+          jsonrpc: '2.0', id: 1, method: 'getTokenAccountsByOwner',
+          params: [solAddr, { mint }, { encoding: 'jsonParsed' }],
+        });
+        if (j.error) return { ok: false, error: j.error.message };
+        let total = 0n;
+        for (const a of (j.result?.value || [])) {
+          const amt = a.account?.data?.parsed?.info?.tokenAmount?.amount;
+          if (amt) total += BigInt(amt);
+        }
+        return { ok: true, raw: total };
+      } catch (err) { return { ok: false, error: err.message }; }
+    }
+
+    function evaluateRule(rule, state) {
+      if (rule.kind === 'chainTx') {
+        if (!state.evm) return { status: 'fail' };
+        const c = state.byChain[rule.chain];
+        if (!c || !c.ok || c.txCountError != null) return { status: 'unavailable' };
+        const n = c.txCount || 0;
+        if (n >= rule.minCount) return { status: 'pass' };
+        if (n > 0) return { status: 'partial' };
+        return { status: 'fail' };
+      }
+      if (rule.kind === 'tokenBalance') {
+        if (!state.evm) return { status: 'fail' };
+        const c = state.byChain[rule.chain];
+        if (!c || !c.ok) return { status: 'unavailable' };
+        const bal = c.balances.get(rule.contract);
+        if (bal == null || (bal && bal.error != null)) return { status: 'unavailable' };
+        const minRaw = minBigInt(rule.decimals, rule.min);
+        if (bal >= minRaw) return { status: 'pass' };
+        if (bal > 0n) return { status: 'partial' };
+        return { status: 'fail' };
+      }
+      if (rule.kind === 'solanaTx') {
+        if (!state.sol) return { status: 'fail' };
+        if (!state.solSig || !state.solSig.ok) return { status: 'unavailable' };
+        return state.solSig.present ? { status: 'pass' } : { status: 'fail' };
+      }
+      if (rule.kind === 'holdsSolMint') {
+        if (!state.sol) return { status: 'fail' };
+        const e = state.solMints && state.solMints[rule.mint];
+        if (!e) return { status: 'unavailable' };
+        if (!e.ok) return { status: 'unavailable' };
+        const minRaw = minBigInt(rule.decimals, rule.min);
+        if (e.raw >= minRaw) return { status: 'pass' };
+        if (e.raw > 0n) return { status: 'partial' };
+        return { status: 'fail' };
+      }
+      if (rule.kind === 'any') {
+        const sub = rule.rules.map((r) => evaluateRule(r, state));
+        if (sub.some((s) => s.status === 'pass')) return { status: 'pass' };
+        if (sub.some((s) => s.status === 'partial')) return { status: 'partial' };
+        if (sub.every((s) => s.status === 'unavailable')) return { status: 'unavailable' };
+        return { status: 'fail' };
+      }
+      if (rule.kind === 'all') {
+        const sub = rule.rules.map((r) => evaluateRule(r, state));
+        if (sub.some((s) => s.status === 'unavailable')) return { status: 'unavailable' };
+        if (sub.every((s) => s.status === 'pass')) return { status: 'pass' };
+        if (sub.some((s) => s.status === 'pass')) return { status: 'partial' };
+        return { status: 'fail' };
+      }
+      return { status: 'fail' };
+    }
+
+    async function runEligibility(evmAddr, solAddr) {
+      const body = document.getElementById('db-body-eligibility');
+      body.innerHTML = '<p class="db-loading">Evaluating ' + Object.keys(RULES).length + ' rules across all curated airdrops…</p>';
+
+      const needs = { evmTxCount: new Set(), evmTokenBalance: [], solanaTx: false, solMints: new Set() };
+      for (const slug of Object.keys(RULES)) collectEligibilityNeeds(RULES[slug], needs);
+
+      const evmChains = Array.from(new Set([...needs.evmTxCount, ...needs.evmTokenBalance.map((t) => t.chain)]));
+      const evmJobs = evmAddr ? evmChains.map((c) => fetchEvmChainForRules(c, evmAddr, needs)) : [];
+
+      const solJobs = [];
+      if (solAddr && needs.solanaTx) solJobs.push(fetchSolanaSigPresent(solAddr).then((r) => ({ kind: 'sig', r })));
+      if (solAddr) {
+        for (const mint of needs.solMints) solJobs.push(fetchSplBalance(solAddr, mint).then((r) => ({ kind: 'mint', mint, r })));
+      }
+
+      const [evmRes, solRes] = await Promise.all([Promise.all(evmJobs), Promise.all(solJobs)]);
+      const byChain = {};
+      for (const r of evmRes) byChain[r.chain] = r;
+      let solSig = null;
+      const solMints = {};
+      for (const item of solRes) {
+        if (item.kind === 'sig') solSig = item.r;
+        else if (item.kind === 'mint') solMints[item.mint] = item.r;
+      }
+
+      const state = { evm: evmAddr, sol: solAddr, byChain, solSig, solMints };
+
+      let pass = 0, partial = 0, fail = 0, unavail = 0, manual = 0;
+      const topHits = [];
+      for (const entry of ENTRIES) {
+        const rule = RULES[entry.slug];
+        if (!rule) { manual++; continue; }
+        const v = evaluateRule(rule, state);
+        if (v.status === 'pass') { pass++; topHits.push(entry); }
+        else if (v.status === 'partial') partial++;
+        else if (v.status === 'unavailable') unavail++;
+        else fail++;
+      }
+
+      const deepHref = '/tools/eligibility?' + (evmAddr ? 'evm=' + encodeURIComponent(evmAddr) : '') +
+        (evmAddr && solAddr ? '&' : '') + (solAddr ? 'sol=' + encodeURIComponent(solAddr) : '');
+
+      const ruleTotal = Object.keys(RULES).length;
+      let html = '<div class="db-bucket-grid">';
+      html += '<div class="db-bucket db-bucket-pass"><div class="db-bucket-num">' + pass + '</div><div class="db-bucket-lbl">✅ Eligible</div></div>';
+      html += '<div class="db-bucket db-bucket-partial"><div class="db-bucket-num">' + partial + '</div><div class="db-bucket-lbl">🟡 Keep farming</div></div>';
+      html += '<div class="db-bucket db-bucket-manual"><div class="db-bucket-num">' + manual + '</div><div class="db-bucket-lbl">🔍 Manual</div></div>';
+      html += '<div class="db-bucket"><div class="db-bucket-num">' + fail + '</div><div class="db-bucket-lbl">⏭ Skip</div></div>';
+      html += '</div>';
+      html += '<p class="db-bucket-note">' + pass + ' clear hits / ' + partial + ' partial out of ' +
+        ruleTotal + ' auto-checkable rules (' + ENTRIES.length + ' airdrops total; ' + manual + ' need manual review).</p>';
+      if (pass > 0) {
+        const top = topHits.slice(0, 5);
+        html += '<ul class="db-mini-list">';
+        for (const e of top) {
+          html += '<li><a href="/airdrops/' + encodeURIComponent(e.slug) +
+            '?utm_source=dashboard&utm_medium=tool&utm_campaign=eligibility-hit">' +
+            escHtml(e.project) + '</a> <span class="db-mini-meta">· ' + escHtml(e.chain) +
+            ' · risk-' + escHtml(e.risk) + '</span></li>';
+        }
+        if (topHits.length > top.length) {
+          html += '<li class="db-mini-more">+ ' + (topHits.length - top.length) + ' more · <a href="' + escHtml(deepHref) + '">see full verdict →</a></li>';
+        } else {
+          html += '<li class="db-mini-more"><a href="' + escHtml(deepHref) + '">See full verdict (per-rule detail) →</a></li>';
+        }
+        html += '</ul>';
+      } else {
+        html += '<p class="db-zero">No clear eligibility hits — most airdrops on this directory need on-chain history this wallet hasn\'t crossed yet. <a href="' + escHtml(deepHref) + '">See per-rule breakdown →</a></p>';
+      }
+      body.innerHTML = html;
+      return pass;
+    }
+
+    // =========================================================================
+    // Section 2 — Matched airdrops by chain (presence check, wallet-check style)
+    // =========================================================================
+    const WC_EVM = [
+      { key: 'ethereum', rpc: EVM_RPCS.ethereum, label: 'Ethereum', needles: ['ethereum'] },
+      { key: 'base',     rpc: EVM_RPCS.base,     label: 'Base',     needles: ['base'] },
+      { key: 'linea',    rpc: EVM_RPCS.linea,    label: 'Linea',    needles: ['linea'] },
+      { key: 'arbitrum', rpc: EVM_RPCS.arbitrum, label: 'Arbitrum', needles: ['arbitrum'] },
+      { key: 'polygon',  rpc: EVM_RPCS.polygon,  label: 'Polygon',  needles: ['polygon'] },
+      { key: 'bsc',      rpc: EVM_RPCS.bsc,      label: 'BSC',      needles: ['bsc', 'binance'] },
+    ];
+
+    async function checkEvmActivity(chain, addr) {
+      try {
+        const j = await rpcCall(chain.rpc, { jsonrpc: '2.0', id: 1, method: 'eth_getTransactionCount', params: [addr, 'latest'] });
+        if (j.error) return { chain, active: false };
+        return { chain, active: parseInt(j.result, 16) > 0 };
+      } catch { return { chain, active: false }; }
+    }
+
+    async function runMatched(evmAddr, solAddr) {
+      const body = document.getElementById('db-body-matched');
+      body.innerHTML = '<p class="db-loading">Scanning chain activity…</p>';
+
+      let active = [];
+      if (evmAddr) {
+        const results = await Promise.all(WC_EVM.map((c) => checkEvmActivity(c, evmAddr)));
+        active = results.filter((r) => r.active).map((r) => r.chain);
+      }
+      if (solAddr) {
+        const r = await fetchSolanaSigPresent(solAddr);
+        if (r.ok && r.present) active.push({ key: 'solana', label: 'Solana', needles: ['solana'] });
+      }
+
+      const deepHref = '/tools/wallet-check?addr=' + encodeURIComponent(evmAddr || solAddr);
+
+      if (active.length === 0) {
+        body.innerHTML = '<p class="db-zero">No activity detected on any of the chains we check. <a href="' + escHtml(deepHref) + '">Try the full tool →</a></p>';
+        return;
+      }
+
+      const matched = [];
+      const seen = new Set();
+      for (const ch of active) {
+        for (const e of ENTRIES) {
+          if (seen.has(e.slug)) continue;
+          const hay = (e.chain || '').toLowerCase();
+          if (ch.needles.some((n) => hay.includes(n))) {
+            matched.push(e);
+            seen.add(e.slug);
+          }
+        }
+      }
+
+      let html = '<p class="db-bucket-note">Active on <strong>' + active.map((c) => escHtml(c.label)).join('</strong>, <strong>') +
+        '</strong>. <strong>' + matched.length + '</strong> live airdrop' + (matched.length === 1 ? '' : 's') + ' on those chains.</p>';
+      if (matched.length > 0) {
+        const top = matched.slice(0, 8);
+        html += '<ul class="db-mini-list">';
+        for (const e of top) {
+          html += '<li><a href="/airdrops/' + encodeURIComponent(e.slug) +
+            '?utm_source=dashboard&utm_medium=tool&utm_campaign=matched">' +
+            escHtml(e.project) + '</a> <span class="db-mini-meta">· ' + escHtml(e.chain) +
+            ' · risk-' + escHtml(e.risk) + ' · effort ' + escHtml(e.effort) + '</span></li>';
+        }
+        if (matched.length > top.length) {
+          html += '<li class="db-mini-more">+ ' + (matched.length - top.length) + ' more · <a href="' + escHtml(deepHref) + '">full per-chain breakdown →</a></li>';
+        }
+        html += '</ul>';
+      }
+      body.innerHTML = html;
+    }
+
+    // =========================================================================
+    // Section 3 — Token holdings (balanceOf fanout, token-holdings logic)
+    // =========================================================================
+    async function fetchEvmTokenHoldings(chainKey, holder) {
+      const tokens = TOKENS.filter((t) => t.chain === chainKey && t.kind === 'erc20');
+      if (tokens.length === 0) return [];
+      const data = encodeBalanceOf(holder);
+      const batch = tokens.map((t, i) => ({
+        jsonrpc: '2.0', id: i, method: 'eth_call',
+        params: [{ to: t.address, data }, 'latest'],
+      }));
+      let resp;
+      try { resp = await rpcCall(EVM_RPCS[chainKey], batch); }
+      catch { return tokens.map((t) => ({ token: t, error: true })); }
+      const byId = new Map();
+      for (const r of resp) byId.set(r.id, r);
+      return tokens.map((t, i) => {
+        const r = byId.get(i);
+        if (!r || r.error) return { token: t, error: true };
+        return { token: t, raw: hexToBigInt(r.result) };
+      });
+    }
+
+    async function fetchSolTokenHoldings(holder) {
+      const tokens = TOKENS.filter((t) => t.chain === 'solana' && t.kind === 'spl');
+      const out = [];
+      for (let i = 0; i < tokens.length; i++) {
+        if (i > 0) await new Promise((r) => setTimeout(r, 250));
+        const r = await fetchSplBalance(holder, tokens[i].mint);
+        if (r.ok) out.push({ token: tokens[i], raw: r.raw });
+        else out.push({ token: tokens[i], error: true });
+      }
+      return out;
+    }
+
+    async function runHoldings(evmAddr, solAddr) {
+      const body = document.getElementById('db-body-holdings');
+      body.innerHTML = '<p class="db-loading">Checking balanceOf across ' + TOKENS.length + ' airdrop tokens…</p>';
+
+      let all = [];
+      if (evmAddr) {
+        const chains = [...new Set(TOKENS.filter((t) => t.kind === 'erc20').map((t) => t.chain))];
+        const groups = await Promise.all(chains.map((c) => fetchEvmTokenHoldings(c, evmAddr)));
+        all = all.concat(groups.flat());
+      }
+      if (solAddr) {
+        all = all.concat(await fetchSolTokenHoldings(solAddr));
+      }
+
+      const holders = all.filter((r) => !r.error && r.raw > 0n);
+      const deepHref = '/tools/token-holdings?addr=' + encodeURIComponent(evmAddr || solAddr);
+
+      if (holders.length === 0) {
+        body.innerHTML = '<p class="db-zero">No airdrop-token balances detected across ' + TOKENS.length + ' tokens we check. <a href="' + escHtml(deepHref) + '">Full token-by-token detail →</a></p>';
+        return;
+      }
+
+      let html = '<p class="db-bucket-note"><strong>' + holders.length + '</strong> airdrop token' +
+        (holders.length === 1 ? '' : 's') + ' detected in this wallet.</p>';
+      html += '<ul class="db-mini-list">';
+      for (const h of holders) {
+        const amount = fmtAmount(h.raw, h.token.decimals);
+        html += '<li><span class="db-token-sym mono">' + escHtml(h.token.symbol) + '</span> ' +
+          '<span class="db-token-amount mono">' + escHtml(amount) + '</span> ' +
+          '<span class="db-mini-meta">· ' + escHtml(h.token.project) + ' · ' + escHtml(CHAIN_LABELS[h.token.chain] || h.token.chain) + '</span></li>';
+      }
+      html += '</ul>';
+      html += '<p class="db-deep-link"><a href="' + escHtml(deepHref) + '">All ' + TOKENS.length + ' tokens checked · airdrop history →</a></p>';
+      body.innerHTML = html;
+    }
+
+    // =========================================================================
+    // Section 4 — Wallet age (drpc archive, binary search per chain)
+    // =========================================================================
+    const AGE_CHAINS = [
+      { key: 'ethereum', rpc: 'https://eth.drpc.org',       bucket: 'drpc', label: 'Ethereum' },
+      { key: 'polygon',  rpc: 'https://1rpc.io/matic',      bucket: '1rpc', label: 'Polygon' },
+      { key: 'arbitrum', rpc: 'https://arbitrum.drpc.org',  bucket: 'drpc', label: 'Arbitrum' },
+      { key: 'base',     rpc: 'https://mainnet.base.org',   bucket: 'base', label: 'Base' },
+      { key: 'bsc',      rpc: 'https://bsc.drpc.org',       bucket: 'drpc', label: 'BNB Chain' },
+    ];
+
+    async function nonceAt(chain, addr, blockTagOrHex) {
+      const hex = await runInBucket(chain.bucket, () =>
+        archiveRpcCall(chain.rpc, { jsonrpc: '2.0', id: 1, method: 'eth_getTransactionCount', params: [addr, blockTagOrHex] }));
+      return parseInt(hex, 16);
+    }
+    async function blockNumber(chain) {
+      const hex = await runInBucket(chain.bucket, () =>
+        archiveRpcCall(chain.rpc, { jsonrpc: '2.0', id: 1, method: 'eth_blockNumber', params: [] }));
+      return parseInt(hex, 16);
+    }
+    async function blockTimestamp(chain, blockNum) {
+      const blk = await runInBucket(chain.bucket, () =>
+        archiveRpcCall(chain.rpc, { jsonrpc: '2.0', id: 1, method: 'eth_getBlockByNumber', params: [toHex(blockNum), false] }));
+      if (!blk || !blk.timestamp) throw new Error('no block');
+      return parseInt(blk.timestamp, 16);
+    }
+    async function findFirstTxBlock(chain, addr, latestBlock) {
+      let lo = 0, hi = latestBlock;
+      let steps = 0;
+      while (lo < hi) {
+        const mid = (lo + hi) >>> 1;
+        const n = await nonceAt(chain, addr, toHex(mid));
+        if (n >= 1) hi = mid; else lo = mid + 1;
+        if (++steps > 40) throw new Error('exceeded 40 steps');
+        await new Promise((r) => setTimeout(r, 120));
+      }
+      return lo;
+    }
+    async function ageOnChain(chain, addr) {
+      try {
+        const latestNonce = await nonceAt(chain, addr, 'latest');
+        if (latestNonce === 0) return { chain, status: 'inactive' };
+        const latest = await blockNumber(chain);
+        let probe;
+        try { probe = await nonceAt(chain, addr, toHex(1)); }
+        catch (err) { return { chain, status: 'no-archive', latestNonce, error: err.message }; }
+        if (probe === latestNonce && latestNonce > 0) return { chain, status: 'no-archive', latestNonce };
+        const firstTxBlock = await findFirstTxBlock(chain, addr, latest);
+        const ts = await blockTimestamp(chain, firstTxBlock);
+        return { chain, status: 'active', latestNonce, firstTxBlock, firstTxTs: ts };
+      } catch (err) {
+        return { chain, status: 'error', error: err.message };
+      }
+    }
+
+    async function runWalletAge(evmAddr) {
+      const body = document.getElementById('db-body-age');
+      if (!evmAddr) {
+        body.innerHTML = '<p class="db-zero">Solana address — wallet age check needs an EVM address (no cheap way to find Solana\'s earliest signature). <a href="/tools/wallet-age">EVM-only tool →</a></p>';
+        return;
+      }
+      body.innerHTML = '<p class="db-loading">Binary-searching archive RPCs across ' + AGE_CHAINS.length + ' chains (~25 calls/chain)…</p>';
+
+      const results = await Promise.all(AGE_CHAINS.map((c) => ageOnChain(c, evmAddr)));
+      const active = results.filter((r) => r.status === 'active');
+      const deepHref = '/tools/wallet-age?addr=' + encodeURIComponent(evmAddr);
+
+      if (active.length === 0) {
+        const errored = results.filter((r) => r.status === 'error' || r.status === 'no-archive').length;
+        body.innerHTML = '<p class="db-zero">No outgoing transactions found on any of the 5 chains we check' +
+          (errored > 0 ? ' (' + errored + ' chain' + (errored === 1 ? '' : 's') + ' had RPC errors)' : '') +
+          '. Either this wallet has never signed a tx or it has only received funds. <a href="' + escHtml(deepHref) + '">Per-chain detail →</a></p>';
+        return;
+      }
+
+      let oldest = active[0];
+      for (const r of active) if (r.firstTxTs < oldest.firstTxTs) oldest = r;
+      const oldestDays = daysSince(oldest.firstTxTs);
+
+      let html = '<div class="db-age-hero"><div class="db-age-num">' + oldestDays.toLocaleString() +
+        '</div><div class="db-age-lbl">day' + (oldestDays === 1 ? '' : 's') + ' alive · first tx ' + fmtDate(oldest.firstTxTs) + ' on ' + escHtml(oldest.chain.label) + '</div></div>';
+
+      html += '<ul class="db-mini-list">';
+      for (const r of results) {
+        if (r.status === 'active') {
+          html += '<li><strong>' + escHtml(r.chain.label) + '</strong> · ' + fmtDate(r.firstTxTs) +
+            ' <span class="db-mini-meta">(' + daysSince(r.firstTxTs).toLocaleString() + ' days, ' +
+            r.latestNonce.toLocaleString() + ' tx, block <a href="' + (AGE_EXPLORERS[r.chain.key] || '') + r.firstTxBlock +
+            '" rel="nofollow noopener" target="_blank">' + r.firstTxBlock.toLocaleString() + '</a>)</span></li>';
+        } else if (r.status === 'inactive') {
+          html += '<li><strong>' + escHtml(r.chain.label) + '</strong> · <span class="db-mini-meta">no outgoing activity</span></li>';
+        } else {
+          html += '<li><strong>' + escHtml(r.chain.label) + '</strong> · <span class="db-mini-meta">archive RPC skipped</span></li>';
+        }
+      }
+      html += '</ul>';
+      html += '<p class="db-deep-link"><a href="' + escHtml(deepHref) + '">Full timeline →</a></p>';
+      body.innerHTML = html;
+    }
+
+    // =========================================================================
+    // Section 5 — Historical airdrop value (drpc archive + publicnode current)
+    // =========================================================================
+    function collectHistoricalNeeds(airdrops, addrs) {
+      const archiveTxByChainBlock = {};
+      const tokenBalancesByChain = {};
+      const solMintSet = new Set();
+      let needSolSig = false;
+      for (const a of airdrops) {
+        const c = a.eligibility;
+        if (c.kind === 'evmFirstTxBefore' && addrs.evm) {
+          if (!archiveTxByChainBlock[c.chain]) archiveTxByChainBlock[c.chain] = new Set();
+          archiveTxByChainBlock[c.chain].add(c.beforeBlock);
+        } else if (c.kind === 'evmHoldsToken' && addrs.evm) {
+          if (!tokenBalancesByChain[c.chain]) tokenBalancesByChain[c.chain] = new Set();
+          tokenBalancesByChain[c.chain].add(c.contract);
+        } else if (c.kind === 'solHasSignature' && addrs.sol) {
+          needSolSig = true;
+        } else if (c.kind === 'solHoldsMint' && addrs.sol) {
+          solMintSet.add(c.mint);
+        }
+      }
+      return { archiveTxByChainBlock, tokenBalancesByChain, needSolSig, solMintSet };
+    }
+
+    async function fetchHistArchiveChain(chain, blocks, evmAddr) {
+      const url = ARCHIVE_RPCS[chain];
+      const blockArr = Array.from(blocks);
+      const reqs = blockArr.map((b, i) => ({
+        jsonrpc: '2.0', id: i, method: 'eth_getTransactionCount',
+        params: [evmAddr, '0x' + b.toString(16)],
+      }));
+      let body;
+      try { body = await rpcCall(url, reqs); }
+      catch (err) { return { chain, ok: false, error: err.message }; }
+      const byId = new Map();
+      for (const r of body) byId.set(r.id, r);
+      const byBlock = new Map();
+      for (let i = 0; i < blockArr.length; i++) {
+        const r = byId.get(i);
+        if (r && r.result != null && !r.error) byBlock.set(blockArr[i], parseInt(r.result, 16) || 0);
+        else byBlock.set(blockArr[i], null);
+      }
+      return { chain, ok: true, byBlock };
+    }
+
+    async function fetchHistCurrentChain(chain, contracts, evmAddr) {
+      const url = EVM_RPCS[chain];
+      const contractArr = Array.from(contracts);
+      const reqs = contractArr.map((c, i) => ({
+        jsonrpc: '2.0', id: i, method: 'eth_call',
+        params: [{ to: c, data: encodeBalanceOf(evmAddr) }, 'latest'],
+      }));
+      let body;
+      try { body = await rpcCall(url, reqs); }
+      catch (err) { return { chain, ok: false, error: err.message }; }
+      const byId = new Map();
+      for (const r of body) byId.set(r.id, r);
+      const byContract = new Map();
+      for (let i = 0; i < contractArr.length; i++) {
+        const r = byId.get(i);
+        if (r && r.result != null && !r.error) byContract.set(contractArr[i], hexToBigInt(r.result));
+        else byContract.set(contractArr[i], null);
+      }
+      return { chain, ok: true, byContract };
+    }
+
+    function evalHistoric(check, state) {
+      if (check.kind === 'evmFirstTxBefore') {
+        if (!state.evm) return { status: 'not-eligible' };
+        const c = state.archive[check.chain];
+        if (!c || !c.ok) return { status: 'unavailable' };
+        const n = c.byBlock.get(check.beforeBlock);
+        if (n == null) return { status: 'unavailable' };
+        return n > 0 ? { status: 'eligible' } : { status: 'not-eligible' };
+      }
+      if (check.kind === 'evmHoldsToken') {
+        if (!state.evm) return { status: 'not-eligible' };
+        const c = state.current[check.chain];
+        if (!c || !c.ok) return { status: 'unavailable' };
+        const bal = c.byContract.get(check.contract);
+        if (bal == null) return { status: 'unavailable' };
+        return bal > 0n ? { status: 'eligible' } : { status: 'not-eligible' };
+      }
+      if (check.kind === 'solHasSignature') {
+        if (!state.sol) return { status: 'not-eligible' };
+        if (!state.solSig || !state.solSig.ok) return { status: 'unavailable' };
+        return state.solSig.present ? { status: 'eligible' } : { status: 'not-eligible' };
+      }
+      if (check.kind === 'solHoldsMint') {
+        if (!state.sol) return { status: 'not-eligible' };
+        const e = state.solMints && state.solMints[check.mint];
+        if (!e || !e.ok) return { status: 'unavailable' };
+        return e.raw > 0n ? { status: 'eligible' } : { status: 'not-eligible' };
+      }
+      return { status: 'unavailable' };
+    }
+
+    async function runHistorical(evmAddr, solAddr) {
+      const body = document.getElementById('db-body-historical');
+      body.innerHTML = '<p class="db-loading">Checking ' + HISTORICAL.length + ' past airdrops (archive lookups can take a few seconds)…</p>';
+
+      const needs = collectHistoricalNeeds(HISTORICAL, { evm: evmAddr, sol: solAddr });
+
+      const archiveJobs = evmAddr ? Object.keys(needs.archiveTxByChainBlock).map((c) => fetchHistArchiveChain(c, needs.archiveTxByChainBlock[c], evmAddr)) : [];
+      const currentJobs = evmAddr ? Object.keys(needs.tokenBalancesByChain).map((c) => fetchHistCurrentChain(c, needs.tokenBalancesByChain[c], evmAddr)) : [];
+      const solJobs = [];
+      if (solAddr && needs.needSolSig) solJobs.push(fetchSolanaSigPresent(solAddr).then((r) => ({ kind: 'sig', r })));
+      if (solAddr) for (const mint of needs.solMintSet) solJobs.push(fetchSplBalance(solAddr, mint).then((r) => ({ kind: 'mint', mint, r })));
+
+      const [archiveRes, currentRes, solRes] = await Promise.all([
+        Promise.all(archiveJobs), Promise.all(currentJobs), Promise.all(solJobs),
+      ]);
+      const archive = {}; for (const r of archiveRes) archive[r.chain] = r;
+      const current = {}; for (const r of currentRes) current[r.chain] = r;
+      let solSig = null; const solMints = {};
+      for (const item of solRes) {
+        if (item.kind === 'sig') solSig = item.r;
+        else if (item.kind === 'mint') solMints[item.mint] = item.r;
+      }
+
+      const state = { evm: evmAddr, sol: solAddr, archive, current, solSig, solMints };
+      let totalUSD = 0;
+      let hits = 0;
+      const hitRows = [];
+      for (const a of HISTORICAL) {
+        const v = evalHistoric(a.eligibility, state);
+        if (v.status === 'eligible') {
+          const dollars = a.baseAmount * a.claimPriceUSD;
+          hits++;
+          totalUSD += dollars;
+          hitRows.push({ a, dollars });
+        }
+      }
+      hitRows.sort((x, y) => y.dollars - x.dollars);
+
+      const deepHref = '/tools/historical-value?' + (evmAddr ? 'evm=' + encodeURIComponent(evmAddr) : '') +
+        (evmAddr && solAddr ? '&' : '') + (solAddr ? 'sol=' + encodeURIComponent(solAddr) : '');
+
+      let html = '<div class="db-hv-hero"><div class="db-hv-num mono">' + escHtml(fmtUSD(totalUSD)) +
+        '</div><div class="db-hv-lbl">est. base-tier value if you\'d claimed ' + hits + ' / ' + HISTORICAL.length + ' past drops</div></div>';
+
+      if (hits === 0) {
+        html += '<p class="db-zero">No historical-airdrop matches for this wallet. Likely too new, or activity was on chains we don\'t cover. <a href="' + escHtml(deepHref) + '">Full per-airdrop detail →</a></p>';
+      } else {
+        const top = hitRows.slice(0, 5);
+        html += '<ul class="db-mini-list">';
+        for (const r of top) {
+          html += '<li><strong>' + escHtml(r.a.project) + '</strong> ' +
+            '<span class="db-token-amount mono">' + escHtml(fmtUSD(r.dollars)) + '</span> ' +
+            '<span class="db-mini-meta">· ' + r.a.baseAmount.toLocaleString('en-US') + ' ' + escHtml(r.a.symbol) +
+            ' at claim-day $' + r.a.claimPriceUSD + '</span></li>';
+        }
+        if (hitRows.length > top.length) {
+          html += '<li class="db-mini-more">+ ' + (hitRows.length - top.length) + ' more · <a href="' + escHtml(deepHref) + '">full breakdown →</a></li>';
+        } else {
+          html += '<li class="db-mini-more"><a href="' + escHtml(deepHref) + '">Per-airdrop breakdown (incl. misses + caveats) →</a></li>';
+        }
+        html += '</ul>';
+        html += '<p class="db-caveat">Floor estimate: assumes you actually met each criterion, claimed, and sold at claim-day price. Not financial advice.</p>';
+      }
+      body.innerHTML = html;
+    }
+
+    // =========================================================================
+    // Recent wallets (localStorage, last 3)
+    // =========================================================================
+    const RECENT_KEY = 'web3d:dash:recent';
+    function loadRecent() {
+      try { const raw = localStorage.getItem(RECENT_KEY); return raw ? JSON.parse(raw) : []; }
+      catch { return []; }
+    }
+    function saveRecent(addr) {
+      let list = loadRecent().filter((a) => a !== addr);
+      list.unshift(addr);
+      list = list.slice(0, 3);
+      try { localStorage.setItem(RECENT_KEY, JSON.stringify(list)); } catch {}
+      renderRecent();
+    }
+    function renderRecent() {
+      const list = loadRecent();
+      const wrap = document.getElementById('db-recent');
+      const pills = document.getElementById('db-recent-pills');
+      if (!wrap || !pills) return;
+      if (list.length === 0) { wrap.hidden = true; return; }
+      wrap.hidden = false;
+      pills.innerHTML = list.map((a) =>
+        '<button type="button" class="db-pill" data-addr="' + escHtml(a) + '" title="' + escHtml(a) + '">' +
+          '<span class="db-pill-addr mono">' + escHtml(shortAddr(a)) + '</span>' +
+        '</button>'
+      ).join('');
+      for (const btn of pills.querySelectorAll('.db-pill')) {
+        btn.addEventListener('click', () => {
+          const addr = btn.getAttribute('data-addr');
+          document.getElementById('db-input').value = addr;
+          runDashboard(addr);
+          updateUrl(addr);
+        });
+      }
+    }
+
+    // =========================================================================
+    // Orchestration
+    // =========================================================================
+    function resetSections() {
+      document.getElementById('db-body-eligibility').innerHTML = '<p class="db-loading">Queued…</p>';
+      document.getElementById('db-body-matched').innerHTML     = '<p class="db-loading">Queued…</p>';
+      document.getElementById('db-body-holdings').innerHTML    = '<p class="db-loading">Queued…</p>';
+      document.getElementById('db-body-age').innerHTML         = '<p class="db-loading">Queued…</p>';
+      document.getElementById('db-body-historical').innerHTML  = '<p class="db-loading">Queued…</p>';
+    }
+
+    function renderShareBlock(addr) {
+      const shareEl = document.getElementById('db-share');
+      const url = window.location.origin + '/dashboard?addr=' + encodeURIComponent(addr);
+      shareEl.innerHTML =
+        '<div class="db-share-lead"><strong>Share this dashboard.</strong> Anyone opening the link sees the same five-section view for this wallet.</div>' +
+        '<div class="db-share-row">' +
+          '<input class="db-share-input mono" id="db-share-url" readonly value="' + escHtml(url) + '" />' +
+          '<button type="button" class="db-share-btn" id="db-share-copy" data-text="' + escHtml(url) + '">Copy link</button>' +
+        '</div>';
+      shareEl.hidden = false;
+      const copyBtn = document.getElementById('db-share-copy');
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(copyBtn.dataset.text || '');
+          const orig = copyBtn.textContent;
+          copyBtn.textContent = 'Copied!';
+          setTimeout(() => { copyBtn.textContent = orig; }, 1600);
+        } catch {
+          const input = document.getElementById('db-share-url');
+          if (input) { input.select(); document.execCommand && document.execCommand('copy'); }
+        }
+      });
+    }
+
+    async function runDashboard(rawAddr) {
+      const statusEl = document.getElementById('db-status');
+      const shareEl  = document.getElementById('db-share');
+      const signupEl = document.getElementById('db-signup');
+
+      const fmt = detectFormat(rawAddr);
+      if (fmt.kind === 'unknown') {
+        statusEl.innerHTML = '<strong>Unrecognised address format.</strong> Expecting an EVM <code>0x</code>-prefixed address (40 hex chars) or a Solana base58 address (32–44 chars).';
+        statusEl.hidden = false;
+        shareEl.hidden = true;
+        if (signupEl) signupEl.hidden = true;
+        return;
+      }
+
+      const evmAddr = fmt.kind === 'evm' ? fmt.addr : '';
+      const solAddr = fmt.kind === 'solana' ? fmt.addr : '';
+
+      statusEl.innerHTML = 'Loading dashboard for <code>' + escHtml(shortAddr(fmt.addr)) + '</code> · ' +
+        (fmt.kind === 'evm' ? 'EVM' : 'Solana') + ' address. Sections load in parallel.';
+      statusEl.hidden = false;
+      resetSections();
+      renderShareBlock(fmt.addr);
+      saveRecent(fmt.addr);
+
+      // Run all 5 sections in parallel. Each one writes to its own DOM target
+      // as it completes — fast sections render before slow ones finish.
+      const jobs = [
+        runEligibility(evmAddr, solAddr).catch((e) => { document.getElementById('db-body-eligibility').innerHTML = '<p class="db-error">Failed: ' + escHtml(e.message || 'unknown') + '</p>'; }),
+        runMatched(evmAddr, solAddr).catch((e)     => { document.getElementById('db-body-matched').innerHTML     = '<p class="db-error">Failed: ' + escHtml(e.message || 'unknown') + '</p>'; }),
+        runHoldings(evmAddr, solAddr).catch((e)    => { document.getElementById('db-body-holdings').innerHTML    = '<p class="db-error">Failed: ' + escHtml(e.message || 'unknown') + '</p>'; }),
+        runWalletAge(evmAddr).catch((e)            => { document.getElementById('db-body-age').innerHTML         = '<p class="db-error">Failed: ' + escHtml(e.message || 'unknown') + '</p>'; }),
+        runHistorical(evmAddr, solAddr).catch((e)  => { document.getElementById('db-body-historical').innerHTML  = '<p class="db-error">Failed: ' + escHtml(e.message || 'unknown') + '</p>'; }),
+      ];
+      await Promise.all(jobs);
+
+      if (signupEl) signupEl.hidden = false;
+
+      // GoatCounter event with overall dashboard completion.
+      if (typeof window.goatcounter !== 'undefined' && window.goatcounter &&
+          typeof window.goatcounter.count === 'function') {
+        window.goatcounter.count({
+          path: 'tool-dashboard-result',
+          title: 'dashboard loaded for ' + fmt.kind,
+          event: true,
+        });
+      }
+    }
+
+    function updateUrl(addr) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('addr', addr);
+      history.replaceState(null, '', url.toString());
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.getElementById('db-form');
+      const input = document.getElementById('db-input');
+
+      renderRecent();
+
+      form.addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        const v = input.value.trim();
+        if (!v) return;
+        updateUrl(v);
+        runDashboard(v);
+      });
+
+      const initial = new URL(window.location.href).searchParams.get('addr');
+      if (initial) {
+        input.value = initial;
+        runDashboard(initial);
+      }
+    });
+  </script>
+
+  <style>
+    .kicker {
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent, #c8531a);
+      margin-bottom: 0.4rem;
+    }
+    .lede { font-family: var(--font-serif, Georgia, serif); font-size: 1.1rem; line-height: 1.55; }
+    .db-form {
+      margin: 1.25rem 0 0;
+      padding: 1rem 1.1rem;
+      background: #fff;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-left: 4px solid var(--accent, #c8531a);
+      border-radius: 4px;
+    }
+    .db-label {
+      display: block;
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--ink-soft, #555);
+      font-family: var(--font-mono, monospace);
+      margin-bottom: 0.35rem;
+    }
+    .db-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .db-row input[type="text"] {
+      flex: 1 1 320px;
+      min-width: 0;
+      padding: 0.65rem 0.85rem;
+      font-family: var(--font-mono, monospace);
+      font-size: 0.92rem;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 4px;
+      background: #fff;
+      box-sizing: border-box;
+    }
+    .db-row input[type="text"]:focus {
+      outline: 2px solid var(--accent, #c8531a);
+      outline-offset: -1px;
+    }
+    .db-btn {
+      padding: 0.65rem 1.1rem;
+      background: var(--accent, #c8531a);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    .db-btn:hover { background: var(--warn, #a8741a); }
+    .db-hint { margin: 0.6rem 0 0; font-size: 0.85rem; color: var(--ink-soft, #555); }
+    .db-recent {
+      margin-top: 0.85rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .db-recent-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--ink-soft, #555);
+      font-family: var(--font-mono, monospace);
+    }
+    .db-recent-pills { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+    .db-pill {
+      padding: 0.35rem 0.75rem;
+      background: #fdfbf6;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 999px;
+      font-size: 0.84rem;
+      cursor: pointer;
+      color: var(--ink, #222);
+    }
+    .db-pill:hover { background: #fff; border-color: var(--accent, #c8531a); }
+    .db-pill-addr { font-family: var(--font-mono, monospace); }
+    .db-status {
+      padding: 0.85rem 1rem;
+      background: #fdfbf6;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-left: 3px solid var(--accent, #c8531a);
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+    .db-share {
+      padding: 0.9rem 1rem;
+      background: rgba(46, 133, 64, 0.06);
+      border: 1px solid rgba(46, 133, 64, 0.3);
+      border-left: 4px solid #2e8540;
+      border-radius: 4px;
+      margin-bottom: 1.25rem;
+    }
+    .db-share-lead { font-size: 0.92rem; margin-bottom: 0.55rem; }
+    .db-share-row { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .db-share-input {
+      flex: 1 1 360px;
+      min-width: 0;
+      padding: 0.5rem 0.7rem;
+      font-size: 0.84rem;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 4px;
+      background: #fff;
+      box-sizing: border-box;
+    }
+    .db-share-btn {
+      padding: 0.5rem 0.95rem;
+      font-size: 0.85rem;
+      background: var(--accent, #c8531a);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .db-share-btn:hover { background: var(--warn, #a8741a); }
+    .db-sections {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .db-section {
+      padding: 1rem 1.05rem;
+      background: #fff;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 4px;
+    }
+    .db-section:nth-child(1) { border-left: 4px solid #2e8540; }
+    .db-section:nth-child(2) { border-left: 4px solid var(--accent, #c8531a); }
+    .db-section:nth-child(3) { border-left: 4px solid #4060a8; }
+    .db-section:nth-child(4) { border-left: 4px solid #8a6cba; }
+    .db-section:nth-child(5) { border-left: 4px solid #a86b1a; }
+    .db-sec-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-areas: "kicker kicker" "title deep";
+      gap: 0.3rem 0.6rem;
+      align-items: baseline;
+      margin-bottom: 0.85rem;
+    }
+    .db-sec-kicker {
+      grid-area: kicker;
+      font-family: var(--font-mono, monospace);
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink-soft, #555);
+    }
+    .db-sec-head h2 {
+      grid-area: title;
+      margin: 0;
+      font-family: var(--font-serif, Georgia, serif);
+      font-size: 1.25rem;
+    }
+    .db-sec-deep {
+      grid-area: deep;
+      font-size: 0.85rem;
+      color: var(--accent, #c8531a);
+      white-space: nowrap;
+    }
+    .db-sec-body { font-size: 0.92rem; line-height: 1.5; }
+    .db-empty { color: var(--ink-soft, #888); font-style: italic; }
+    .db-loading { color: var(--ink-soft, #555); font-style: italic; }
+    .db-error {
+      padding: 0.6rem 0.75rem;
+      background: rgba(200, 83, 26, 0.08);
+      border-left: 2px solid var(--warn, #a8741a);
+      color: var(--ink, #222);
+      border-radius: 3px;
+      font-size: 0.88rem;
+    }
+    .db-zero {
+      color: var(--ink-soft, #555);
+      margin: 0;
+    }
+    .db-bucket-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.4rem;
+      margin-bottom: 0.7rem;
+    }
+    .db-bucket {
+      padding: 0.6rem 0.4rem;
+      background: #fdfbf6;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 3px;
+      text-align: center;
+    }
+    .db-bucket-pass { border-left: 3px solid #2e8540; }
+    .db-bucket-partial { border-left: 3px solid var(--accent, #c8531a); }
+    .db-bucket-manual { border-left: 3px solid #4060a8; }
+    .db-bucket-num {
+      font-family: var(--font-serif, Georgia, serif);
+      font-size: 1.55rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .db-bucket-lbl {
+      font-size: 0.74rem;
+      color: var(--ink-soft, #555);
+      margin-top: 0.25rem;
+    }
+    .db-bucket-note {
+      font-size: 0.88rem;
+      color: var(--ink, #222);
+      margin: 0 0 0.6rem;
+    }
+    .db-mini-list {
+      list-style: none;
+      padding: 0;
+      margin: 0.4rem 0 0.4rem;
+    }
+    .db-mini-list li {
+      padding: 0.4rem 0;
+      border-bottom: 1px dashed var(--rule, #d9d4c4);
+      font-size: 0.9rem;
+    }
+    .db-mini-list li:last-child { border-bottom: none; }
+    .db-mini-list a {
+      color: var(--ink, #222);
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .db-mini-list a:hover { color: var(--accent, #c8531a); text-decoration: underline; }
+    .db-mini-meta { color: var(--ink-soft, #555); font-size: 0.84rem; }
+    .db-mini-more a { color: var(--accent, #c8531a) !important; font-weight: 600; }
+    .db-deep-link {
+      margin: 0.5rem 0 0;
+      font-size: 0.88rem;
+    }
+    .db-deep-link a { color: var(--accent, #c8531a); font-weight: 600; }
+    .db-token-sym { font-weight: 700; }
+    .db-token-amount { font-weight: 600; color: var(--ink, #222); }
+    .db-age-hero {
+      padding: 0.7rem 0.85rem;
+      background: linear-gradient(135deg, #fff 0%, #f5f0fb 100%);
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 3px;
+      margin-bottom: 0.7rem;
+    }
+    .db-age-num {
+      font-family: var(--font-serif, Georgia, serif);
+      font-size: 1.85rem;
+      font-weight: 700;
+      line-height: 1;
+      color: #5a3d8a;
+    }
+    .db-age-lbl {
+      margin-top: 0.25rem;
+      font-size: 0.86rem;
+      color: var(--ink-soft, #555);
+    }
+    .db-hv-hero {
+      padding: 0.85rem 0.95rem;
+      background: linear-gradient(135deg, #fff 0%, #f0fff4 100%);
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 3px;
+      margin-bottom: 0.7rem;
+    }
+    .db-hv-num {
+      font-family: var(--font-serif, Georgia, serif);
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1;
+      color: #2e8540;
+    }
+    .db-hv-lbl {
+      margin-top: 0.3rem;
+      font-size: 0.86rem;
+      color: var(--ink-soft, #555);
+    }
+    .db-caveat {
+      margin: 0.5rem 0 0;
+      padding: 0.55rem 0.75rem;
+      background: rgba(200, 83, 26, 0.08);
+      border-left: 2px solid var(--warn, #a8741a);
+      font-size: 0.82rem;
+      color: var(--ink, #222);
+      border-radius: 2px;
+    }
+    .db-howitworks {
+      margin-top: 1.5rem;
+      padding: 0.85rem 1rem;
+      background: #fdfbf6;
+      border: 1px solid var(--rule, #d9d4c4);
+      border-radius: 4px;
+    }
+    .db-howitworks summary { cursor: pointer; font-weight: 600; font-size: 0.95rem; }
+    .db-howitworks .prose { margin-top: 0.75rem; font-size: 0.92rem; line-height: 1.55; }
+    .db-howitworks .prose ul { padding-left: 1.2rem; }
+    .db-howitworks .prose li { margin-bottom: 0.5rem; }
+
+    @media (max-width: 480px) {
+      .db-bucket-grid { grid-template-columns: repeat(2, 1fr); }
+      .db-sec-head {
+        grid-template-columns: 1fr;
+        grid-template-areas: "kicker" "title" "deep";
+      }
+      .db-sec-deep { white-space: normal; }
+    }
+  </style>
+</Base>
